@@ -1,40 +1,55 @@
 // frontend/src/screens/LoginScreen.js
-import { View, ImageBackground, StyleSheet, Dimensions, Platform } from 'react-native';
+import { View, ImageBackground, StyleSheet, Dimensions } from 'react-native';
 import LoginCard from '../components/LoginCard';
-
-const { width, height } = Dimensions.get('window');
+import { useState, useEffect } from 'react';
 
 export default function LoginScreen({ navigation }) {
+  const [dimensions, setDimensions] = useState(Dimensions.get('window'));
+
+  useEffect(() => {
+    const subscription = Dimensions.addEventListener('change', ({ window }) => {
+      setDimensions(window);
+    });
+    return () => subscription?.remove();
+  }, []);
+
   const handleLogin = (user) => {
     navigation.replace('Dashboard', { user });
   };
 
-  // Responsive sizing
+  const { width } = dimensions;
   const isSmallScreen = width < 768;
   const isMediumScreen = width >= 768 && width < 1024;
   const isLargeScreen = width >= 1024;
 
   return (
     <View style={screenStyles.container}>
-      <ImageBackground
-        source={require('../../assets/bg2.png')}
-        style={screenStyles.fullScreen}
-        resizeMode="stretch"
-      >
-        <View style={[
-          screenStyles.overlay,
-          isSmallScreen && screenStyles.overlayMobile
-        ]}>
+      <View style={screenStyles.backgroundWrapper}>
+        <ImageBackground
+          source={require('../../assets/bg2.png')}
+          style={screenStyles.fullScreen}
+          resizeMode={isSmallScreen ? 'cover' : 'stretch'}
+          imageStyle={isSmallScreen ? {
+            // On mobile: shift left by -100% to show the RIGHT side (person)
+            width: '200%',
+            left: '-100%',  // Negative = shift left to reveal right portion
+          } : undefined}
+        >
           <View style={[
-            screenStyles.leftAlign,
-            isSmallScreen && screenStyles.centerAlign,
-            isMediumScreen && screenStyles.mediumAlign,
-            isLargeScreen && screenStyles.largeAlign
+            screenStyles.overlay,
+            isSmallScreen && screenStyles.overlayMobile
           ]}>
-            <LoginCard onLogin={handleLogin} />
+            <View style={[
+              screenStyles.leftAlign,
+              isSmallScreen && screenStyles.centerAlign,
+              isMediumScreen && screenStyles.mediumAlign,
+              isLargeScreen && screenStyles.largeAlign
+            ]}>
+              <LoginCard onLogin={handleLogin} />
+            </View>
           </View>
-        </View>
-      </ImageBackground>
+        </ImageBackground>
+      </View>
     </View>
   );
 }
@@ -42,6 +57,11 @@ export default function LoginScreen({ navigation }) {
 const screenStyles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#000',
+  },
+  backgroundWrapper: {
+    flex: 1,
+    overflow: 'hidden',
   },
   fullScreen: {
     flex: 1,
@@ -56,12 +76,13 @@ const screenStyles = StyleSheet.create({
     paddingLeft: 60,
   },
   overlayMobile: {
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     paddingLeft: 0,
     alignItems: 'center',
     paddingHorizontal: 20,
   },
   leftAlign: {
-    width: 380, // Increased from 300
+    width: 380,
   },
   centerAlign: {
     width: '100%',
@@ -71,6 +92,6 @@ const screenStyles = StyleSheet.create({
     width: 380,
   },
   largeAlign: {
-    width: 420, // Even bigger for large screens
+    width: 420,
   },
 });
