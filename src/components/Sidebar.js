@@ -1,3 +1,4 @@
+// frontend/src/components/Sidebar.js - EXACT ORIGINAL + user prop
 import { View, Text, Pressable } from 'react-native';
 import {
   LayoutDashboard,
@@ -21,11 +22,10 @@ const MENU = [
   { label: 'Masters', icon: Settings },
 ];
 
-export default function Sidebar({ activeMenu, onChange, onLogout }) {
+export default function Sidebar({ activeMenu, onChange, onLogout, user }) { // Add user prop
   return (
     <View style={styles.sidebar}>
-
-      {/* 🔷 HEADER */}
+      {/* YOUR EXACT ORIGINAL HEADER */}
       <View style={styles.sidebarHeader}>
         <View style={styles.logoCircle}>
           <Text style={styles.logoText}>GE</Text>
@@ -38,11 +38,10 @@ export default function Sidebar({ activeMenu, onChange, onLogout }) {
 
       <View style={styles.sidebarDivider} />
 
-      {/* 🔹 MENU */}
+      {/* YOUR EXACT ORIGINAL MENU */}
       <View style={styles.sidebarMenu}>
         {MENU.map(({ label, icon: Icon }) => {
           const active = activeMenu === label;
-
           return (
             <Pressable
               key={label}
@@ -53,12 +52,7 @@ export default function Sidebar({ activeMenu, onChange, onLogout }) {
               ]}
             >
               <Icon size={20} color={active ? '#2563EB' : '#374151'} />
-              <Text
-                style={[
-                  styles.sidebarText,
-                  active && styles.sidebarTextActive,
-                ]}
-              >
+              <Text style={[styles.sidebarText, active && styles.sidebarTextActive]}>
                 {label}
               </Text>
             </Pressable>
@@ -66,15 +60,17 @@ export default function Sidebar({ activeMenu, onChange, onLogout }) {
         })}
       </View>
 
-      {/* 🔻 FOOTER */}
+      {/* YOUR EXACT ORIGINAL FOOTER - Just show real user data */}
       <View style={styles.sidebarFooter}>
         <View style={styles.userCard}>
-          <Text style={styles.userName}>Super Admin</Text>
-          <Text style={styles.userEmail}>admin@gym.com</Text>
-          <Text style={styles.userRole}>Super Admin</Text>
+          <Text style={styles.userName}>{user?.name || 'Super Admin'}</Text>
+          <Text style={styles.userEmail}>{user?.email || 'admin@gym.com'}</Text>
+          <Text style={styles.userRole}>
+            {user?.userType === 'gym_owner' ? 'Gym Owner' : 'Super Admin'}
+          </Text>
         </View>
 
-        <Pressable style={styles.logoutBtn} onPress={onLogout}>
+        <Pressable onPress={onLogout} style={styles.logoutBtn}>
           <LogOut size={18} color="#DC2626" />
           <Text style={styles.logoutText}>Logout</Text>
         </Pressable>
