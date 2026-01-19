@@ -42,3 +42,17 @@ yarn-error.*
 
 npm-debug.log*
 pnpm-debug.log*
+
+loginCard: {
+  backgroundColor: '#FFFFFF',  // Add this
+  padding: 32,
+  borderRadius: 16,
+  borderWidth: 1,
+  borderColor: 'rgba(229, 231, 235, 0.5)',
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.1,
+  shadowRadius: 12,
+  elevation: 5,
+  minWidth: 400,
+},
