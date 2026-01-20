@@ -51,5 +51,21 @@ if (process.env.NODE_ENV !== 'production') {
   });
 }
 
+// Root route
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'MuscleTime ERP API',
+    status: 'running',
+    endpoints: {
+      health: '/health',
+      auth: '/api/auth',
+      dashboard: '/api/dashboard',
+      members: '/api/members',
+      employees: '/api/employees',
+      branches: '/api/branches'
+    }
+  });
+});
+
 // Export for Vercel serverless
 export default app;
