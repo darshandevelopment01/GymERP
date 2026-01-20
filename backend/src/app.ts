@@ -29,14 +29,12 @@ app.use((req, res, next) => {
   next();
 });
 
-// Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/members', memberRoutes);
-app.use('/api/employees', employeeRoutes);
-app.use('/api/branches', branchRoutes);
+// Health check - FIRST
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', message: 'Server is running' });
+});
 
-// Root route
+// Root route - SECOND
 app.get('/', (req, res) => {
   res.json({ 
     message: 'MuscleTime ERP API',
@@ -52,9 +50,11 @@ app.get('/', (req, res) => {
   });
 });
 
-// Health check
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Server is running' });
-});
+// API Routes - LAST
+app.use('/api/auth', authRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/members', memberRoutes);
+app.use('/api/employees', employeeRoutes);
+app.use('/api/branches', branchRoutes);
 
 export default app;
