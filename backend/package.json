@@ -1,4 +1,11 @@
 {
+  "name": "gym-erp-backend",
+  "version": "1.0.0",
+  "description": "Backend for Gym ERP System",
+  "main": "dist/index.js",
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "tsc",
