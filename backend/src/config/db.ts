@@ -1,17 +1,15 @@
-// backend/src/config/db.ts
 import mongoose from 'mongoose';
 
 const connectDB = async () => {
   try {
-    const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/gym-erp';
+    if (mongoose.connection.readyState >= 1) {
+      return; 
+    }
     
-    await mongoose.connect(mongoURI);
-    
-    console.log('✅ MongoDB Connected Successfully');
+    const conn = await mongoose.connect(process.env.MONGODB_URI as string);
+    console.log(`MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
-    console.error('❌ MongoDB Connection Error:', error);
-    process.exit(1);
+    console.error(`Error: ${error}`);
   }
 };
-
 export default connectDB;
