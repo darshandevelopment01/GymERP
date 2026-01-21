@@ -1,5 +1,5 @@
 // src/services/api.js
-const API_URL = 'http://localhost:3001/api';
+const API_URL = 'https://muscletime-backend-git-main-dev-teams-projects-f902652e.vercel.app/api';
 
 class ApiService {
   async login(email, password) {
