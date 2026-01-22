@@ -1,5 +1,6 @@
 // src/components/DashboardContent.jsx
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Store, 
@@ -16,6 +17,7 @@ export default function DashboardContent() {
   const [weeklyData, setWeeklyData] = useState([]);
   const [membershipData, setMembershipData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchDashboardData();
@@ -87,7 +89,28 @@ export default function DashboardContent() {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
-    window.location.href = '/login';
+    navigate('/login');
+  };
+
+  const handleMenuChange = (menu) => {
+    setActiveMenu(menu);
+    
+    // Navigate based on menu selection
+    const routes = {
+      'Dashboard': '/dashboard',
+      'Masters': '/masters',
+      'Enquiry': '/enquiry',
+      'Members': '/members',
+      'Employees': '/employees',
+      'Attendance': '/attendance',
+      'Reports': '/reports',
+    };
+    
+    if (routes[menu]) {
+      navigate(routes[menu]);
+    }
+    
+    closeSidebar();
   };
 
   const toggleSidebar = () => {
@@ -108,13 +131,13 @@ export default function DashboardContent() {
 
   return (
     <div className="dashboard-container">
-      <Sidebar 
-        activeMenu={activeMenu} 
-        onChange={setActiveMenu} 
-        onLogout={handleLogout}
-        isOpen={isSidebarOpen}
-        onClose={closeSidebar}
-      />
+     <Sidebar 
+  activeMenu={activeMenu} 
+  onChange={handleMenuChange}
+  onLogout={handleLogout}
+  isOpen={false}  // FORCE FALSE on desktop
+  onClose={closeSidebar}
+/>
 
       <div className="dashboard-main">
         <div className="dashboard-mobile-header">

@@ -2,6 +2,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LoginScreen from './screens/LoginScreen';
 import DashboardScreen from './screens/DashboardScreen';
+import MastersScreen from './screens/MastersScreen';
 import './App.css';
 
 function PrivateRoute({ children }) {
@@ -31,6 +32,14 @@ function App() {
           element={
             <PrivateRoute>
               <DashboardScreen />
+            </PrivateRoute>
+          } 
+        />
+        <Route 
+          path="/masters" 
+          element={
+            <PrivateRoute>
+              <MastersScreen />
             </PrivateRoute>
           } 
         />

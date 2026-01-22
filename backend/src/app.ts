@@ -8,6 +8,7 @@ import dashboardRoutes from './routes/dashboard.routes';
 import memberRoutes from './routes/member.routes';
 import employeeRoutes from './routes/employee.routes';
 import branchRoutes from './routes/branch.routes';
+import mastersRoutes from './routes/masters.routes';  // ADD THIS
 
 dotenv.config();
 
@@ -45,7 +46,8 @@ app.get('/', (req, res) => {
       dashboard: '/api/dashboard',
       members: '/api/members',
       employees: '/api/employees',
-      branches: '/api/branches'
+      branches: '/api/branches',
+      masters: '/api/masters'  // ADD THIS
     }
   });
 });
@@ -56,5 +58,6 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/members', memberRoutes);
 app.use('/api/employees', employeeRoutes);
 app.use('/api/branches', branchRoutes);
+app.use('/api/masters', mastersRoutes);  // ADD THIS LINE
 
 export default app;

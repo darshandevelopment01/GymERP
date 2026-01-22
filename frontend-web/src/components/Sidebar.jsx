@@ -26,8 +26,7 @@ const MENU = [
 export default function Sidebar({ activeMenu, onChange, onLogout, isOpen, onClose }) {
   return (
     <>
-      {/* Mobile Overlay */}
-      {isOpen && <div className="sidebar-overlay" onClick={onClose}></div>}
+      {/* REMOVED THE OVERLAY COMPLETELY */}
 
       {/* Sidebar */}
       <div className={`sidebar ${isOpen ? 'sidebar-open' : ''}`}>
@@ -56,7 +55,7 @@ export default function Sidebar({ activeMenu, onChange, onLogout, isOpen, onClos
                 key={label}
                 onClick={() => {
                   onChange(label);
-                  onClose(); // Close sidebar on mobile after selection
+                  onClose();
                 }}
                 className={`sidebar-item ${isActive ? 'sidebar-item-active' : ''}`}
               >
