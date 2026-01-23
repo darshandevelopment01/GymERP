@@ -85,7 +85,7 @@ const UserMaster = () => {
       ],
     },
     {
-      name: 'dateOfJoining',
+      name: 'joinDate',  // ✅ CHANGED FROM 'dateOfJoining' to match backend field
       label: 'Date of Joining',
       type: 'date',
       required: false,
@@ -95,29 +95,49 @@ const UserMaster = () => {
       name: 'employeeCode',
       label: 'Employee Code',
       type: 'text',
-      required: false,
-      disabled: true,
-      placeholder: 'Auto-generated',
+      required: true,
+      disabled: false,
+      placeholder: 'Enter employee code (e.g., EMP001)',
     },
     {
       name: 'designation',
       label: 'Designation',
       type: 'select',
       required: false,
-      options: designations.map(d => ({ 
-        value: d._id, 
-        label: d.name 
-      })),
+      options: [
+        { value: '', label: 'Select Designation' },
+        ...designations.map(d => ({ 
+          value: d._id, 
+          label: d.designationName
+        }))
+      ],
+      displayValue: (item) => {
+        if (!item.designation) return '-';
+        return typeof item.designation === 'object' 
+          ? item.designation.designationName 
+          : designations.find(d => d._id === item.designation)?.designationName || item.designation;
+      }
     },
     {
       name: 'shift',
       label: 'Shift Timing',
       type: 'select',
       required: false,
-      options: shifts.map(s => ({ 
-        value: s._id, 
-        label: `${s.name} (${s.startTime} - ${s.endTime})` 
-      })),
+      options: [
+        { value: '', label: 'Select Shift Timing' },
+        ...shifts.map(s => ({ 
+          value: s._id, 
+          label: `${s.shiftName} (${s.startTime} - ${s.endTime})`
+        }))
+      ],
+      displayValue: (item) => {
+        if (!item.shift) return '-';
+        if (typeof item.shift === 'object') {
+          return `${item.shift.shiftName} (${item.shift.startTime} - ${item.shift.endTime})`;
+        }
+        const shift = shifts.find(s => s._id === item.shift);
+        return shift ? `${shift.shiftName} (${shift.startTime} - ${shift.endTime})` : item.shift;
+      }
     },
     {
       name: 'userType',
@@ -130,14 +150,24 @@ const UserMaster = () => {
       ],
     },
     {
-      name: 'branchId',  // Changed from 'branches' to 'branchId'
+      name: 'branchId',
       label: 'Branch',
-      type: 'select',  // Changed from 'multiselect' to 'select'
+      type: 'select',
       required: true,
-      options: branches.map(b => ({ 
-        value: b._id, 
-        label: b.name 
-      })),
+      options: [
+        { value: '', label: 'Select Branch' },
+        ...branches.map(b => ({ 
+          value: b._id, 
+          label: b.name 
+        }))
+      ],
+      displayValue: (item) => {
+        if (!item.branchId) return '-';
+        if (typeof item.branchId === 'object') {
+          return item.branchId.name;
+        }
+        return branches.find(b => b._id === item.branchId)?.name || item.branchId;
+      }
     },
   ];
 

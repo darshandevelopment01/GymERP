@@ -4,20 +4,14 @@ import { branchAPI } from '../../services/mastersApi';
 
 const BranchMaster = () => {
   const columns = [
-    { label: 'Branch ID', field: 'branchId' },
+    { label: 'ID', field: 'branchId' },
     { 
       label: 'Branch Name', 
       field: 'name',
       icon: '🏢'
     },
-    { 
-      label: 'Address', 
-      field: 'address',
-    },
-    { 
-      label: 'Mobile Number', 
-      field: 'phone',
-    },
+    { label: 'City', field: 'city' },
+    { label: 'Mobile', field: 'phone' },
   ];
 
   const formFields = [
@@ -46,28 +40,28 @@ const BranchMaster = () => {
       name: 'email',
       label: 'Email',
       type: 'email',
-      required: true,
+      required: false,
       placeholder: 'Enter email address',
     },
     {
       name: 'city',
       label: 'City',
       type: 'text',
-      required: true,
+      required: false,
       placeholder: 'Enter city',
     },
     {
       name: 'state',
       label: 'State',
       type: 'text',
-      required: true,
+      required: false,
       placeholder: 'Enter state',
     },
     {
       name: 'zipCode',
       label: 'Zip Code',
       type: 'text',
-      required: true,
+      required: false,
       placeholder: 'Enter zip code',
     },
     {
@@ -76,6 +70,41 @@ const BranchMaster = () => {
       type: 'number',
       required: true,
       placeholder: 'Enter radius (e.g., 100)',
+    },
+    // ✅ CHANGED: Display latitude from location.coordinates[1]
+    {
+      name: 'latitude',
+      label: 'Latitude',
+      type: 'number',
+      required: false,
+      placeholder: 'Auto-filled or enter manually',
+      step: 'any',
+      displayValue: (item) => {
+        if (item.location && item.location.coordinates && item.location.coordinates[1]) {
+          return String(item.location.coordinates[1]);
+        }
+        return '-';
+      }
+    },
+    // ✅ CHANGED: Display longitude from location.coordinates[0]
+    {
+      name: 'longitude',
+      label: 'Longitude',
+      type: 'number',
+      required: false,
+      placeholder: 'Auto-filled or enter manually',
+      step: 'any',
+      displayValue: (item) => {
+        if (item.location && item.location.coordinates && item.location.coordinates[0]) {
+          return String(item.location.coordinates[0]);
+        }
+        return '-';
+      }
+    },
+    {
+      name: 'getLocation',
+      label: 'Get Current Location',
+      type: 'location-button',
     },
   ];
 

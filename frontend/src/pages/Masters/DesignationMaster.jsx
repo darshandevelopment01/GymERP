@@ -9,6 +9,11 @@ const DesignationMaster = () => {
       label: 'Designation Name', 
       field: 'designationName',
     },
+    { 
+      label: 'Max Discount', 
+      field: 'maxDiscountPercentage',
+      render: (item) => `${item.maxDiscountPercentage}%`
+    },
   ];
 
   const formFields = [
@@ -18,6 +23,15 @@ const DesignationMaster = () => {
       type: 'text',
       required: true,
       placeholder: 'Enter designation (e.g., Manager, Trainer)',
+    },
+    {
+      name: 'maxDiscountPercentage',
+      label: 'Max Discount Percentage',
+      type: 'number',
+      required: true,
+      placeholder: 'Enter max discount % (0-100)',
+      min: 0,
+      max: 100,
     },
   ];
 

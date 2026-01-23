@@ -21,7 +21,6 @@ const generateId = async (Model: any, idField: string): Promise<string> => {
   else if (idField === 'designationId') prefix = 'D';
   else if (idField === 'employeeCode') prefix = 'EMP';
   
-  // FIX: Handle undefined or null values
   let lastNumber = 0;
   if (lastItem && lastItem[idField]) {
     const matches = lastItem[idField].match(/\d+/);
@@ -180,9 +179,31 @@ export const updateDesignation = (req: Request, res: Response) =>
 export const deleteDesignation = (req: Request, res: Response) => 
   deleteMaster(Designation, String(req.params.id), res);
 
-// Branch Controllers
-export const createBranch = (req: Request, res: Response) => 
-  createMaster(Branch, 'branchId', req.body, res);
+// Branch Controllers - UPDATED WITH LOCATION HANDLING
+export const createBranch = async (req: Request, res: Response) => {
+  try {
+    const { latitude, longitude, ...otherData } = req.body;
+    
+    // Generate branch ID
+    otherData.branchId = await generateId(Branch, 'branchId');
+    
+    // Convert latitude/longitude to GeoJSON format if provided
+    if (latitude && longitude) {
+      otherData.location = {
+        type: 'Point',
+        coordinates: [parseFloat(longitude), parseFloat(latitude)], // GeoJSON: [lng, lat]
+      };
+    }
+    
+    const branch = new Branch(otherData);
+    await branch.save();
+    
+    res.status(201).json({ message: 'Branch created successfully', data: branch });
+  } catch (error: any) {
+    console.error('Create branch error:', error);
+    res.status(500).json({ message: 'Error creating branch', error: error.message });
+  }
+};
 
 export const getAllBranches = (req: Request, res: Response) => 
   getAllMaster(Branch, res);
@@ -190,16 +211,64 @@ export const getAllBranches = (req: Request, res: Response) =>
 export const getBranchById = (req: Request, res: Response) => 
   getMasterById(Branch, String(req.params.id), res);
 
-export const updateBranch = (req: Request, res: Response) => 
-  updateMaster(Branch, String(req.params.id), req.body, res);
+export const updateBranch = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { latitude, longitude, ...otherData } = req.body;
+    
+    // Convert latitude/longitude to GeoJSON format if provided
+    if (latitude && longitude) {
+      otherData.location = {
+        type: 'Point',
+        coordinates: [parseFloat(longitude), parseFloat(latitude)],
+      };
+    }
+    
+    const branch = await Branch.findByIdAndUpdate(id, otherData, {
+      new: true,
+      runValidators: true,
+    });
+    
+    if (!branch) {
+      return res.status(404).json({ message: 'Branch not found' });
+    }
+    
+    res.json({ message: 'Branch updated successfully', data: branch });
+  } catch (error: any) {
+    console.error('Update branch error:', error);
+    res.status(500).json({ message: 'Error updating branch', error: error.message });
+  }
+};
 
 export const deleteBranch = (req: Request, res: Response) => 
   deleteMaster(Branch, String(req.params.id), res);
 
-// Employee Controllers
+// Employee Controllers - UPDATED TO USE ADMIN'S EMPLOYEE CODE
 export const createEmployee = async (req: Request, res: Response) => {
   try {
-    req.body.employeeCode = await generateId(Employee, 'employeeCode');
+    // DON'T auto-generate - use the code provided by admin
+    // req.body.employeeCode = await generateId(Employee, 'employeeCode');
+    
+    // Validate that employee code is provided by admin
+    if (!req.body.employeeCode || req.body.employeeCode.trim() === '') {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Employee code is required' 
+      });
+    }
+    
+    // Check if employee code already exists
+    const existingEmployee = await Employee.findOne({ 
+      employeeCode: req.body.employeeCode,
+      status: 'active'
+    });
+    
+    if (existingEmployee) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Employee code already exists' 
+      });
+    }
     
     const defaultPassword = req.body.password || req.body.employeeCode;
     req.body.password = await bcrypt.hash(defaultPassword, 10);
