@@ -1,12 +1,13 @@
 import { Request, Response } from 'express';
 import Enquiry from '../models/Enquiry';
-import Plan from '../models/Plan'; // ✅ Import Plan model
+import Plan from '../models/Plan';
 
-// Get all enquiries
+
+// ✅ FIXED: Get all enquiries (include converted ones)
 export const getAllEnquiries = async (req: Request, res: Response): Promise<void> => {
   try {
-    // ✅ Only fetch enquiries that are NOT converted
-    const enquiries = await Enquiry.find({ status: { $ne: 'converted' } })
+    // ✅ Fetch ALL enquiries including converted
+    const enquiries = await Enquiry.find()
       .populate('branch', 'name city state')
       .populate('plan', 'planName duration price')
       .sort({ createdAt: -1 });
@@ -19,6 +20,7 @@ export const getAllEnquiries = async (req: Request, res: Response): Promise<void
     res.status(500).json({ success: false, message: 'Failed to fetch enquiries' });
   }
 };
+
 
 // Get single enquiry
 export const getEnquiryById = async (req: Request, res: Response): Promise<void> => {
@@ -39,7 +41,8 @@ export const getEnquiryById = async (req: Request, res: Response): Promise<void>
   }
 };
 
-// Create new enquiry - UPDATED WITH VALIDATION
+
+// Create new enquiry
 export const createEnquiry = async (req: Request, res: Response): Promise<void> => {
   try {
     console.log('=== CREATE ENQUIRY STARTED ===');
@@ -114,7 +117,8 @@ export const createEnquiry = async (req: Request, res: Response): Promise<void> 
   }
 };
 
-// Update enquiry - UPDATED WITH VALIDATION
+
+// Update enquiry
 export const updateEnquiry = async (req: Request, res: Response): Promise<void> => {
   try {
     console.log('=== UPDATE ENQUIRY STARTED ===');
@@ -176,6 +180,7 @@ export const updateEnquiry = async (req: Request, res: Response): Promise<void> 
   }
 };
 
+
 // Delete enquiry
 export const deleteEnquiry = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -193,22 +198,30 @@ export const deleteEnquiry = async (req: Request, res: Response): Promise<void> 
   }
 };
 
-// Get enquiry statistics
+
+// ✅ FIXED: Get enquiry statistics
 export const getEnquiryStats = async (req: Request, res: Response): Promise<void> => {
   try {
+    // ✅ Count all enquiries
     const totalEnquiries = await Enquiry.countDocuments();
-    const confirmed = await Enquiry.countDocuments({ status: 'confirmed' });
+    
+    // ✅ Count pending enquiries (not converted)
+    const pending = await Enquiry.countDocuments({ status: 'pending' });
+    
+    // ✅ Count this month's enquiries
     const thisMonth = await Enquiry.countDocuments({
       createdAt: {
         $gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
       }
     });
     
+    console.log('📊 Stats:', { total: totalEnquiries, pending, thisMonth });
+    
     res.json({
       success: true,
       data: {
         total: totalEnquiries,
-        confirmed: confirmed,
+        pending: pending, // ✅ Changed from 'confirmed' to 'pending'
         thisMonth: thisMonth
       }
     });

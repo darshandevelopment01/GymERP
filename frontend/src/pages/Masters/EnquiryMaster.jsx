@@ -12,7 +12,7 @@ import './EnquiryMaster.css';
 const EnquiryMaster = () => {
   const [branches, setBranches] = useState([]);
   const [plans, setPlans] = useState([]);
-  const [stats, setStats] = useState({ total: 0, confirmed: 0, thisMonth: 0 });
+  const [stats, setStats] = useState({ total: 0, pending: 0, thisMonth: 0 }); // ✅ Changed 'confirmed' to 'pending'
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
@@ -81,11 +81,11 @@ const EnquiryMaster = () => {
       if (response.success && response.data) {
         setStats(response.data);
       } else {
-        setStats({ total: 0, confirmed: 0, thisMonth: 0 });
+        setStats({ total: 0, pending: 0, thisMonth: 0 }); // ✅ Changed
       }
     } catch (error) {
       console.error('Error fetching stats:', error);
-      setStats({ total: 0, confirmed: 0, thisMonth: 0 });
+      setStats({ total: 0, pending: 0, thisMonth: 0 }); // ✅ Changed
     }
   };
 
@@ -234,7 +234,7 @@ const EnquiryMaster = () => {
       type: 'select',
       required: true,
       options: [
-        { value: '', label: 'Select Branch' }, // ✅ Added placeholder
+        { value: '', label: 'Select Branch' },
         ...branches.map(b => ({
           value: b._id,
           label: b.name
@@ -268,7 +268,7 @@ const EnquiryMaster = () => {
       type: 'select',
       required: true,
       options: [
-        { value: '', label: 'Select Gender' }, // ✅ Added placeholder
+        { value: '', label: 'Select Gender' },
         { value: 'Male', label: 'Male' },
         { value: 'Female', label: 'Female' },
         { value: 'Other', label: 'Other' }
@@ -280,7 +280,7 @@ const EnquiryMaster = () => {
       type: 'select',
       required: true,
       options: [
-        { value: '', label: 'Select Source' }, // ✅ Added placeholder
+        { value: '', label: 'Select Source' },
         { value: 'Walk-in', label: 'Walk-in' },
         { value: 'Social Media', label: 'Social Media' },
         { value: 'Referral', label: 'Referral' },
@@ -294,10 +294,9 @@ const EnquiryMaster = () => {
       type: 'select',
       required: false,
       options: [
-        { value: '', label: 'Select Status' }, // ✅ Added placeholder
+        { value: '', label: 'Select Status' },
         { value: 'pending', label: 'Pending' },
-        { value: 'confirmed', label: 'Confirmed' },
-        { value: 'rejected', label: 'Rejected' }
+        { value: 'rejected', label: 'Rejected' } // ✅ REMOVED 'confirmed'
       ]
     },
     {
@@ -327,8 +326,7 @@ const EnquiryMaster = () => {
       options: [
         { value: '', label: 'All Status' },
         { value: 'pending', label: 'Pending' },
-        { value: 'confirmed', label: 'Confirmed' },
-        { value: 'rejected', label: 'Rejected' },
+        { value: 'rejected', label: 'Rejected' }, // ✅ REMOVED 'confirmed'
         { value: 'converted', label: 'Converted' }
       ]
     },
@@ -406,10 +404,10 @@ const EnquiryMaster = () => {
           </div>
         </div>
         <div className="stat-card confirmed">
-          <div className="stat-icon">✅</div>
+          <div className="stat-icon">⏳</div>
           <div className="stat-content">
-            <h3>{stats.confirmed}</h3>
-            <p>Confirmed</p>
+            <h3>{stats.pending || 0}</h3>
+            <p>Pending</p>
           </div>
         </div>
         <div className="stat-card this-month">
@@ -430,7 +428,7 @@ const EnquiryMaster = () => {
         filterConfig={filterConfig}
         searchPlaceholder="Search by name, mobile, email, or enquiry ID..."
         icon="👥"
-        showCreateButton={true} // ✅ CHANGED FROM false TO true
+        showCreateButton={true}
         showExportButton={true}
         exportFileName="enquiries"
         customActions={(item) => (

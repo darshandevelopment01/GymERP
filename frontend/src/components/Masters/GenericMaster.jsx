@@ -49,8 +49,21 @@ const GenericMaster = ({
     try {
       setLoading(true);
       const response = await apiService.getAll();
-      setData(response.data || []);
-      setFilteredData(response.data || []);
+      const fetchedData = response.data || [];
+      
+      // ✅ DEBUG: Log all data
+      console.log('📊 Fetched Data:', fetchedData);
+      console.log('📊 Total Records:', fetchedData.length);
+      
+      // ✅ DEBUG: Log status distribution
+      const statusCounts = {};
+      fetchedData.forEach(item => {
+        statusCounts[item.status] = (statusCounts[item.status] || 0) + 1;
+      });
+      console.log('📊 Status Distribution:', statusCounts);
+      
+      setData(fetchedData);
+      setFilteredData(fetchedData);
     } catch (error) {
       console.error('Error fetching data:', error);
       alert('Failed to fetch data');
@@ -63,6 +76,10 @@ const GenericMaster = ({
   const applyFiltersAndSearch = () => {
     let filtered = [...data];
 
+    // ✅ DEBUG: Log initial data
+    console.log('🔍 Starting filter process...');
+    console.log('🔍 Total data:', filtered.length);
+    console.log('🔍 Active filters:', filters);
 
     // Apply search query
     if (searchQuery) {
@@ -71,15 +88,20 @@ const GenericMaster = ({
           String(val).toLowerCase().includes(searchQuery.toLowerCase())
         )
       );
+      console.log('🔍 After search:', filtered.length);
     }
-
 
     // Apply filters
     Object.keys(filters).forEach(filterKey => {
       const filterValue = filters[filterKey];
       
-      if (!filterValue) return;
-
+      // ✅ DEBUG: Log each filter
+      console.log(`🔍 Applying filter: ${filterKey} = "${filterValue}"`);
+      
+      if (!filterValue) {
+        console.log(`⏭️ Skipping empty filter: ${filterKey}`);
+        return;
+      }
 
       const filterField = filterConfig.find(f => f.name === filterKey);
       
@@ -88,11 +110,13 @@ const GenericMaster = ({
           const itemDate = new Date(item.createdAt || item.joiningDate || item.date);
           return itemDate >= new Date(filterValue);
         });
+        console.log(`🔍 After ${filterKey} filter:`, filtered.length);
       } else if (filterKey === 'endDate') {
         filtered = filtered.filter(item => {
           const itemDate = new Date(item.createdAt || item.joiningDate || item.date);
           return itemDate <= new Date(filterValue);
         });
+        console.log(`🔍 After ${filterKey} filter:`, filtered.length);
       } else if (filterKey === 'paymentStatus') {
         filtered = filtered.filter(item => {
           if (filterValue === 'paid') {
@@ -102,16 +126,38 @@ const GenericMaster = ({
           }
           return true;
         });
+        console.log(`🔍 After ${filterKey} filter:`, filtered.length);
       } else if (filterKey === 'status') {
-        filtered = filtered.filter(item => item.status === filterValue);
-      } else if (filterKey === 'branch') {
+        // ✅ FIXED: Case-insensitive status comparison
+        const beforeCount = filtered.length;
+        filtered = filtered.filter(item => {
+          const itemStatus = (item.status || '').toLowerCase();
+          const filterStatus = (filterValue || '').toLowerCase();
+          return itemStatus === filterStatus;
+        });
+        console.log(`🔍 Status filter: "${filterValue}"`);
+        console.log(`🔍 Before: ${beforeCount}, After: ${filtered.length}`);
+        console.log(`🔍 Filtered items:`, filtered.map(item => ({
+          id: item._id,
+          name: item.name || item.enquiryId,
+          status: item.status
+        })));
+      }      
+      
+       else if (filterKey === 'branch') {
         filtered = filtered.filter(item => 
           item.branch?._id === filterValue || item.branch === filterValue
         );
+        console.log(`🔍 After ${filterKey} filter:`, filtered.length);
       } else if (filterKey === 'plan') {
         filtered = filtered.filter(item => 
           item.plan?._id === filterValue || item.plan === filterValue
         );
+        console.log(`🔍 After ${filterKey} filter:`, filtered.length);
+      } else if (filterKey === 'source') {
+        // ✅ ADDED: Specific source filter
+        filtered = filtered.filter(item => item.source === filterValue);
+        console.log(`🔍 After ${filterKey} filter:`, filtered.length);
       } else {
         // Generic filter for other fields
         filtered = filtered.filter(item => {
@@ -121,15 +167,20 @@ const GenericMaster = ({
           }
           return itemValue === filterValue;
         });
+        console.log(`🔍 After ${filterKey} filter:`, filtered.length);
       }
     });
 
+    // ✅ DEBUG: Log final results
+    console.log('✅ Final filtered data:', filtered.length);
+    console.log('✅ Final data:', filtered);
 
     setFilteredData(filtered);
   };
 
 
   const handleFilterChange = (filterName, value) => {
+    console.log(`🎛️ Filter changed: ${filterName} = "${value}"`);
     setFilters(prev => ({
       ...prev,
       [filterName]: value
@@ -154,13 +205,11 @@ const GenericMaster = ({
       const response = await apiService.getAll();
       const allData = response.data || [];
 
-
       if (allData.length === 0) {
         alert('❌ No data available to export');
         setExporting(false);
         return;
       }
-
 
       // Prepare data for export
       const exportData = allData.map(item => {
@@ -192,7 +241,6 @@ const GenericMaster = ({
         });
         return row;
       });
-
 
       // Create worksheet
       const worksheet = XLSX.utils.json_to_sheet(exportData);
@@ -292,7 +340,6 @@ const GenericMaster = ({
         }
       });
 
-
       console.log('📤 Submitting data:', cleanedData);
       
       if (editingItem) {
@@ -335,22 +382,18 @@ const GenericMaster = ({
       return;
     }
 
-
     setLoadingLocation(true);
-
 
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const latitude = position.coords.latitude;
         const longitude = position.coords.longitude;
 
-
         setFormData((prev) => ({
           ...prev,
           latitude: latitude,
           longitude: longitude,
         }));
-
 
         try {
           const response = await fetch(
@@ -363,7 +406,6 @@ const GenericMaster = ({
           );
           const data = await response.json();
 
-
           if (data && data.address) {
             const address = data.address;
             
@@ -375,7 +417,6 @@ const GenericMaster = ({
               state: address.state || '',
               zipCode: address.postcode || '',
             }));
-
 
             setLoadingLocation(false);
             alert('✅ Location and address details captured successfully!');
@@ -415,7 +456,6 @@ const GenericMaster = ({
         })}</span>
       </div>
 
-
       <div className="master-controls">
         <div className="search-box">
           <span className="search-icon">🔍</span>
@@ -454,7 +494,6 @@ const GenericMaster = ({
           )}
         </div>
       </div>
-
 
       {/* Filter Panel */}
       {showFilters && filterConfig.length > 0 && (
@@ -524,7 +563,6 @@ const GenericMaster = ({
         </div>
       )}
 
-
       {loading ? (
         <div className="loading">Loading...</div>
       ) : (
@@ -576,7 +614,6 @@ const GenericMaster = ({
         </div>
       )}
 
-
       {/* Edit/Create Modal */}
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
@@ -599,7 +636,6 @@ const GenericMaster = ({
                         onChange={handleInputChange}
                         required={field.required}
                       >
-                        {/* ✅ REMOVED DUPLICATE - Only use options from formFields */}
                         {field.options?.map((opt, i) => (
                           <option key={i} value={opt.value}>{opt.label}</option>
                         ))}
@@ -703,7 +739,6 @@ const GenericMaster = ({
         </div>
       )}
 
-
       {/* View Details Modal */}
       {showViewModal && viewingItem && (
         <div className="modal-overlay" onClick={() => setShowViewModal(false)}>
@@ -729,7 +764,6 @@ const GenericMaster = ({
                 .map((field, idx) => {
                   const value = viewingItem[field.name];
                   let displayValue = '-';
-
 
                   if (field.displayValue && typeof field.displayValue === 'function') {
                     displayValue = field.displayValue(viewingItem);
@@ -761,7 +795,6 @@ const GenericMaster = ({
                       displayValue = String(value);
                     }
                   }
-
 
                   return (
                     <div 
@@ -815,6 +848,5 @@ const GenericMaster = ({
     </div>
   );
 };
-
 
 export default GenericMaster;
