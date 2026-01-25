@@ -3,13 +3,15 @@ import './GenericMaster.css';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
+
 const GenericMaster = ({ 
   title, 
   apiService, 
   columns, 
   formFields, 
   searchPlaceholder = 'Search...',
-  icon 
+  icon,
+  customActions
 }) => {
   const [data, setData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
@@ -22,12 +24,12 @@ const GenericMaster = ({
   const [loading, setLoading] = useState(false);
   const [loadingLocation, setLoadingLocation] = useState(false);
 
-  // Fetch data on mount
+
   useEffect(() => {
     fetchData();
   }, []);
 
-  // Search filter
+
   useEffect(() => {
     if (searchQuery) {
       const filtered = data.filter(item => 
@@ -40,6 +42,7 @@ const GenericMaster = ({
       setFilteredData(data);
     }
   }, [searchQuery, data]);
+
 
   const fetchData = async () => {
     try {
@@ -55,21 +58,23 @@ const GenericMaster = ({
     }
   };
 
+
   const handleCreate = () => {
     setEditingItem(null);
     setFormData({});
     setShowModal(true);
   };
 
+
   const handleView = (item) => {
     setViewingItem(item);
     setShowViewModal(true);
   };
 
+
   const handleEdit = (item) => {
     setEditingItem(item);
     
-    // Format date for input field if it exists
     const formattedItem = { ...item };
     formFields.forEach(field => {
       if (field.type === 'date' && item[field.name]) {
@@ -88,6 +93,7 @@ const GenericMaster = ({
     setShowModal(true);
   };
 
+
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this item?')) return;
     
@@ -100,6 +106,7 @@ const GenericMaster = ({
       alert('Failed to delete');
     }
   };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -120,18 +127,20 @@ const GenericMaster = ({
     }
   };
 
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  // Handle Date Change for DatePicker
+
   const handleDateChange = (date, fieldName) => {
     setFormData({ 
       ...formData, 
       [fieldName]: date ? date.toISOString().split('T')[0] : '' 
     });
   };
+
 
   const handleGetLocation = () => {
     if (!navigator.geolocation) {
@@ -199,6 +208,7 @@ const GenericMaster = ({
       }
     );
   };
+
 
   return (
     <div className="generic-master">
@@ -268,6 +278,7 @@ const GenericMaster = ({
                       <button className="btn-delete" onClick={() => handleDelete(item._id)}>
                         🗑️
                       </button>
+                      {customActions && customActions(item)}
                     </td>
                   </tr>
                 ))
@@ -323,7 +334,8 @@ const GenericMaster = ({
                           showYearDropdown
                           showMonthDropdown
                           dropdownMode="select"
-                          maxDate={new Date()}
+                          minDate={field.futureOnly ? new Date() : null}
+                          maxDate={field.futureOnly ? null : new Date()}
                           isClearable
                           required={field.required}
                           showPopperArrow={false}
@@ -343,7 +355,7 @@ const GenericMaster = ({
                           <line x1="8" y1="2" x2="8" y2="6"></line>
                           <line x1="3" y1="10" x2="21" y2="10"></line>
                         </svg>
-                      </div>
+                      </div>                    
                     ) : field.type === 'location-button' ? (
                       <button
                         type="button"
@@ -389,12 +401,13 @@ const GenericMaster = ({
                 ))}
               </div>
               
+              {/* THIS IS THE CORRECT LOCATION FOR THE FOOTER */}
               <div className="modal-footer">
                 <button type="button" className="btn-cancel" onClick={() => setShowModal(false)}>
                   Cancel
                 </button>
                 <button type="submit" className="btn-save">
-                  {editingItem ? 'Update' : 'Create'}
+                  {editingItem ? 'Update' : 'Save & Close'}
                 </button>
               </div>
             </form>
@@ -402,7 +415,7 @@ const GenericMaster = ({
         </div>
       )}
 
-      {/* View Details Modal - WHITE BACKGROUND */}
+      {/* View Details Modal */}
       {showViewModal && viewingItem && (
         <div className="modal-overlay" onClick={() => setShowViewModal(false)}>
           <div 
@@ -428,7 +441,6 @@ const GenericMaster = ({
                   const value = viewingItem[field.name];
                   let displayValue = '-';
 
-                  // Use custom displayValue function if provided
                   if (field.displayValue && typeof field.displayValue === 'function') {
                     displayValue = field.displayValue(viewingItem);
                   } else if (value !== null && value !== undefined && value !== '') {

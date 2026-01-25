@@ -8,7 +8,9 @@ import dashboardRoutes from './routes/dashboard.routes';
 import memberRoutes from './routes/member.routes';
 import employeeRoutes from './routes/employee.routes';
 import branchRoutes from './routes/branch.routes';
-import mastersRoutes from './routes/masters.routes';  // ADD THIS
+import mastersRoutes from './routes/masters.routes';
+import enquiryRoutes from './routes/enquiry.routes';
+
 
 dotenv.config();
 
@@ -58,6 +60,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/members', memberRoutes);
 app.use('/api/employees', employeeRoutes);
 app.use('/api/branches', branchRoutes);
-app.use('/api/masters', mastersRoutes);  // ADD THIS LINE
+app.use('/api/masters', mastersRoutes);  
+app.use('/api/enquiries', enquiryRoutes);
 
 export default app;
