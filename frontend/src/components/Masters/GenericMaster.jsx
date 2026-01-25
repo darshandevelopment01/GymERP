@@ -195,80 +195,76 @@ const GenericMaster = ({
 
 
   const activeFilterCount = Object.values(filters).filter(v => v !== '' && v !== null).length;
+// ✅ FIXED: Export ONLY filtered/visible data (respects filters and search)
+const handleExportToExcel = async () => {
+  setExporting(true);
+  try {
+    // ✅ Use filteredData (visible records on screen) instead of fetching all
+    const dataToExport = filteredData;
 
-
-  // ✅ FIXED: Export ALL data from database
-  const handleExportToExcel = async () => {
-    setExporting(true);
-    try {
-      // Fetch ALL data from database (bypass filters)
-      const response = await apiService.getAll();
-      const allData = response.data || [];
-
-      if (allData.length === 0) {
-        alert('❌ No data available to export');
-        setExporting(false);
-        return;
-      }
-
-      // Prepare data for export
-      const exportData = allData.map(item => {
-        const row = {};
-        columns.forEach(col => {
-          if (col.field === 'branch') {
-            row[col.label] = item.branch?.name || '-';
-          } else if (col.field === 'plan') {
-            row[col.label] = item.plan?.planName || '-';
-          } else if (col.field === 'status') {
-            row[col.label] = item.status || '-';
-          } else if (col.field === 'payment') {
-            row['Payment Received'] = item.paymentReceived || 0;
-            row['Payment Remaining'] = item.paymentRemaining || 0;
-          } else if (col.field === 'dateOfBirth' || col.field === 'joiningDate' || col.field === 'createdAt') {
-            // Format dates properly
-            if (item[col.field]) {
-              const date = new Date(item[col.field]);
-              row[col.label] = date.toLocaleDateString('en-GB'); // DD/MM/YYYY format
-            } else {
-              row[col.label] = '-';
-            }
-          } else if (typeof item[col.field] === 'object' && item[col.field] !== null) {
-            // Handle nested objects
-            row[col.label] = item[col.field]?.name || item[col.field]?.planName || item[col.field]?.branchName || '-';
-          } else {
-            row[col.label] = item[col.field] || '-';
-          }
-        });
-        return row;
-      });
-
-      // Create worksheet
-      const worksheet = XLSX.utils.json_to_sheet(exportData);
-      
-      // Set column widths
-      const colWidths = columns.map(() => ({ wch: 20 }));
-      worksheet['!cols'] = colWidths;
-      
-      // Create workbook
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
-      
-      // Generate filename with timestamp
-      const timestamp = new Date().toISOString().split('T')[0];
-      const filename = `${exportFileName}_${timestamp}.xlsx`;
-      
-      // Download file
-      XLSX.writeFile(workbook, filename);
-      
-      alert(`✅ Exported ${allData.length} records successfully!`);
-    } catch (error) {
-      console.error('Error exporting to Excel:', error);
-      alert('❌ Failed to export data');
-    } finally {
+    if (dataToExport.length === 0) {
+      alert('❌ No data available to export');
       setExporting(false);
+      return;
     }
-  };
 
+    // Prepare data for export
+    const exportData = dataToExport.map(item => {
+      const row = {};
+      columns.forEach(col => {
+        if (col.field === 'branch') {
+          row[col.label] = item.branch?.name || '-';
+        } else if (col.field === 'plan') {
+          row[col.label] = item.plan?.planName || '-';
+        } else if (col.field === 'status') {
+          row[col.label] = item.status || '-';
+        } else if (col.field === 'payment') {
+          row['Payment Received'] = item.paymentReceived || 0;
+          row['Payment Remaining'] = item.paymentRemaining || 0;
+        } else if (col.field === 'dateOfBirth' || col.field === 'joiningDate' || col.field === 'createdAt') {
+          // Format dates properly
+          if (item[col.field]) {
+            const date = new Date(item[col.field]);
+            row[col.label] = date.toLocaleDateString('en-GB'); // DD/MM/YYYY format
+          } else {
+            row[col.label] = '-';
+          }
+        } else if (typeof item[col.field] === 'object' && item[col.field] !== null) {
+          // Handle nested objects
+          row[col.label] = item[col.field]?.name || item[col.field]?.planName || item[col.field]?.branchName || '-';
+        } else {
+          row[col.label] = item[col.field] || '-';
+        }
+      });
+      return row;
+    });
+
+    // Create worksheet
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    
+    // Set column widths
+    const colWidths = columns.map(() => ({ wch: 20 }));
+    worksheet['!cols'] = colWidths;
+    
+    // Create workbook
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+    
+    // Generate filename with timestamp
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filename = `${exportFileName}_${timestamp}.xlsx`;
+    
+    // Download file
+    XLSX.writeFile(workbook, filename);
+    
+    alert(`✅ Exported ${dataToExport.length} records successfully!`);
+  } catch (error) {
+    console.error('Error exporting to Excel:', error);
+    alert('❌ Failed to export data');
+  } finally {
+    setExporting(false);
+  }
+};
 
   const handleCreate = () => {
     setEditingItem(null);
