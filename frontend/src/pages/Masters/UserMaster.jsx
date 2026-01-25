@@ -79,13 +79,14 @@ const UserMaster = () => {
       type: 'select',
       required: true,
       options: [
+        { value: '', label: 'Select Gender' }, // ✅ Added placeholder
         { value: 'Male', label: 'Male' },
         { value: 'Female', label: 'Female' },
         { value: 'Other', label: 'Other' },
       ],
     },
     {
-      name: 'joinDate',  // ✅ CHANGED FROM 'dateOfJoining' to match backend field
+      name: 'joinDate',
       label: 'Date of Joining',
       type: 'date',
       required: false,
@@ -105,7 +106,7 @@ const UserMaster = () => {
       type: 'select',
       required: false,
       options: [
-        { value: '', label: 'Select Designation' },
+        { value: '', label: 'Select Designation' }, // ✅ Single placeholder
         ...designations.map(d => ({ 
           value: d._id, 
           label: d.designationName
@@ -124,7 +125,7 @@ const UserMaster = () => {
       type: 'select',
       required: false,
       options: [
-        { value: '', label: 'Select Shift Timing' },
+        { value: '', label: 'Select Shift Timing' }, // ✅ Single placeholder
         ...shifts.map(s => ({ 
           value: s._id, 
           label: `${s.shiftName} (${s.startTime} - ${s.endTime})`
@@ -145,6 +146,7 @@ const UserMaster = () => {
       type: 'select',
       required: true,
       options: [
+        { value: '', label: 'Select User Type' }, // ✅ Added placeholder
         { value: 'Admin', label: 'Admin' },
         { value: 'User', label: 'User' },
       ],
@@ -155,7 +157,7 @@ const UserMaster = () => {
       type: 'select',
       required: true,
       options: [
-        { value: '', label: 'Select Branch' },
+        { value: '', label: 'Select Branch' }, // ✅ Single placeholder
         ...branches.map(b => ({ 
           value: b._id, 
           label: b.name 

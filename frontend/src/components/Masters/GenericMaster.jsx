@@ -4,6 +4,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import * as XLSX from 'xlsx';
 
+
 const GenericMaster = ({ 
   title, 
   apiService, 
@@ -33,13 +34,16 @@ const GenericMaster = ({
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({});
 
+
   useEffect(() => {
     fetchData();
   }, []);
 
+
   useEffect(() => {
     applyFiltersAndSearch();
   }, [searchQuery, data, filters]);
+
 
   const fetchData = async () => {
     try {
@@ -55,8 +59,10 @@ const GenericMaster = ({
     }
   };
 
+
   const applyFiltersAndSearch = () => {
     let filtered = [...data];
+
 
     // Apply search query
     if (searchQuery) {
@@ -67,11 +73,13 @@ const GenericMaster = ({
       );
     }
 
+
     // Apply filters
     Object.keys(filters).forEach(filterKey => {
       const filterValue = filters[filterKey];
       
       if (!filterValue) return;
+
 
       const filterField = filterConfig.find(f => f.name === filterKey);
       
@@ -116,8 +124,10 @@ const GenericMaster = ({
       }
     });
 
+
     setFilteredData(filtered);
   };
+
 
   const handleFilterChange = (filterName, value) => {
     setFilters(prev => ({
@@ -126,12 +136,15 @@ const GenericMaster = ({
     }));
   };
 
+
   const clearFilters = () => {
     setFilters({});
     setSearchQuery('');
   };
 
+
   const activeFilterCount = Object.values(filters).filter(v => v !== '' && v !== null).length;
+
 
   // ✅ FIXED: Export ALL data from database
   const handleExportToExcel = async () => {
@@ -141,11 +154,13 @@ const GenericMaster = ({
       const response = await apiService.getAll();
       const allData = response.data || [];
 
+
       if (allData.length === 0) {
         alert('❌ No data available to export');
         setExporting(false);
         return;
       }
+
 
       // Prepare data for export
       const exportData = allData.map(item => {
@@ -178,6 +193,7 @@ const GenericMaster = ({
         return row;
       });
 
+
       // Create worksheet
       const worksheet = XLSX.utils.json_to_sheet(exportData);
       
@@ -205,16 +221,19 @@ const GenericMaster = ({
     }
   };
 
+
   const handleCreate = () => {
     setEditingItem(null);
     setFormData({});
     setShowModal(true);
   };
 
+
   const handleView = (item) => {
     setViewingItem(item);
     setShowViewModal(true);
   };
+
 
   const handleEdit = (item) => {
     setEditingItem(item);
@@ -241,6 +260,7 @@ const GenericMaster = ({
     setShowModal(true);
   };
 
+
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this item?')) return;
     
@@ -253,6 +273,7 @@ const GenericMaster = ({
       alert('Failed to delete');
     }
   };
+
 
   // ✅ UPDATED: Handle empty select values properly
   const handleSubmit = async (e) => {
@@ -270,6 +291,7 @@ const GenericMaster = ({
           }
         }
       });
+
 
       console.log('📤 Submitting data:', cleanedData);
       
@@ -292,10 +314,12 @@ const GenericMaster = ({
     }
   };
 
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
+
 
   const handleDateChange = (date, fieldName) => {
     setFormData({ 
@@ -304,24 +328,29 @@ const GenericMaster = ({
     });
   };
 
+
   const handleGetLocation = () => {
     if (!navigator.geolocation) {
       alert('Geolocation is not supported by your browser');
       return;
     }
 
+
     setLoadingLocation(true);
+
 
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const latitude = position.coords.latitude;
         const longitude = position.coords.longitude;
 
+
         setFormData((prev) => ({
           ...prev,
           latitude: latitude,
           longitude: longitude,
         }));
+
 
         try {
           const response = await fetch(
@@ -334,6 +363,7 @@ const GenericMaster = ({
           );
           const data = await response.json();
 
+
           if (data && data.address) {
             const address = data.address;
             
@@ -345,6 +375,7 @@ const GenericMaster = ({
               state: address.state || '',
               zipCode: address.postcode || '',
             }));
+
 
             setLoadingLocation(false);
             alert('✅ Location and address details captured successfully!');
@@ -371,6 +402,7 @@ const GenericMaster = ({
     );
   };
 
+
   return (
     <div className="generic-master">
       <div className="master-header">
@@ -382,6 +414,7 @@ const GenericMaster = ({
           day: 'numeric' 
         })}</span>
       </div>
+
 
       <div className="master-controls">
         <div className="search-box">
@@ -421,6 +454,7 @@ const GenericMaster = ({
           )}
         </div>
       </div>
+
 
       {/* Filter Panel */}
       {showFilters && filterConfig.length > 0 && (
@@ -490,6 +524,7 @@ const GenericMaster = ({
         </div>
       )}
 
+
       {loading ? (
         <div className="loading">Loading...</div>
       ) : (
@@ -541,6 +576,7 @@ const GenericMaster = ({
         </div>
       )}
 
+
       {/* Edit/Create Modal */}
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
@@ -563,7 +599,7 @@ const GenericMaster = ({
                         onChange={handleInputChange}
                         required={field.required}
                       >
-                        <option value="">Select {field.label}</option>
+                        {/* ✅ REMOVED DUPLICATE - Only use options from formFields */}
                         {field.options?.map((opt, i) => (
                           <option key={i} value={opt.value}>{opt.label}</option>
                         ))}
@@ -667,6 +703,7 @@ const GenericMaster = ({
         </div>
       )}
 
+
       {/* View Details Modal */}
       {showViewModal && viewingItem && (
         <div className="modal-overlay" onClick={() => setShowViewModal(false)}>
@@ -692,6 +729,7 @@ const GenericMaster = ({
                 .map((field, idx) => {
                   const value = viewingItem[field.name];
                   let displayValue = '-';
+
 
                   if (field.displayValue && typeof field.displayValue === 'function') {
                     displayValue = field.displayValue(viewingItem);
@@ -723,6 +761,7 @@ const GenericMaster = ({
                       displayValue = String(value);
                     }
                   }
+
 
                   return (
                     <div 
@@ -776,5 +815,6 @@ const GenericMaster = ({
     </div>
   );
 };
+
 
 export default GenericMaster;

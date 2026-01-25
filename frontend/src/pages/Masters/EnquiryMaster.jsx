@@ -8,6 +8,7 @@ import planApi from '../../services/planApi';
 import memberApi from '../../services/memberApi';
 import './EnquiryMaster.css';
 
+
 const EnquiryMaster = () => {
   const [branches, setBranches] = useState([]);
   const [plans, setPlans] = useState([]);
@@ -24,9 +25,11 @@ const EnquiryMaster = () => {
     paymentRemaining: 0
   });
 
+
   useEffect(() => {
     fetchInitialData();
   }, []);
+
 
   const fetchInitialData = async () => {
     setLoading(true);
@@ -45,6 +48,7 @@ const EnquiryMaster = () => {
     }
   };
 
+
   const fetchBranches = async () => {
     try {
       const response = await branchApi.getAll();
@@ -57,6 +61,7 @@ const EnquiryMaster = () => {
     }
   };
 
+
   const fetchPlans = async () => {
     try {
       const response = await planApi.getAll();
@@ -68,6 +73,7 @@ const EnquiryMaster = () => {
       setPlans([]);
     }
   };
+
 
   const fetchStats = async () => {
     try {
@@ -83,6 +89,7 @@ const EnquiryMaster = () => {
     }
   };
 
+
   const handleConvertToMember = (enquiry) => {
     setSelectedEnquiry(enquiry);
     setPaymentData({
@@ -94,11 +101,13 @@ const EnquiryMaster = () => {
     setShowPaymentModal(true);
   };
 
+
   const handlePaymentChange = (e) => {
     const received = parseFloat(e.target.value) || 0;
     const selectedPlan = plans.find(p => p._id === paymentData.plan);
     const totalAmount = selectedPlan ? selectedPlan.price : 0;
     const remaining = totalAmount - received;
+
 
     setPaymentData({
       ...paymentData,
@@ -107,11 +116,13 @@ const EnquiryMaster = () => {
     });
   };
 
+
   const handlePlanChangeInPayment = (e) => {
     const planId = e.target.value;
     const selectedPlan = plans.find(p => p._id === planId);
     const totalAmount = selectedPlan ? selectedPlan.price : 0;
     const remaining = totalAmount - paymentData.paymentReceived;
+
 
     setPaymentData({
       ...paymentData,
@@ -120,18 +131,22 @@ const EnquiryMaster = () => {
     });
   };
 
+
   const handleSubmitPayment = async (e) => {
     e.preventDefault();
+
 
     if (!paymentData.plan || !paymentData.dateOfBirth || paymentData.paymentReceived <= 0) {
       alert('Please fill all required fields');
       return;
     }
 
+
     try {
       const dobDate = typeof paymentData.dateOfBirth === 'string' 
         ? new Date(paymentData.dateOfBirth) 
         : paymentData.dateOfBirth;
+
 
       const memberData = {
         name: selectedEnquiry.name,
@@ -148,12 +163,15 @@ const EnquiryMaster = () => {
         enquiryId: selectedEnquiry._id
       };
 
+
       console.log('Sending member data:', memberData);
+
 
       const response = await memberApi.create(memberData);
       console.log('Member created:', response);
       
       await enquiryApi.update(selectedEnquiry._id, { status: 'converted' });
+
 
       alert('✅ Enquiry converted to Member successfully!');
       setShowPaymentModal(false);
@@ -166,6 +184,7 @@ const EnquiryMaster = () => {
       alert(`❌ Failed to convert to member: ${errorMessage}`);
     }
   };
+
 
   const columns = [
     {
@@ -207,16 +226,20 @@ const EnquiryMaster = () => {
     }
   ];
 
+
   const formFields = [
     {
       name: 'branch',
       label: 'Branch',
       type: 'select',
       required: true,
-      options: branches.map(b => ({
-        value: b._id,
-        label: b.name
-      }))
+      options: [
+        { value: '', label: 'Select Branch' }, // ✅ Added placeholder
+        ...branches.map(b => ({
+          value: b._id,
+          label: b.name
+        }))
+      ]
     },
     {
       name: 'name',
@@ -245,6 +268,7 @@ const EnquiryMaster = () => {
       type: 'select',
       required: true,
       options: [
+        { value: '', label: 'Select Gender' }, // ✅ Added placeholder
         { value: 'Male', label: 'Male' },
         { value: 'Female', label: 'Female' },
         { value: 'Other', label: 'Other' }
@@ -256,6 +280,7 @@ const EnquiryMaster = () => {
       type: 'select',
       required: true,
       options: [
+        { value: '', label: 'Select Source' }, // ✅ Added placeholder
         { value: 'Walk-in', label: 'Walk-in' },
         { value: 'Social Media', label: 'Social Media' },
         { value: 'Referral', label: 'Referral' },
@@ -269,6 +294,7 @@ const EnquiryMaster = () => {
       type: 'select',
       required: false,
       options: [
+        { value: '', label: 'Select Status' }, // ✅ Added placeholder
         { value: 'pending', label: 'Pending' },
         { value: 'confirmed', label: 'Confirmed' },
         { value: 'rejected', label: 'Rejected' }
@@ -290,6 +316,7 @@ const EnquiryMaster = () => {
       placeholder: 'Add any additional notes or comments...'
     }
   ];  
+
 
   // Filter configuration for Enquiry
   const filterConfig = [
@@ -342,6 +369,7 @@ const EnquiryMaster = () => {
     }
   ];
 
+
   if (loading) {
     return (
       <div className="loading-container">
@@ -350,6 +378,7 @@ const EnquiryMaster = () => {
       </div>
     );
   }
+
 
   if (error) {
     return (
@@ -364,6 +393,7 @@ const EnquiryMaster = () => {
       </div>
     );
   }
+
 
   return (
     <div className="enquiry-master-page">
@@ -391,6 +421,7 @@ const EnquiryMaster = () => {
         </div>
       </div>
 
+
       <GenericMaster
         title="Enquiry Master"
         apiService={enquiryApi}
@@ -399,7 +430,7 @@ const EnquiryMaster = () => {
         filterConfig={filterConfig}
         searchPlaceholder="Search by name, mobile, email, or enquiry ID..."
         icon="👥"
-        showCreateButton={false}
+        showCreateButton={true} // ✅ CHANGED FROM false TO true
         showExportButton={true}
         exportFileName="enquiries"
         customActions={(item) => (
@@ -428,6 +459,7 @@ const EnquiryMaster = () => {
         )}
       />
 
+
       {showPaymentModal && (
         <div className="modal-overlay" onClick={() => setShowPaymentModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -450,6 +482,7 @@ const EnquiryMaster = () => {
                   <p style={{ margin: '0.25rem 0', color: '#64748b' }}><strong>Mobile:</strong> {selectedEnquiry?.mobileNumber}</p>
                 </div>
 
+
                 <div className="form-group">
                   <label>Membership Plan <span className="required">*</span></label>
                   <select
@@ -465,6 +498,7 @@ const EnquiryMaster = () => {
                     ))}
                   </select>
                 </div>
+
 
                 <div className="form-group">
                   <label>Date of Birth <span className="required">*</span></label>
@@ -485,6 +519,7 @@ const EnquiryMaster = () => {
                   />
                 </div>
 
+
                 <div className="form-group">
                   <label>Payment Received <span className="required">*</span></label>
                   <input
@@ -497,6 +532,7 @@ const EnquiryMaster = () => {
                   />
                 </div>
 
+
                 <div className="form-group">
                   <label>Payment Remaining</label>
                   <input
@@ -507,6 +543,7 @@ const EnquiryMaster = () => {
                     style={{ background: '#f1f5f9', cursor: 'not-allowed' }}
                   />
                 </div>
+
 
                 {paymentData.plan && (
                   <div style={{
@@ -539,5 +576,6 @@ const EnquiryMaster = () => {
     </div>
   );
 };
+
 
 export default EnquiryMaster;
