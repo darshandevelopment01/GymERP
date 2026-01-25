@@ -2,6 +2,7 @@ import React from 'react';
 import GenericMaster from '../../components/Masters/GenericMaster';
 import { planAPI } from '../../services/mastersApi';
 
+
 const PlanMaster = () => {
   const columns = [
     { label: 'ID', field: 'planId' },
@@ -18,6 +19,7 @@ const PlanMaster = () => {
     },
   ];
 
+
   const formFields = [
     {
       name: 'planName',
@@ -32,8 +34,12 @@ const PlanMaster = () => {
       type: 'select',
       required: true,
       options: [
+        { value: '', label: 'Select Duration' }, // ✅ Added default option
         { value: 'Monthly', label: 'Monthly' },
+        { value: 'Two Monthly', label: 'Two Monthly' }, // ✅ ADDED
         { value: 'Quarterly', label: 'Quarterly' },
+        { value: 'Four Monthly', label: 'Four Monthly' }, // ✅ ADDED
+        { value: 'Six Monthly', label: 'Six Monthly' }, // ✅ ADDED
         { value: 'Yearly', label: 'Yearly' },
       ],
     },
@@ -46,6 +52,7 @@ const PlanMaster = () => {
     },
   ];
 
+
   return (
     <GenericMaster
       title="Plan Master"
@@ -57,5 +64,6 @@ const PlanMaster = () => {
     />
   );
 };
+
 
 export default PlanMaster;

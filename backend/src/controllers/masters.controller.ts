@@ -8,6 +8,7 @@ import Branch from '../models/Branch';
 import Employee from '../models/Employee';
 import bcrypt from 'bcryptjs';
 
+
 // Generic CRUD helper functions
 const generateId = async (Model: any, idField: string): Promise<string> => {
   const lastItem = await Model.findOne().sort({ [idField]: -1 });
@@ -30,6 +31,7 @@ const generateId = async (Model: any, idField: string): Promise<string> => {
   return `${prefix}${String(lastNumber + 1).padStart(3, '0')}`;
 };
 
+
 const createMaster = async (Model: any, idField: string, data: any, res: Response) => {
   try {
     data[idField] = await generateId(Model, idField);
@@ -41,6 +43,7 @@ const createMaster = async (Model: any, idField: string, data: any, res: Respons
     res.status(500).json({ message: 'Error creating item', error: error.message });
   }
 };
+
 
 const getAllMaster = async (Model: any, res: Response, populateFields?: string) => {
   try {
@@ -54,6 +57,7 @@ const getAllMaster = async (Model: any, res: Response, populateFields?: string) 
     res.status(500).json({ message: 'Error fetching items', error: error.message });
   }
 };
+
 
 const getMasterById = async (Model: any, id: string, res: Response, populateFields?: string) => {
   try {
@@ -71,6 +75,7 @@ const getMasterById = async (Model: any, id: string, res: Response, populateFiel
   }
 };
 
+
 const updateMaster = async (Model: any, id: string, data: any, res: Response, populateFields?: string) => {
   try {
     let query = Model.findByIdAndUpdate(id, data, { new: true, runValidators: true });
@@ -87,6 +92,7 @@ const updateMaster = async (Model: any, id: string, data: any, res: Response, po
   }
 };
 
+
 const deleteMaster = async (Model: any, id: string, res: Response) => {
   try {
     const item = await Model.findByIdAndUpdate(id, { status: 'inactive' }, { new: true });
@@ -99,85 +105,189 @@ const deleteMaster = async (Model: any, id: string, res: Response) => {
   }
 };
 
-// Payment Type Controllers
-export const createPaymentType = (req: Request, res: Response) => 
-  createMaster(PaymentType, 'paymentTypeId', req.body, res);
+
+// ✅ PAYMENT TYPE CONTROLLERS - WITH DUPLICATE VALIDATION
+export const createPaymentType = async (req: Request, res: Response) => {
+  try {
+    const { paymentType } = req.body;
+
+    // ✅ Check if payment type already exists (case-insensitive)
+    const existingPaymentType = await PaymentType.findOne({
+      paymentType: { $regex: new RegExp(`^${paymentType.trim()}$`, 'i') },
+      status: 'active'
+    });
+
+    if (existingPaymentType) {
+      return res.status(400).json({
+        success: false,
+        message: `Payment type "${paymentType}" already exists!`
+      });
+    }
+
+    // Generate ID and create
+    req.body.paymentTypeId = await generateId(PaymentType, 'paymentTypeId');
+    const item = new PaymentType(req.body);
+    await item.save();
+    
+    res.status(201).json({ 
+      success: true,
+      message: 'Payment type created successfully', 
+      data: item 
+    });
+  } catch (error: any) {
+    console.error('Create payment type error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error creating payment type', 
+      error: error.message 
+    });
+  }
+};
+
 
 export const getAllPaymentTypes = (req: Request, res: Response) => 
   getAllMaster(PaymentType, res);
 
+
 export const getPaymentTypeById = (req: Request, res: Response) => 
   getMasterById(PaymentType, String(req.params.id), res);
 
-export const updatePaymentType = (req: Request, res: Response) => 
-  updateMaster(PaymentType, String(req.params.id), req.body, res);
+
+export const updatePaymentType = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { paymentType } = req.body;
+
+    // ✅ Check if another payment type with same name exists (excluding current)
+const existingPaymentType = await PaymentType.findOne({
+  paymentType: { $regex: `^${paymentType.trim()}$`, $options: 'i' },
+  status: 'active'
+});
+
+
+    if (existingPaymentType) {
+      return res.status(400).json({
+        success: false,
+        message: `Payment type "${paymentType}" already exists!`
+      });
+    }
+
+    const item = await PaymentType.findByIdAndUpdate(
+      id, 
+      req.body, 
+      { new: true, runValidators: true }
+    );
+
+    if (!item) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Payment type not found' 
+      });
+    }
+
+    res.json({ 
+      success: true,
+      message: 'Payment type updated successfully', 
+      data: item 
+    });
+  } catch (error: any) {
+    console.error('Update payment type error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error updating payment type', 
+      error: error.message 
+    });
+  }
+};
+
 
 export const deletePaymentType = (req: Request, res: Response) => 
   deleteMaster(PaymentType, String(req.params.id), res);
+
 
 // Plan Controllers
 export const createPlan = (req: Request, res: Response) => 
   createMaster(Plan, 'planId', req.body, res);
 
+
 export const getAllPlans = (req: Request, res: Response) => 
   getAllMaster(Plan, res);
+
 
 export const getPlanById = (req: Request, res: Response) => 
   getMasterById(Plan, String(req.params.id), res);
 
+
 export const updatePlan = (req: Request, res: Response) => 
   updateMaster(Plan, String(req.params.id), req.body, res);
 
+
 export const deletePlan = (req: Request, res: Response) => 
   deleteMaster(Plan, String(req.params.id), res);
+
 
 // Tax Slab Controllers
 export const createTaxSlab = (req: Request, res: Response) => 
   createMaster(TaxSlab, 'taxSlabId', req.body, res);
 
+
 export const getAllTaxSlabs = (req: Request, res: Response) => 
   getAllMaster(TaxSlab, res);
+
 
 export const getTaxSlabById = (req: Request, res: Response) => 
   getMasterById(TaxSlab, String(req.params.id), res);
 
+
 export const updateTaxSlab = (req: Request, res: Response) => 
   updateMaster(TaxSlab, String(req.params.id), req.body, res);
 
+
 export const deleteTaxSlab = (req: Request, res: Response) => 
   deleteMaster(TaxSlab, String(req.params.id), res);
+
 
 // Shift Controllers
 export const createShift = (req: Request, res: Response) => 
   createMaster(Shift, 'shiftId', req.body, res);
 
+
 export const getAllShifts = (req: Request, res: Response) => 
   getAllMaster(Shift, res);
+
 
 export const getShiftById = (req: Request, res: Response) => 
   getMasterById(Shift, String(req.params.id), res);
 
+
 export const updateShift = (req: Request, res: Response) => 
   updateMaster(Shift, String(req.params.id), req.body, res);
 
+
 export const deleteShift = (req: Request, res: Response) => 
   deleteMaster(Shift, String(req.params.id), res);
+
 
 // Designation Controllers
 export const createDesignation = (req: Request, res: Response) => 
   createMaster(Designation, 'designationId', req.body, res);
 
+
 export const getAllDesignations = (req: Request, res: Response) => 
   getAllMaster(Designation, res);
+
 
 export const getDesignationById = (req: Request, res: Response) => 
   getMasterById(Designation, String(req.params.id), res);
 
+
 export const updateDesignation = (req: Request, res: Response) => 
   updateMaster(Designation, String(req.params.id), req.body, res);
 
+
 export const deleteDesignation = (req: Request, res: Response) => 
   deleteMaster(Designation, String(req.params.id), res);
+
 
 // Branch Controllers - UPDATED WITH LOCATION HANDLING
 export const createBranch = async (req: Request, res: Response) => {
@@ -205,11 +315,14 @@ export const createBranch = async (req: Request, res: Response) => {
   }
 };
 
+
 export const getAllBranches = (req: Request, res: Response) => 
   getAllMaster(Branch, res);
 
+
 export const getBranchById = (req: Request, res: Response) => 
   getMasterById(Branch, String(req.params.id), res);
+
 
 export const updateBranch = async (req: Request, res: Response) => {
   try {
@@ -240,8 +353,10 @@ export const updateBranch = async (req: Request, res: Response) => {
   }
 };
 
+
 export const deleteBranch = (req: Request, res: Response) => 
   deleteMaster(Branch, String(req.params.id), res);
+
 
 // Employee Controllers - UPDATED TO USE ADMIN'S EMPLOYEE CODE
 export const createEmployee = async (req: Request, res: Response) => {
@@ -273,9 +388,11 @@ export const createEmployee = async (req: Request, res: Response) => {
     const defaultPassword = req.body.password || req.body.employeeCode;
     req.body.password = await bcrypt.hash(defaultPassword, 10);
 
+
     if (req.body.branches && req.body.branches.length > 0) {
       req.body.branchId = req.body.branches[0];
     }
+
 
     const employee = new Employee(req.body);
     await employee.save();
@@ -293,11 +410,14 @@ export const createEmployee = async (req: Request, res: Response) => {
   }
 };
 
+
 export const getAllEmployees = (req: Request, res: Response) => 
   getAllMaster(Employee, res, 'designation branches branchId shift');
 
+
 export const getEmployeeById = (req: Request, res: Response) => 
   getMasterById(Employee, String(req.params.id), res, 'designation branches branchId shift');
+
 
 export const updateEmployee = async (req: Request, res: Response) => {
   try {
@@ -305,9 +425,11 @@ export const updateEmployee = async (req: Request, res: Response) => {
       req.body.password = await bcrypt.hash(req.body.password, 10);
     }
 
+
     if (req.body.branches && req.body.branches.length > 0) {
       req.body.branchId = req.body.branches[0];
     }
+
 
     await updateMaster(Employee, String(req.params.id), req.body, res, 'designation branches branchId shift');
   } catch (error: any) {
@@ -316,8 +438,10 @@ export const updateEmployee = async (req: Request, res: Response) => {
   }
 };
 
+
 export const deleteEmployee = (req: Request, res: Response) => 
   deleteMaster(Employee, String(req.params.id), res);
+
 
 export const searchEmployees = async (req: Request, res: Response) => {
   try {
