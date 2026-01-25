@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import GenericMaster from '../../components/Masters/GenericMaster';
 import enquiryApi from '../../services/enquiryApi';
 import branchApi from '../../services/branchApi';
 import planApi from '../../services/planApi';
-import memberApi from '../../services/memberApi';  // ADD THIS
+import memberApi from '../../services/memberApi';
 import './EnquiryMaster.css';
 
 const EnquiryMaster = () => {
@@ -13,12 +15,11 @@ const EnquiryMaster = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // ADD THESE STATES
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedEnquiry, setSelectedEnquiry] = useState(null);
   const [paymentData, setPaymentData] = useState({
     plan: '',
-    dateOfBirth: '',
+    dateOfBirth: null,
     paymentReceived: 0,
     paymentRemaining: 0
   });
@@ -47,12 +48,8 @@ const EnquiryMaster = () => {
   const fetchBranches = async () => {
     try {
       const response = await branchApi.getAll();
-      console.log('Branches response:', response);
-      
       const branchData = Array.isArray(response) ? response : (response.data || []);
       const activeBranches = branchData.filter(b => b.status === 'active');
-      console.log('Active branches:', activeBranches);
-      
       setBranches(activeBranches);
     } catch (error) {
       console.error('Error fetching branches:', error);
@@ -63,12 +60,8 @@ const EnquiryMaster = () => {
   const fetchPlans = async () => {
     try {
       const response = await planApi.getAll();
-      console.log('Plans response:', response);
-      
       const planData = response.data || [];
       const activePlans = planData.filter(p => p.status === 'active');
-      console.log('Active plans:', activePlans);
-      
       setPlans(activePlans);
     } catch (error) {
       console.error('Error fetching plans:', error);
@@ -79,7 +72,6 @@ const EnquiryMaster = () => {
   const fetchStats = async () => {
     try {
       const response = await enquiryApi.getStats();
-      console.log('Stats response:', response);
       if (response.success && response.data) {
         setStats(response.data);
       } else {
@@ -91,19 +83,17 @@ const EnquiryMaster = () => {
     }
   };
 
-  // ADD THIS FUNCTION - Handle Payment Modal
   const handleConvertToMember = (enquiry) => {
     setSelectedEnquiry(enquiry);
     setPaymentData({
       plan: enquiry.plan?._id || '',
-      dateOfBirth: enquiry.dateOfBirth || '',
+      dateOfBirth: enquiry.dateOfBirth ? new Date(enquiry.dateOfBirth) : null,
       paymentReceived: 0,
       paymentRemaining: 0
     });
     setShowPaymentModal(true);
   };
 
-  // ADD THIS FUNCTION - Calculate Remaining Payment
   const handlePaymentChange = (e) => {
     const received = parseFloat(e.target.value) || 0;
     const selectedPlan = plans.find(p => p._id === paymentData.plan);
@@ -117,7 +107,6 @@ const EnquiryMaster = () => {
     });
   };
 
-  // ADD THIS FUNCTION - Plan Change Handler
   const handlePlanChangeInPayment = (e) => {
     const planId = e.target.value;
     const selectedPlan = plans.find(p => p._id === planId);
@@ -131,7 +120,6 @@ const EnquiryMaster = () => {
     });
   };
 
-  // ADD THIS FUNCTION - Convert Enquiry to Member
   const handleSubmitPayment = async (e) => {
     e.preventDefault();
 
@@ -141,14 +129,15 @@ const EnquiryMaster = () => {
     }
 
     try {
-      const selectedPlan = plans.find(p => p._id === paymentData.plan);
-      
-      // Create Member
+      const dobDate = typeof paymentData.dateOfBirth === 'string' 
+        ? new Date(paymentData.dateOfBirth) 
+        : paymentData.dateOfBirth;
+
       const memberData = {
         name: selectedEnquiry.name,
         email: selectedEnquiry.email,
         mobileNumber: selectedEnquiry.mobileNumber,
-        dateOfBirth: paymentData.dateOfBirth,
+        dateOfBirth: dobDate.toISOString(),
         gender: selectedEnquiry.gender,
         branch: selectedEnquiry.branch._id || selectedEnquiry.branch,
         plan: paymentData.plan,
@@ -159,43 +148,41 @@ const EnquiryMaster = () => {
         enquiryId: selectedEnquiry._id
       };
 
-      console.log('Creating member:', memberData);
+      console.log('Sending member data:', memberData);
+
+      const response = await memberApi.create(memberData);
+      console.log('Member created:', response);
       
-      await memberApi.create(memberData);
-      
-      // Update Enquiry Status to Converted
       await enquiryApi.update(selectedEnquiry._id, { status: 'converted' });
 
       alert('✅ Enquiry converted to Member successfully!');
       setShowPaymentModal(false);
       fetchInitialData();
-      window.location.reload(); // Refresh to update data
     } catch (error) {
       console.error('Error converting to member:', error);
-      alert('❌ Failed to convert to member');
+      console.error('Error response:', error.response?.data);
+      
+      const errorMessage = error.response?.data?.message || error.message || 'Unknown error occurred';
+      alert(`❌ Failed to convert to member: ${errorMessage}`);
     }
   };
 
   const columns = [
     {
       label: 'Enquiry ID',
-      field: 'enquiryId',
-      icon: '🆔'
+      field: 'enquiryId'
     },
     {
       label: 'Name',
-      field: 'name',
-      icon: '👤'
+      field: 'name'
     },
     {
       label: 'Mobile',
-      field: 'mobileNumber',
-      icon: '📱'
+      field: 'mobileNumber'
     },
     {
       label: 'Email',
       field: 'email',
-      icon: '📧',
       render: (item) => (
         <span style={{ fontSize: '0.9rem' }}>{item.email}</span>
       )
@@ -203,19 +190,16 @@ const EnquiryMaster = () => {
     {
       label: 'Branch',
       field: 'branch',
-      icon: '🏢',
       render: (item) => item.branch?.name || '-'
     },
     {
       label: 'Plan',
       field: 'plan',
-      icon: '💳',
       render: (item) => item.plan?.planName || '-'
     },
     {
       label: 'Source',
-      field: 'source',
-      icon: '📍'
+      field: 'source'
     },
     {
       label: 'Status',
@@ -260,7 +244,6 @@ const EnquiryMaster = () => {
       required: true,
       placeholder: 'Enter email address'
     },
-    // REMOVE dateOfBirth from here
     {
       name: 'gender',
       label: 'Gender',
@@ -272,7 +255,6 @@ const EnquiryMaster = () => {
         { value: 'Other', label: 'Other' }
       ]
     },
-    // REMOVE plan from here
     {
       name: 'source',
       label: 'Enquiry Source',
@@ -313,7 +295,57 @@ const EnquiryMaster = () => {
       placeholder: 'Add any additional notes or comments...'
     }
   ];
-  
+
+  // Filter configuration for Enquiry
+  const filterConfig = [
+    {
+      name: 'status',
+      label: 'Status',
+      type: 'select',
+      options: [
+        { value: '', label: 'All Status' },
+        { value: 'pending', label: 'Pending' },
+        { value: 'confirmed', label: 'Confirmed' },
+        { value: 'rejected', label: 'Rejected' },
+        { value: 'converted', label: 'Converted' }
+      ]
+    },
+    {
+      name: 'branch',
+      label: 'Branch',
+      type: 'select',
+      options: [
+        { value: '', label: 'All Branches' },
+        ...branches.map(b => ({
+          value: b._id,
+          label: b.name
+        }))
+      ]
+    },
+    {
+      name: 'source',
+      label: 'Source',
+      type: 'select',
+      options: [
+        { value: '', label: 'All Sources' },
+        { value: 'Walk-in', label: 'Walk-in' },
+        { value: 'Social Media', label: 'Social Media' },
+        { value: 'Referral', label: 'Referral' },
+        { value: 'Website', label: 'Website' },
+        { value: 'Phone Call', label: 'Phone Call' }
+      ]
+    },
+    {
+      name: 'startDate',
+      label: 'Start Date',
+      type: 'date'
+    },
+    {
+      name: 'endDate',
+      label: 'End Date',
+      type: 'date'
+    }
+  ];
 
   if (loading) {
     return (
@@ -340,7 +372,6 @@ const EnquiryMaster = () => {
 
   return (
     <div className="enquiry-master-page">
-      {/* Stats Cards */}
       <div className="stats-container">
         <div className="stat-card total">
           <div className="stat-icon">📊</div>
@@ -365,12 +396,12 @@ const EnquiryMaster = () => {
         </div>
       </div>
 
-      {/* Generic Master Component */}
       <GenericMaster
         title="Enquiry Master"
         apiService={enquiryApi}
         columns={columns}
         formFields={formFields}
+        filterConfig={filterConfig}
         searchPlaceholder="Search by name, mobile, email, or enquiry ID..."
         icon="👥"
         customActions={(item) => (
@@ -399,7 +430,6 @@ const EnquiryMaster = () => {
         )}
       />
 
-      {/* Payment Modal */}
       {showPaymentModal && (
         <div className="modal-overlay" onClick={() => setShowPaymentModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -440,12 +470,20 @@ const EnquiryMaster = () => {
 
                 <div className="form-group">
                   <label>Date of Birth <span className="required">*</span></label>
-                  <input
-                    type="date"
-                    value={paymentData.dateOfBirth}
-                    onChange={(e) => setPaymentData({ ...paymentData, dateOfBirth: e.target.value })}
+                  <DatePicker
+                    selected={paymentData.dateOfBirth}
+                    onChange={(date) => setPaymentData({ ...paymentData, dateOfBirth: date })}
+                    dateFormat="dd/MM/yyyy"
+                    showYearDropdown
+                    showMonthDropdown
+                    dropdownMode="select"
+                    maxDate={new Date()}
+                    yearDropdownItemNumber={100}
+                    scrollableYearDropdown
+                    placeholderText="Select date of birth"
                     required
-                    max={new Date().toISOString().split('T')[0]}
+                    className="custom-datepicker"
+                    wrapperClassName="datepicker-wrapper"
                   />
                 </div>
 

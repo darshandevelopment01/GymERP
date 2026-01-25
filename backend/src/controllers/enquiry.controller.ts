@@ -4,9 +4,14 @@ import Enquiry from '../models/Enquiry';
 // Get all enquiries
 export const getAllEnquiries = async (req: Request, res: Response): Promise<void> => {
   try {
-    const enquiries = await Enquiry.find()
+    // ✅ Only fetch enquiries that are NOT converted
+    const enquiries = await Enquiry.find({ status: { $ne: 'converted' } })
       .populate('branch', 'branchName city')
-      .populate('plan', 'planName duration price')
+      .populate({
+        path: 'plan',
+        select: 'planName duration price',
+        options: { strictPopulate: false }
+      })
       .sort({ createdAt: -1 });
     
     res.json({ success: true, data: enquiries });
@@ -35,20 +40,50 @@ export const getEnquiryById = async (req: Request, res: Response): Promise<void>
   }
 };
 
-// Create new enquiry
+// Create new enquiry - UPDATED WITH ID GENERATION
 export const createEnquiry = async (req: Request, res: Response): Promise<void> => {
   try {
-    const enquiry = new Enquiry(req.body);
+    console.log('=== CREATE ENQUIRY STARTED ===');
+    console.log('Request body:', JSON.stringify(req.body, null, 2));
+    
+    // ✅ Generate enquiry ID manually
+    const count = await Enquiry.countDocuments();
+    const enquiryId = 'ENQ' + String(count + 1).padStart(4, '0');
+    
+    console.log('Generated enquiryId:', enquiryId);
+    
+    // ✅ Create enquiry with generated ID
+    const enquiry = new Enquiry({
+      ...req.body,
+      enquiryId: enquiryId
+    });
+    
+    console.log('Enquiry object created with ID');
+    
     await enquiry.save();
+    console.log('Enquiry saved successfully');
     
     const populatedEnquiry = await Enquiry.findById(enquiry._id)
-      .populate('branch', 'branchName city')
-      .populate('plan', 'planName duration price');
+      .populate('branch', 'branchName city');
     
-    res.status(201).json({ success: true, data: populatedEnquiry });
-  } catch (error) {
-    console.error('Error creating enquiry:', error);
-    res.status(500).json({ success: false, message: 'Failed to create enquiry' });
+    console.log('Enquiry populated:', populatedEnquiry);
+    
+    res.status(201).json({ 
+      success: true, 
+      data: populatedEnquiry,
+      message: 'Enquiry created successfully' 
+    });
+  } catch (error: any) {
+    console.error('=== CREATE ENQUIRY ERROR ===');
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    
+    res.status(500).json({ 
+      success: false, 
+      message: error.message || 'Failed to create enquiry',
+      error: process.env.NODE_ENV === 'development' ? error : undefined
+    });
   }
 };
 
@@ -61,7 +96,11 @@ export const updateEnquiry = async (req: Request, res: Response): Promise<void> 
       { new: true, runValidators: true }
     )
       .populate('branch', 'branchName city')
-      .populate('plan', 'planName duration price');
+      .populate({
+        path: 'plan',
+        select: 'planName duration price',
+        options: { strictPopulate: false }
+      });
     
     if (!enquiry) {
       res.status(404).json({ success: false, message: 'Enquiry not found' });

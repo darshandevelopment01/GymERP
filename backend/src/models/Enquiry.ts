@@ -6,9 +6,9 @@ export interface IEnquiry extends Document {
   name: string;
   mobileNumber: string;
   email: string;
-  dateOfBirth: Date;
+  dateOfBirth?: Date;
   gender: 'Male' | 'Female' | 'Other';
-  plan: mongoose.Types.ObjectId;
+  plan?: mongoose.Types.ObjectId;
   source: 'Walk-in' | 'Social Media' | 'Referral' | 'Website' | 'Phone Call';
   status: 'pending' | 'confirmed' | 'rejected' | 'converted';
   profilePhoto?: string;
@@ -24,7 +24,7 @@ const enquirySchema = new Schema<IEnquiry>({
   enquiryId: {
     type: String,
     unique: true,
-    required: true
+    required: false
   },
   branch: {
     type: Schema.Types.ObjectId,
@@ -49,7 +49,7 @@ const enquirySchema = new Schema<IEnquiry>({
   },
   dateOfBirth: {
     type: Date,
-    required: true
+    required: false
   },
   gender: {
     type: String,
@@ -59,7 +59,7 @@ const enquirySchema = new Schema<IEnquiry>({
   plan: {
     type: Schema.Types.ObjectId,
     ref: 'Plan',
-    required: true
+    required: false
   },
   source: {
     type: String,
@@ -96,13 +96,6 @@ const enquirySchema = new Schema<IEnquiry>({
   timestamps: true
 });
 
-// Auto-generate enquiry ID
-enquirySchema.pre('save', async function(next: (err?: Error) => void) {
-  if (!this.enquiryId) {
-    const count = await mongoose.model('Enquiry').countDocuments();
-    this.enquiryId = `ENQ${String(count + 1).padStart(3, '0')}`; 
-  }
-  next();
-});
+// ✅ REMOVED PRE-SAVE HOOK - We'll generate ID in controller instead
 
 export default mongoose.model<IEnquiry>('Enquiry', enquirySchema);

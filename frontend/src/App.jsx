@@ -4,6 +4,7 @@ import LoginScreen from './screens/LoginScreen';
 import DashboardScreen from './screens/DashboardScreen';
 import MastersScreen from './screens/MastersScreen';
 import EnquiryScreen from './screens/EnquiryScreen';
+import MemberScreen from './screens/MemberScreen';  // ✅ Add this import
 import './App.css';
 
 function PrivateRoute({ children }) {
@@ -49,6 +50,15 @@ function App() {
           element={
             <PrivateRoute>
               <EnquiryScreen />
+            </PrivateRoute>
+          } 
+        />
+        {/* ✅ Add Members route */}
+        <Route 
+          path="/members" 
+          element={
+            <PrivateRoute>
+              <MemberScreen />
             </PrivateRoute>
           } 
         />

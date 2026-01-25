@@ -1,74 +1,104 @@
-// backend/src/models/Member.ts
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IMember extends Document {
+  memberId: string;
   name: string;
   email: string;
-  phone: string;
+  mobileNumber: string;
   dateOfBirth: Date;
-  gender: 'male' | 'female' | 'other';
-  address: string;
-  membershipType: string;
-  joinDate: Date;
-  expiryDate: Date;
+  gender: 'Male' | 'Female' | 'Other';
+  address?: string;
+  branch: mongoose.Types.ObjectId;
+  plan: mongoose.Types.ObjectId;
+  membershipStartDate: Date;
+  membershipEndDate: Date;
+  paymentReceived: number;
+  paymentRemaining: number;
   status: 'active' | 'inactive' | 'expired';
-  branchId: mongoose.Types.ObjectId;
+  enquiryId?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
 
 const MemberSchema = new Schema<IMember>(
   {
+    memberId: {
+      type: String,
+      unique: true,
+      required: false
+    },
     name: {
       type: String,
       required: true,
+      trim: true
     },
     email: {
       type: String,
       required: true,
+      trim: true,
+      lowercase: true
     },
-    phone: {
+    mobileNumber: {
       type: String,
       required: true,
+      trim: true
     },
     dateOfBirth: {
       type: Date,
-      required: true,
+      required: true
     },
     gender: {
       type: String,
-      enum: ['male', 'female', 'other'],
-      required: true,
+      enum: ['Male', 'Female', 'Other'],
+      required: true
     },
     address: {
       type: String,
-      required: true,
+      required: false,
+      default: ''
     },
-    membershipType: {
-      type: String,
-      required: true,
+    branch: {
+      type: Schema.Types.ObjectId,
+      ref: 'Branch',
+      required: true
     },
-    joinDate: {
+    plan: {
+      type: Schema.Types.ObjectId,
+      ref: 'Plan',
+      required: true
+    },
+    membershipStartDate: {
       type: Date,
-      default: Date.now,
-    },
-    expiryDate: {
-      type: Date,
       required: true,
+      default: Date.now
+    },
+    membershipEndDate: {
+      type: Date,
+      required: false
+    },
+    paymentReceived: {
+      type: Number,
+      required: true,
+      default: 0
+    },
+    paymentRemaining: {
+      type: Number,
+      required: false,
+      default: 0
     },
     status: {
       type: String,
       enum: ['active', 'inactive', 'expired'],
-      default: 'active',
+      default: 'active'
     },
-    branchId: {
+    enquiryId: {
       type: Schema.Types.ObjectId,
-      ref: 'Branch',
-      required: true,
-    },
+      ref: 'Enquiry',
+      required: false
+    }
   },
   {
-    timestamps: true,
+    timestamps: true
   }
 );
 

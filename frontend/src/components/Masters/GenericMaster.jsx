@@ -3,7 +3,6 @@ import './GenericMaster.css';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
-
 const GenericMaster = ({ 
   title, 
   apiService, 
@@ -11,7 +10,8 @@ const GenericMaster = ({
   formFields, 
   searchPlaceholder = 'Search...',
   icon,
-  customActions
+  customActions,
+  filterConfig = [] // New prop for filters
 }) => {
   const [data, setData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
@@ -23,26 +23,18 @@ const GenericMaster = ({
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(false);
   const [loadingLocation, setLoadingLocation] = useState(false);
-
+  
+  // Filter states
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({});
 
   useEffect(() => {
     fetchData();
   }, []);
 
-
   useEffect(() => {
-    if (searchQuery) {
-      const filtered = data.filter(item => 
-        Object.values(item).some(val => 
-          String(val).toLowerCase().includes(searchQuery.toLowerCase())
-        )
-      );
-      setFilteredData(filtered);
-    } else {
-      setFilteredData(data);
-    }
-  }, [searchQuery, data]);
-
+    applyFiltersAndSearch();
+  }, [searchQuery, data, filters]);
 
   const fetchData = async () => {
     try {
@@ -58,6 +50,83 @@ const GenericMaster = ({
     }
   };
 
+  const applyFiltersAndSearch = () => {
+    let filtered = [...data];
+
+    // Apply search query
+    if (searchQuery) {
+      filtered = filtered.filter(item => 
+        Object.values(item).some(val => 
+          String(val).toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      );
+    }
+
+    // Apply filters
+    Object.keys(filters).forEach(filterKey => {
+      const filterValue = filters[filterKey];
+      
+      if (!filterValue) return;
+
+      const filterField = filterConfig.find(f => f.name === filterKey);
+      
+      if (filterKey === 'startDate') {
+        filtered = filtered.filter(item => {
+          const itemDate = new Date(item.createdAt || item.joiningDate || item.date);
+          return itemDate >= new Date(filterValue);
+        });
+      } else if (filterKey === 'endDate') {
+        filtered = filtered.filter(item => {
+          const itemDate = new Date(item.createdAt || item.joiningDate || item.date);
+          return itemDate <= new Date(filterValue);
+        });
+      } else if (filterKey === 'paymentStatus') {
+        filtered = filtered.filter(item => {
+          if (filterValue === 'paid') {
+            return item.paymentRemaining === 0 || !item.paymentRemaining;
+          } else if (filterValue === 'pending') {
+            return item.paymentRemaining > 0;
+          }
+          return true;
+        });
+      } else if (filterKey === 'status') {
+        filtered = filtered.filter(item => item.status === filterValue);
+      } else if (filterKey === 'branch') {
+        filtered = filtered.filter(item => 
+          item.branch?._id === filterValue || item.branch === filterValue
+        );
+      } else if (filterKey === 'plan') {
+        filtered = filtered.filter(item => 
+          item.plan?._id === filterValue || item.plan === filterValue
+        );
+      } else {
+        // Generic filter for other fields
+        filtered = filtered.filter(item => {
+          const itemValue = item[filterKey];
+          if (typeof itemValue === 'object' && itemValue?._id) {
+            return itemValue._id === filterValue;
+          }
+          return itemValue === filterValue;
+        });
+      }
+    });
+
+    setFilteredData(filtered);
+  };
+
+  const handleFilterChange = (filterName, value) => {
+    setFilters(prev => ({
+      ...prev,
+      [filterName]: value
+    }));
+  };
+
+  const clearFilters = () => {
+    setFilters({});
+    setSearchQuery('');
+  };
+
+  const activeFilterCount = Object.values(filters).filter(v => v !== '' && v !== null).length;
 
   const handleCreate = () => {
     setEditingItem(null);
@@ -65,12 +134,10 @@ const GenericMaster = ({
     setShowModal(true);
   };
 
-
   const handleView = (item) => {
     setViewingItem(item);
     setShowViewModal(true);
   };
-
 
   const handleEdit = (item) => {
     setEditingItem(item);
@@ -93,7 +160,6 @@ const GenericMaster = ({
     setShowModal(true);
   };
 
-
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this item?')) return;
     
@@ -106,7 +172,6 @@ const GenericMaster = ({
       alert('Failed to delete');
     }
   };
-
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -127,12 +192,10 @@ const GenericMaster = ({
     }
   };
 
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
-
 
   const handleDateChange = (date, fieldName) => {
     setFormData({ 
@@ -140,7 +203,6 @@ const GenericMaster = ({
       [fieldName]: date ? date.toISOString().split('T')[0] : '' 
     });
   };
-
 
   const handleGetLocation = () => {
     if (!navigator.geolocation) {
@@ -209,7 +271,6 @@ const GenericMaster = ({
     );
   };
 
-
   return (
     <div className="generic-master">
       <div className="master-header">
@@ -232,10 +293,91 @@ const GenericMaster = ({
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <button className="btn-create" onClick={handleCreate}>
-          + Create {title.replace(' Master', '')}
-        </button>
+        <div className="control-buttons">
+          {filterConfig.length > 0 && (
+            <button 
+              className={`btn-filter ${showFilters ? 'active' : ''}`}
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              🔽 Filters
+              {activeFilterCount > 0 && (
+                <span className="filter-badge">{activeFilterCount}</span>
+              )}
+            </button>
+          )}
+          <button className="btn-create" onClick={handleCreate}>
+            + Create {title.replace(' Master', '')}
+          </button>
+        </div>
       </div>
+
+      {/* Filter Panel */}
+      {showFilters && filterConfig.length > 0 && (
+        <div className="filter-panel">
+          <div className="filter-grid">
+            {filterConfig.map((filter, idx) => (
+              <div className="filter-item" key={idx}>
+                <label>{filter.label}</label>
+                {filter.type === 'select' ? (
+                  <select
+                    value={filters[filter.name] || ''}
+                    onChange={(e) => handleFilterChange(filter.name, e.target.value)}
+                  >
+                    {filter.options.map((opt, i) => (
+                      <option key={i} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                ) : filter.type === 'date' ? (
+                  <div className="filter-date-wrapper">
+                    <DatePicker
+                      selected={filters[filter.name] ? new Date(filters[filter.name]) : null}
+                      onChange={(date) => handleFilterChange(filter.name, date ? date.toISOString().split('T')[0] : '')}
+                      dateFormat="dd-MM-yyyy"
+                      placeholderText="dd-mm-yyyy"
+                      className="filter-date-input"
+                      showYearDropdown
+                      showMonthDropdown
+                      dropdownMode="select"
+                      isClearable
+                      showPopperArrow={false}
+                    />
+                    <svg 
+                      className="filter-calendar-icon"
+                      xmlns="http://www.w3.org/2000/svg" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="2" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round"
+                    >
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                      <line x1="16" y1="2" x2="16" y2="6"></line>
+                      <line x1="8" y1="2" x2="8" y2="6"></line>
+                      <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                  </div>
+                ) : (
+                  <input
+                    type="text"
+                    value={filters[filter.name] || ''}
+                    onChange={(e) => handleFilterChange(filter.name, e.target.value)}
+                    placeholder={filter.placeholder}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="filter-actions">
+            <button className="clear-filters-btn" onClick={clearFilters}>
+              ✕ Clear All Filters
+            </button>
+            <span className="results-count">
+              Showing {filteredData.length} of {data.length} results
+            </span>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="loading">Loading...</div>
@@ -401,7 +543,6 @@ const GenericMaster = ({
                 ))}
               </div>
               
-              {/* THIS IS THE CORRECT LOCATION FOR THE FOOTER */}
               <div className="modal-footer">
                 <button type="button" className="btn-cancel" onClick={() => setShowModal(false)}>
                   Cancel
