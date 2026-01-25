@@ -193,11 +193,6 @@ const EnquiryMaster = () => {
       render: (item) => item.branch?.name || '-'
     },
     {
-      label: 'Plan',
-      field: 'plan',
-      render: (item) => item.plan?.planName || '-'
-    },
-    {
       label: 'Source',
       field: 'source'
     },
@@ -294,7 +289,7 @@ const EnquiryMaster = () => {
       required: false,
       placeholder: 'Add any additional notes or comments...'
     }
-  ];
+  ];  
 
   // Filter configuration for Enquiry
   const filterConfig = [
@@ -404,6 +399,9 @@ const EnquiryMaster = () => {
         filterConfig={filterConfig}
         searchPlaceholder="Search by name, mobile, email, or enquiry ID..."
         icon="👥"
+        showCreateButton={false}
+        showExportButton={true}
+        exportFileName="enquiries"
         customActions={(item) => (
           item.status !== 'converted' && (
             <button 

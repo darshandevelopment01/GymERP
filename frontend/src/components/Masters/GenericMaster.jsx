@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './GenericMaster.css';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import * as XLSX from 'xlsx';
 
 const GenericMaster = ({ 
   title, 
@@ -11,7 +12,10 @@ const GenericMaster = ({
   searchPlaceholder = 'Search...',
   icon,
   customActions,
-  filterConfig = [] // New prop for filters
+  filterConfig = [],
+  showCreateButton = true,
+  showExportButton = false,
+  exportFileName = 'data'
 }) => {
   const [data, setData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
@@ -23,6 +27,7 @@ const GenericMaster = ({
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(false);
   const [loadingLocation, setLoadingLocation] = useState(false);
+  const [exporting, setExporting] = useState(false);
   
   // Filter states
   const [showFilters, setShowFilters] = useState(false);
@@ -128,6 +133,78 @@ const GenericMaster = ({
 
   const activeFilterCount = Object.values(filters).filter(v => v !== '' && v !== null).length;
 
+  // ✅ FIXED: Export ALL data from database
+  const handleExportToExcel = async () => {
+    setExporting(true);
+    try {
+      // Fetch ALL data from database (bypass filters)
+      const response = await apiService.getAll();
+      const allData = response.data || [];
+
+      if (allData.length === 0) {
+        alert('❌ No data available to export');
+        setExporting(false);
+        return;
+      }
+
+      // Prepare data for export
+      const exportData = allData.map(item => {
+        const row = {};
+        columns.forEach(col => {
+          if (col.field === 'branch') {
+            row[col.label] = item.branch?.name || '-';
+          } else if (col.field === 'plan') {
+            row[col.label] = item.plan?.planName || '-';
+          } else if (col.field === 'status') {
+            row[col.label] = item.status || '-';
+          } else if (col.field === 'payment') {
+            row['Payment Received'] = item.paymentReceived || 0;
+            row['Payment Remaining'] = item.paymentRemaining || 0;
+          } else if (col.field === 'dateOfBirth' || col.field === 'joiningDate' || col.field === 'createdAt') {
+            // Format dates properly
+            if (item[col.field]) {
+              const date = new Date(item[col.field]);
+              row[col.label] = date.toLocaleDateString('en-GB'); // DD/MM/YYYY format
+            } else {
+              row[col.label] = '-';
+            }
+          } else if (typeof item[col.field] === 'object' && item[col.field] !== null) {
+            // Handle nested objects
+            row[col.label] = item[col.field]?.name || item[col.field]?.planName || item[col.field]?.branchName || '-';
+          } else {
+            row[col.label] = item[col.field] || '-';
+          }
+        });
+        return row;
+      });
+
+      // Create worksheet
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      
+      // Set column widths
+      const colWidths = columns.map(() => ({ wch: 20 }));
+      worksheet['!cols'] = colWidths;
+      
+      // Create workbook
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+      
+      // Generate filename with timestamp
+      const timestamp = new Date().toISOString().split('T')[0];
+      const filename = `${exportFileName}_${timestamp}.xlsx`;
+      
+      // Download file
+      XLSX.writeFile(workbook, filename);
+      
+      alert(`✅ Exported ${allData.length} records successfully!`);
+    } catch (error) {
+      console.error('Error exporting to Excel:', error);
+      alert('❌ Failed to export data');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const handleCreate = () => {
     setEditingItem(null);
     setFormData({});
@@ -154,6 +231,10 @@ const GenericMaster = ({
           console.error('Date formatting error:', error);
         }
       }
+      // ✅ Handle ObjectId fields (branch, plan, etc.)
+      if (field.type === 'select' && typeof item[field.name] === 'object' && item[field.name]?._id) {
+        formattedItem[field.name] = item[field.name]._id;
+      }
     });
     
     setFormData(formattedItem);
@@ -173,22 +254,41 @@ const GenericMaster = ({
     }
   };
 
+  // ✅ UPDATED: Handle empty select values properly
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     try {
+      // ✅ Clean formData - remove empty strings for select fields
+      const cleanedData = { ...formData };
+      
+      formFields.forEach(field => {
+        if (field.type === 'select' && !field.required) {
+          // For optional select fields, remove if empty
+          if (cleanedData[field.name] === '' || cleanedData[field.name] === null || cleanedData[field.name] === undefined) {
+            delete cleanedData[field.name];
+          }
+        }
+      });
+
+      console.log('📤 Submitting data:', cleanedData);
+      
       if (editingItem) {
-        await apiService.update(editingItem._id, formData);
+        const response = await apiService.update(editingItem._id, cleanedData);
+        console.log('✅ Update response:', response);
         alert('Updated successfully');
       } else {
-        await apiService.create(formData);
+        const response = await apiService.create(cleanedData);
+        console.log('✅ Create response:', response);
         alert('Created successfully');
       }
       setShowModal(false);
       fetchData();
     } catch (error) {
-      console.error('Error saving:', error);
-      alert('Failed to save');
+      console.error('❌ Error saving:', error);
+      console.error('Error details:', error.response?.data);
+      const errorMsg = error.response?.data?.message || error.message || 'Failed to save';
+      alert(`Failed to save: ${errorMsg}`);
     }
   };
 
@@ -305,9 +405,20 @@ const GenericMaster = ({
               )}
             </button>
           )}
-          <button className="btn-create" onClick={handleCreate}>
-            + Create {title.replace(' Master', '')}
-          </button>
+          {showExportButton && (
+            <button 
+              className="btn-export" 
+              onClick={handleExportToExcel}
+              disabled={exporting || data.length === 0}
+            >
+              {exporting ? '⏳ Exporting...' : '📊 Export to Excel'}
+            </button>
+          )}
+          {showCreateButton && (
+            <button className="btn-create" onClick={handleCreate}>
+              + Create {title.replace(' Master', '').replace(' Management', '')}
+            </button>
+          )}
         </div>
       </div>
 
@@ -589,7 +700,7 @@ const GenericMaster = ({
                       displayValue = String(value);
                     } else if (field.type === 'select' && field.options) {
                       const option = field.options.find(opt => opt.value === value || opt.value === value?._id);
-                      displayValue = option ? option.label : (typeof value === 'object' ? value.name || value._id : value);
+                      displayValue = option ? option.label : (typeof value === 'object' ? value.name || value.planName || value._id : value);
                     } else if (field.type === 'date') {
                       try {
                         const date = new Date(value);
@@ -607,7 +718,7 @@ const GenericMaster = ({
                         displayValue = '-';
                       }
                     } else if (typeof value === 'object' && value !== null) {
-                      displayValue = value.name || value.designationName || value.shiftName || value.branchName || value._id || String(value);
+                      displayValue = value.name || value.planName || value.designationName || value.shiftName || value.branchName || value._id || String(value);
                     } else {
                       displayValue = String(value);
                     }

@@ -1,18 +1,17 @@
 import { Request, Response } from 'express';
 import Enquiry from '../models/Enquiry';
+import Plan from '../models/Plan'; // ✅ Import Plan model
 
 // Get all enquiries
 export const getAllEnquiries = async (req: Request, res: Response): Promise<void> => {
   try {
     // ✅ Only fetch enquiries that are NOT converted
     const enquiries = await Enquiry.find({ status: { $ne: 'converted' } })
-      .populate('branch', 'branchName city')
-      .populate({
-        path: 'plan',
-        select: 'planName duration price',
-        options: { strictPopulate: false }
-      })
+      .populate('branch', 'name city state')
+      .populate('plan', 'planName duration price')
       .sort({ createdAt: -1 });
+    
+    console.log(`📊 Fetched ${enquiries.length} enquiries`);
     
     res.json({ success: true, data: enquiries });
   } catch (error) {
@@ -25,7 +24,7 @@ export const getAllEnquiries = async (req: Request, res: Response): Promise<void
 export const getEnquiryById = async (req: Request, res: Response): Promise<void> => {
   try {
     const enquiry = await Enquiry.findById(req.params.id)
-      .populate('branch', 'branchName city state')
+      .populate('branch', 'name city state')
       .populate('plan', 'planName duration price');
     
     if (!enquiry) {
@@ -40,11 +39,25 @@ export const getEnquiryById = async (req: Request, res: Response): Promise<void>
   }
 };
 
-// Create new enquiry - UPDATED WITH ID GENERATION
+// Create new enquiry - UPDATED WITH VALIDATION
 export const createEnquiry = async (req: Request, res: Response): Promise<void> => {
   try {
     console.log('=== CREATE ENQUIRY STARTED ===');
     console.log('Request body:', JSON.stringify(req.body, null, 2));
+    
+    // ✅ Validate plan if provided
+    if (req.body.plan) {
+      const planExists = await Plan.findById(req.body.plan);
+      if (!planExists) {
+        console.error('❌ Plan not found:', req.body.plan);
+        res.status(400).json({ 
+          success: false, 
+          message: 'Invalid plan ID provided' 
+        });
+        return;
+      }
+      console.log('✅ Plan validated:', planExists.planName);
+    }
     
     // ✅ Generate enquiry ID manually
     const count = await Enquiry.countDocuments();
@@ -52,21 +65,35 @@ export const createEnquiry = async (req: Request, res: Response): Promise<void> 
     
     console.log('Generated enquiryId:', enquiryId);
     
-    // ✅ Create enquiry with generated ID
-    const enquiry = new Enquiry({
+    // ✅ Create enquiry data
+    const enquiryData: any = {
       ...req.body,
       enquiryId: enquiryId
-    });
+    };
     
-    console.log('Enquiry object created with ID');
+    // Remove plan if it's empty string
+    if (!enquiryData.plan || enquiryData.plan === '') {
+      delete enquiryData.plan;
+      console.log('⚠️ No plan provided, creating enquiry without plan');
+    } else {
+      console.log('📋 Creating enquiry with plan:', enquiryData.plan);
+    }
     
+    console.log('Final enquiry data:', JSON.stringify(enquiryData, null, 2));
+    
+    // ✅ Create and save enquiry
+    const enquiry = new Enquiry(enquiryData);
     await enquiry.save();
-    console.log('Enquiry saved successfully');
+    console.log('✅ Enquiry saved to database');
     
+    // ✅ Fetch with populated fields
     const populatedEnquiry = await Enquiry.findById(enquiry._id)
-      .populate('branch', 'branchName city');
+      .populate('branch', 'name city state')
+      .populate('plan', 'planName duration price');
     
-    console.log('Enquiry populated:', populatedEnquiry);
+    console.log('✅ Enquiry populated successfully');
+    console.log('Branch:', populatedEnquiry?.branch);
+    console.log('Plan:', populatedEnquiry?.plan);
     
     res.status(201).json({ 
       success: true, 
@@ -87,30 +114,65 @@ export const createEnquiry = async (req: Request, res: Response): Promise<void> 
   }
 };
 
-// Update enquiry
+// Update enquiry - UPDATED WITH VALIDATION
 export const updateEnquiry = async (req: Request, res: Response): Promise<void> => {
   try {
+    console.log('=== UPDATE ENQUIRY STARTED ===');
+    console.log('Enquiry ID:', req.params.id);
+    console.log('Update data:', JSON.stringify(req.body, null, 2));
+    
+    // ✅ Validate plan if provided
+    if (req.body.plan && req.body.plan !== '') {
+      const planExists = await Plan.findById(req.body.plan);
+      if (!planExists) {
+        console.error('❌ Plan not found:', req.body.plan);
+        res.status(400).json({ 
+          success: false, 
+          message: 'Invalid plan ID provided' 
+        });
+        return;
+      }
+      console.log('✅ Plan validated:', planExists.planName);
+    }
+    
+    // ✅ Clean up request body
+    const updateData: any = { ...req.body };
+    
+    // If plan is empty string or undefined, set to null
+    if (!updateData.plan || updateData.plan === '') {
+      updateData.plan = null;
+      console.log('⚠️ Setting plan to null');
+    } else {
+      console.log('📋 Updating with plan:', updateData.plan);
+    }
+    
+    console.log('Final update data:', JSON.stringify(updateData, null, 2));
+    
     const enquiry = await Enquiry.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updateData,
       { new: true, runValidators: true }
     )
-      .populate('branch', 'branchName city')
-      .populate({
-        path: 'plan',
-        select: 'planName duration price',
-        options: { strictPopulate: false }
-      });
+      .populate('branch', 'name city state')
+      .populate('plan', 'planName duration price');
     
     if (!enquiry) {
       res.status(404).json({ success: false, message: 'Enquiry not found' });
       return;
     }
     
+    console.log('✅ Enquiry updated successfully');
+    console.log('Branch:', enquiry.branch);
+    console.log('Plan:', enquiry.plan);
+    
     res.json({ success: true, data: enquiry });
-  } catch (error) {
-    console.error('Error updating enquiry:', error);
-    res.status(500).json({ success: false, message: 'Failed to update enquiry' });
+  } catch (error: any) {
+    console.error('=== UPDATE ENQUIRY ERROR ===');
+    console.error('Error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: error.message || 'Failed to update enquiry' 
+    });
   }
 };
 

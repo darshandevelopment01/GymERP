@@ -365,6 +365,9 @@ const MemberMaster = () => {
         formFields={formFields}
         filterConfig={filterConfig}
         searchPlaceholder="Search by name, mobile, email, or member ID..."
+        showCreateButton={false}
+        showExportButton={true}
+        exportFileName="members"
         customActions={(item) => (
           item.paymentRemaining > 0 && (
             <button 
