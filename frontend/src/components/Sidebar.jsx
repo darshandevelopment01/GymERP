@@ -4,30 +4,25 @@ import {
   LayoutDashboard, 
   UserPlus, 
   Users, 
-  User as UserCog, 
   ClipboardCheck, 
-  BarChart3, 
   Settings, 
   LogOut,
   X // Close icon
 } from 'lucide-react';
 import logo from '../assets/logo.png';
 
+// ✅ REMOVED: Employees and Reports
 const MENU = [
   { label: 'Dashboard', icon: LayoutDashboard },
   { label: 'Enquiry', icon: UserPlus },
   { label: 'Members', icon: Users },
-  { label: 'Employees', icon: UserCog },
   { label: 'Attendance', icon: ClipboardCheck },
-  { label: 'Reports', icon: BarChart3 },
   { label: 'Masters', icon: Settings },
 ];
 
 export default function Sidebar({ activeMenu, onChange, onLogout, isOpen, onClose }) {
   return (
     <>
-      {/* REMOVED THE OVERLAY COMPLETELY */}
-
       {/* Sidebar */}
       <div className={`sidebar ${isOpen ? 'sidebar-open' : ''}`}>
         {/* Mobile Close Button */}
