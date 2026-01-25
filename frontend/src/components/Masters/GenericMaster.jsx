@@ -30,7 +30,6 @@ const GenericMaster = ({
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [exporting, setExporting] = useState(false);
   
-  // Filter states
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({});
 
@@ -51,17 +50,6 @@ const GenericMaster = ({
       const response = await apiService.getAll();
       const fetchedData = response.data || [];
       
-      // ✅ DEBUG: Log all data
-      console.log('📊 Fetched Data:', fetchedData);
-      console.log('📊 Total Records:', fetchedData.length);
-      
-      // ✅ DEBUG: Log status distribution
-      const statusCounts = {};
-      fetchedData.forEach(item => {
-        statusCounts[item.status] = (statusCounts[item.status] || 0) + 1;
-      });
-      console.log('📊 Status Distribution:', statusCounts);
-      
       setData(fetchedData);
       setFilteredData(fetchedData);
     } catch (error) {
@@ -76,90 +64,42 @@ const GenericMaster = ({
   const applyFiltersAndSearch = () => {
     let filtered = [...data];
 
-    // ✅ DEBUG: Log initial data
-    console.log('🔍 Starting filter process...');
-    console.log('🔍 Total data:', filtered.length);
-    console.log('🔍 Active filters:', filters);
-
-    // Apply search query
     if (searchQuery) {
       filtered = filtered.filter(item => 
         Object.values(item).some(val => 
           String(val).toLowerCase().includes(searchQuery.toLowerCase())
         )
       );
-      console.log('🔍 After search:', filtered.length);
     }
 
-    // Apply filters
     Object.keys(filters).forEach(filterKey => {
       const filterValue = filters[filterKey];
       
-      // ✅ DEBUG: Log each filter
-      console.log(`🔍 Applying filter: ${filterKey} = "${filterValue}"`);
-      
-      if (!filterValue) {
-        console.log(`⏭️ Skipping empty filter: ${filterKey}`);
-        return;
-      }
+      if (!filterValue) return;
 
-      const filterField = filterConfig.find(f => f.name === filterKey);
-      
       if (filterKey === 'startDate') {
         filtered = filtered.filter(item => {
           const itemDate = new Date(item.createdAt || item.joiningDate || item.date);
           return itemDate >= new Date(filterValue);
         });
-        console.log(`🔍 After ${filterKey} filter:`, filtered.length);
       } else if (filterKey === 'endDate') {
         filtered = filtered.filter(item => {
           const itemDate = new Date(item.createdAt || item.joiningDate || item.date);
           return itemDate <= new Date(filterValue);
         });
-        console.log(`🔍 After ${filterKey} filter:`, filtered.length);
-      } else if (filterKey === 'paymentStatus') {
-        filtered = filtered.filter(item => {
-          if (filterValue === 'paid') {
-            return item.paymentRemaining === 0 || !item.paymentRemaining;
-          } else if (filterValue === 'pending') {
-            return item.paymentRemaining > 0;
-          }
-          return true;
-        });
-        console.log(`🔍 After ${filterKey} filter:`, filtered.length);
       } else if (filterKey === 'status') {
-        // ✅ FIXED: Case-insensitive status comparison
-        const beforeCount = filtered.length;
         filtered = filtered.filter(item => {
           const itemStatus = (item.status || '').toLowerCase();
           const filterStatus = (filterValue || '').toLowerCase();
           return itemStatus === filterStatus;
         });
-        console.log(`🔍 Status filter: "${filterValue}"`);
-        console.log(`🔍 Before: ${beforeCount}, After: ${filtered.length}`);
-        console.log(`🔍 Filtered items:`, filtered.map(item => ({
-          id: item._id,
-          name: item.name || item.enquiryId,
-          status: item.status
-        })));
-      }      
-      
-       else if (filterKey === 'branch') {
+      } else if (filterKey === 'branch') {
         filtered = filtered.filter(item => 
           item.branch?._id === filterValue || item.branch === filterValue
         );
-        console.log(`🔍 After ${filterKey} filter:`, filtered.length);
-      } else if (filterKey === 'plan') {
-        filtered = filtered.filter(item => 
-          item.plan?._id === filterValue || item.plan === filterValue
-        );
-        console.log(`🔍 After ${filterKey} filter:`, filtered.length);
       } else if (filterKey === 'source') {
-        // ✅ ADDED: Specific source filter
         filtered = filtered.filter(item => item.source === filterValue);
-        console.log(`🔍 After ${filterKey} filter:`, filtered.length);
       } else {
-        // Generic filter for other fields
         filtered = filtered.filter(item => {
           const itemValue = item[filterKey];
           if (typeof itemValue === 'object' && itemValue?._id) {
@@ -167,20 +107,14 @@ const GenericMaster = ({
           }
           return itemValue === filterValue;
         });
-        console.log(`🔍 After ${filterKey} filter:`, filtered.length);
       }
     });
-
-    // ✅ DEBUG: Log final results
-    console.log('✅ Final filtered data:', filtered.length);
-    console.log('✅ Final data:', filtered);
 
     setFilteredData(filtered);
   };
 
 
   const handleFilterChange = (filterName, value) => {
-    console.log(`🎛️ Filter changed: ${filterName} = "${value}"`);
     setFilters(prev => ({
       ...prev,
       [filterName]: value
@@ -195,76 +129,53 @@ const GenericMaster = ({
 
 
   const activeFilterCount = Object.values(filters).filter(v => v !== '' && v !== null).length;
-// ✅ FIXED: Export ONLY filtered/visible data (respects filters and search)
-const handleExportToExcel = async () => {
-  setExporting(true);
-  try {
-    // ✅ Use filteredData (visible records on screen) instead of fetching all
-    const dataToExport = filteredData;
 
-    if (dataToExport.length === 0) {
-      alert('❌ No data available to export');
-      setExporting(false);
-      return;
-    }
 
-    // Prepare data for export
-    const exportData = dataToExport.map(item => {
-      const row = {};
-      columns.forEach(col => {
-        if (col.field === 'branch') {
-          row[col.label] = item.branch?.name || '-';
-        } else if (col.field === 'plan') {
-          row[col.label] = item.plan?.planName || '-';
-        } else if (col.field === 'status') {
-          row[col.label] = item.status || '-';
-        } else if (col.field === 'payment') {
-          row['Payment Received'] = item.paymentReceived || 0;
-          row['Payment Remaining'] = item.paymentRemaining || 0;
-        } else if (col.field === 'dateOfBirth' || col.field === 'joiningDate' || col.field === 'createdAt') {
-          // Format dates properly
-          if (item[col.field]) {
-            const date = new Date(item[col.field]);
-            row[col.label] = date.toLocaleDateString('en-GB'); // DD/MM/YYYY format
+  const handleExportToExcel = async () => {
+    setExporting(true);
+    try {
+      const dataToExport = filteredData;
+
+      if (dataToExport.length === 0) {
+        alert('❌ No data available to export');
+        setExporting(false);
+        return;
+      }
+
+      const exportData = dataToExport.map(item => {
+        const row = {};
+        columns.forEach(col => {
+          if (col.field === 'branch') {
+            row[col.label] = item.branch?.name || '-';
+          } else if (col.field === 'plan') {
+            row[col.label] = item.plan?.planName || '-';
+          } else if (col.field === 'status') {
+            row[col.label] = item.status || '-';
           } else {
-            row[col.label] = '-';
+            row[col.label] = item[col.field] || '-';
           }
-        } else if (typeof item[col.field] === 'object' && item[col.field] !== null) {
-          // Handle nested objects
-          row[col.label] = item[col.field]?.name || item[col.field]?.planName || item[col.field]?.branchName || '-';
-        } else {
-          row[col.label] = item[col.field] || '-';
-        }
+        });
+        return row;
       });
-      return row;
-    });
 
-    // Create worksheet
-    const worksheet = XLSX.utils.json_to_sheet(exportData);
-    
-    // Set column widths
-    const colWidths = columns.map(() => ({ wch: 20 }));
-    worksheet['!cols'] = colWidths;
-    
-    // Create workbook
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
-    
-    // Generate filename with timestamp
-    const timestamp = new Date().toISOString().split('T')[0];
-    const filename = `${exportFileName}_${timestamp}.xlsx`;
-    
-    // Download file
-    XLSX.writeFile(workbook, filename);
-    
-    alert(`✅ Exported ${dataToExport.length} records successfully!`);
-  } catch (error) {
-    console.error('Error exporting to Excel:', error);
-    alert('❌ Failed to export data');
-  } finally {
-    setExporting(false);
-  }
-};
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+      
+      const timestamp = new Date().toISOString().split('T')[0];
+      const filename = `${exportFileName}_${timestamp}.xlsx`;
+      
+      XLSX.writeFile(workbook, filename);
+      
+      alert(`✅ Exported ${dataToExport.length} records successfully!`);
+    } catch (error) {
+      console.error('Error exporting to Excel:', error);
+      alert('❌ Failed to export data');
+    } finally {
+      setExporting(false);
+    }
+  };
+
 
   const handleCreate = () => {
     setEditingItem(null);
@@ -294,7 +205,6 @@ const handleExportToExcel = async () => {
           console.error('Date formatting error:', error);
         }
       }
-      // ✅ Handle ObjectId fields (branch, plan, etc.)
       if (field.type === 'select' && typeof item[field.name] === 'object' && item[field.name]?._id) {
         formattedItem[field.name] = item[field.name]._id;
       }
@@ -319,24 +229,25 @@ const handleExportToExcel = async () => {
   };
 
 
-  // ✅ UPDATED: Handle empty select values properly
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    console.log('🚀 SUBMIT TRIGGERED');
+    console.log('📋 Raw Form Data:', formData);
+    console.log('📋 Form Fields:', formFields);
+    
     try {
-      // ✅ Clean formData - remove empty strings for select fields
-      const cleanedData = { ...formData };
+      const cleanedData = {};
       
-      formFields.forEach(field => {
-        if (field.type === 'select' && !field.required) {
-          // For optional select fields, remove if empty
-          if (cleanedData[field.name] === '' || cleanedData[field.name] === null || cleanedData[field.name] === undefined) {
-            delete cleanedData[field.name];
-          }
+      Object.keys(formData).forEach(key => {
+        const value = formData[key];
+        
+        if (value !== '' && value !== null && value !== undefined) {
+          cleanedData[key] = value;
         }
       });
-
-      console.log('📤 Submitting data:', cleanedData);
+  
+      console.log('📤 Cleaned Data to Send:', cleanedData);
       
       if (editingItem) {
         const response = await apiService.update(editingItem._id, cleanedData);
@@ -347,11 +258,13 @@ const handleExportToExcel = async () => {
         console.log('✅ Create response:', response);
         alert('Created successfully');
       }
+      
       setShowModal(false);
       fetchData();
     } catch (error) {
-      console.error('❌ Error saving:', error);
-      console.error('Error details:', error.response?.data);
+      console.error('❌ Error:', error);
+      console.error('❌ Response:', error.response?.data);
+      
       const errorMsg = error.response?.data?.message || error.message || 'Failed to save';
       alert(`Failed to save: ${errorMsg}`);
     }
@@ -491,7 +404,6 @@ const handleExportToExcel = async () => {
         </div>
       </div>
 
-      {/* Filter Panel */}
       {showFilters && filterConfig.length > 0 && (
         <div className="filter-panel">
           <div className="filter-grid">
@@ -610,7 +522,6 @@ const handleExportToExcel = async () => {
         </div>
       )}
 
-      {/* Edit/Create Modal */}
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -735,7 +646,6 @@ const handleExportToExcel = async () => {
         </div>
       )}
 
-      {/* View Details Modal */}
       {showViewModal && viewingItem && (
         <div className="modal-overlay" onClick={() => setShowViewModal(false)}>
           <div 
@@ -844,5 +754,6 @@ const handleExportToExcel = async () => {
     </div>
   );
 };
+
 
 export default GenericMaster;

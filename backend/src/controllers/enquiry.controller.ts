@@ -1,12 +1,13 @@
 import { Request, Response } from 'express';
 import Enquiry from '../models/Enquiry';
 import Plan from '../models/Plan';
+import Branch from '../models/Branch';
+import mongoose from 'mongoose';
 
 
-// ✅ FIXED: Get all enquiries (include converted ones)
+// ✅ GET ALL ENQUIRIES
 export const getAllEnquiries = async (req: Request, res: Response): Promise<void> => {
   try {
-    // ✅ Fetch ALL enquiries including converted
     const enquiries = await Enquiry.find()
       .populate('branch', 'name city state')
       .populate('plan', 'planName duration price')
@@ -22,7 +23,7 @@ export const getAllEnquiries = async (req: Request, res: Response): Promise<void
 };
 
 
-// Get single enquiry
+// ✅ GET SINGLE ENQUIRY
 export const getEnquiryById = async (req: Request, res: Response): Promise<void> => {
   try {
     const enquiry = await Enquiry.findById(req.params.id)
@@ -42,119 +43,278 @@ export const getEnquiryById = async (req: Request, res: Response): Promise<void>
 };
 
 
-// Create new enquiry
+// ✅ CREATE NEW ENQUIRY - FIXED WITH TRIMMING AND VALIDATION
 export const createEnquiry = async (req: Request, res: Response): Promise<void> => {
   try {
     console.log('=== CREATE ENQUIRY STARTED ===');
-    console.log('Request body:', JSON.stringify(req.body, null, 2));
+    console.log('📥 Raw request body:', JSON.stringify(req.body, null, 2));
     
-    // ✅ Validate plan if provided
-    if (req.body.plan) {
-      const planExists = await Plan.findById(req.body.plan);
-      if (!planExists) {
-        console.error('❌ Plan not found:', req.body.plan);
+    // ✅ STEP 1: Trim all string fields to remove whitespace
+    const trimmedData: any = { ...req.body };
+    Object.keys(trimmedData).forEach(key => {
+      if (typeof trimmedData[key] === 'string') {
+        trimmedData[key] = trimmedData[key].trim();
+        console.log(`✂️ Trimmed ${key}: "${req.body[key]}" -> "${trimmedData[key]}"`);
+      }
+    });
+    
+    console.log('✂️ Trimmed data:', JSON.stringify(trimmedData, null, 2));
+    
+    // ✅ STEP 2: Clean the data - remove empty optional fields
+    const cleanedData: any = { ...trimmedData };
+    
+    const optionalFields = ['plan', 'dateOfBirth', 'followUpDate', 'notes', 'status', 'profilePhoto'];
+    optionalFields.forEach(field => {
+      if (
+        cleanedData[field] === '' || 
+        cleanedData[field] === null || 
+        cleanedData[field] === undefined ||
+        cleanedData[field] === 'select'
+      ) {
+        delete cleanedData[field];
+        console.log(`🧹 Removed empty field: ${field}`);
+      }
+    });
+    
+    console.log('🧹 Cleaned data:', JSON.stringify(cleanedData, null, 2));
+    
+    // ✅ STEP 3: Validate required fields
+    const requiredFields = ['branch', 'name', 'mobileNumber', 'email', 'gender', 'source'];
+    const missingFields = requiredFields.filter(field => !cleanedData[field]);
+    
+    if (missingFields.length > 0) {
+      console.error('❌ Missing required fields:', missingFields);
+      res.status(400).json({ 
+        success: false, 
+        message: `Missing required fields: ${missingFields.join(', ')}` 
+      });
+      return;
+    }
+    
+    // ✅ STEP 4: Validate branch ObjectId and existence
+    if (!mongoose.Types.ObjectId.isValid(cleanedData.branch)) {
+      console.error('❌ Invalid branch ObjectId format:', cleanedData.branch);
+      res.status(400).json({ 
+        success: false, 
+        message: 'Invalid branch ID format' 
+      });
+      return;
+    }
+    
+    const branchExists = await Branch.findById(cleanedData.branch);
+    if (!branchExists) {
+      console.error('❌ Branch not found:', cleanedData.branch);
+      res.status(400).json({ 
+        success: false, 
+        message: 'Branch not found' 
+      });
+      return;
+    }
+    console.log('✅ Branch validated:', branchExists.name);
+    
+    // ✅ STEP 5: Validate plan if provided
+    if (cleanedData.plan) {
+      if (!mongoose.Types.ObjectId.isValid(cleanedData.plan)) {
+        console.error('❌ Invalid plan ObjectId format:', cleanedData.plan);
         res.status(400).json({ 
           success: false, 
-          message: 'Invalid plan ID provided' 
+          message: 'Invalid plan ID format' 
+        });
+        return;
+      }
+      
+      const planExists = await Plan.findById(cleanedData.plan);
+      if (!planExists) {
+        console.error('❌ Plan not found:', cleanedData.plan);
+        res.status(400).json({ 
+          success: false, 
+          message: 'Plan not found' 
         });
         return;
       }
       console.log('✅ Plan validated:', planExists.planName);
-    }
-    
-    // ✅ Generate enquiry ID manually
-    const count = await Enquiry.countDocuments();
-    const enquiryId = 'ENQ' + String(count + 1).padStart(4, '0');
-    
-    console.log('Generated enquiryId:', enquiryId);
-    
-    // ✅ Create enquiry data
-    const enquiryData: any = {
-      ...req.body,
-      enquiryId: enquiryId
-    };
-    
-    // Remove plan if it's empty string
-    if (!enquiryData.plan || enquiryData.plan === '') {
-      delete enquiryData.plan;
-      console.log('⚠️ No plan provided, creating enquiry without plan');
     } else {
-      console.log('📋 Creating enquiry with plan:', enquiryData.plan);
+      console.log('⚠️ No plan provided (optional)');
     }
     
-    console.log('Final enquiry data:', JSON.stringify(enquiryData, null, 2));
+    // ✅ STEP 6: Validate mobile number format
+    if (!/^[0-9]{10}$/.test(cleanedData.mobileNumber)) {
+      console.error('❌ Invalid mobile number format:', cleanedData.mobileNumber);
+      res.status(400).json({ 
+        success: false, 
+        message: 'Mobile number must be exactly 10 digits' 
+      });
+      return;
+    }
+    console.log('✅ Mobile number validated');
     
-    // ✅ Create and save enquiry
-    const enquiry = new Enquiry(enquiryData);
+    // ✅ STEP 7: Validate email format
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanedData.email)) {
+      console.error('❌ Invalid email format:', cleanedData.email);
+      res.status(400).json({ 
+        success: false, 
+        message: 'Invalid email format' 
+      });
+      return;
+    }
+    console.log('✅ Email validated');
+    
+    // ✅ STEP 8: Validate gender
+    if (!['Male', 'Female', 'Other'].includes(cleanedData.gender)) {
+      console.error('❌ Invalid gender value:', cleanedData.gender);
+      res.status(400).json({ 
+        success: false, 
+        message: 'Gender must be Male, Female, or Other' 
+      });
+      return;
+    }
+    console.log('✅ Gender validated');
+    
+    // ✅ STEP 9: Validate source
+    const validSources = ['Walk-in', 'Social Media', 'Referral', 'Website', 'Phone Call'];
+    if (!validSources.includes(cleanedData.source)) {
+      console.error('❌ Invalid source value:', cleanedData.source);
+      res.status(400).json({ 
+        success: false, 
+        message: 'Invalid enquiry source' 
+      });
+      return;
+    }
+    console.log('✅ Source validated');
+    
+    console.log('✅ All validations passed');
+    console.log('📝 Final data to save:', JSON.stringify(cleanedData, null, 2));
+    
+    // ✅ STEP 10: Create and save enquiry
+    const enquiry = new Enquiry(cleanedData);
     await enquiry.save();
-    console.log('✅ Enquiry saved to database');
+    console.log('✅ Enquiry saved to database with ID:', enquiry._id);
+    console.log('✅ Generated enquiryId:', enquiry.enquiryId);
     
-    // ✅ Fetch with populated fields
+    // ✅ STEP 11: Fetch with populated fields
     const populatedEnquiry = await Enquiry.findById(enquiry._id)
       .populate('branch', 'name city state')
       .populate('plan', 'planName duration price');
     
     console.log('✅ Enquiry populated successfully');
-    console.log('Branch:', populatedEnquiry?.branch);
-    console.log('Plan:', populatedEnquiry?.plan);
     
     res.status(201).json({ 
       success: true, 
       data: populatedEnquiry,
       message: 'Enquiry created successfully' 
     });
+    
   } catch (error: any) {
     console.error('=== CREATE ENQUIRY ERROR ===');
-    console.error('Error name:', error.name);
-    console.error('Error message:', error.message);
-    console.error('Error stack:', error.stack);
+    console.error('❌ Error name:', error.name);
+    console.error('❌ Error message:', error.message);
+    console.error('❌ Error stack:', error.stack);
+    
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map((err: any) => err.message);
+      res.status(400).json({ 
+        success: false, 
+        message: `Validation failed: ${messages.join(', ')}` 
+      });
+      return;
+    }
+    
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern || {})[0];
+      res.status(400).json({ 
+        success: false, 
+        message: `${field || 'Field'} already exists` 
+      });
+      return;
+    }
     
     res.status(500).json({ 
       success: false, 
       message: error.message || 'Failed to create enquiry',
-      error: process.env.NODE_ENV === 'development' ? error : undefined
+      error: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 };
 
 
-// Update enquiry
+// ✅ UPDATE ENQUIRY - FIXED WITH TRIMMING
 export const updateEnquiry = async (req: Request, res: Response): Promise<void> => {
   try {
     console.log('=== UPDATE ENQUIRY STARTED ===');
     console.log('Enquiry ID:', req.params.id);
-    console.log('Update data:', JSON.stringify(req.body, null, 2));
+    console.log('📥 Raw update data:', JSON.stringify(req.body, null, 2));
+    
+    // ✅ Trim all string fields
+    const trimmedData: any = { ...req.body };
+    Object.keys(trimmedData).forEach(key => {
+      if (typeof trimmedData[key] === 'string') {
+        trimmedData[key] = trimmedData[key].trim();
+      }
+    });
+    
+    // ✅ Clean the data
+    const cleanedData: any = { ...trimmedData };
+    
+    const optionalFields = ['plan', 'dateOfBirth', 'followUpDate', 'notes', 'profilePhoto'];
+    optionalFields.forEach(field => {
+      if (
+        cleanedData[field] === '' || 
+        cleanedData[field] === null || 
+        cleanedData[field] === undefined
+      ) {
+        delete cleanedData[field];
+        console.log(`🧹 Removed empty field: ${field}`);
+      }
+    });
     
     // ✅ Validate plan if provided
-    if (req.body.plan && req.body.plan !== '') {
-      const planExists = await Plan.findById(req.body.plan);
-      if (!planExists) {
-        console.error('❌ Plan not found:', req.body.plan);
+    if (cleanedData.plan) {
+      if (!mongoose.Types.ObjectId.isValid(cleanedData.plan)) {
         res.status(400).json({ 
           success: false, 
-          message: 'Invalid plan ID provided' 
+          message: 'Invalid plan ID format' 
+        });
+        return;
+      }
+      
+      const planExists = await Plan.findById(cleanedData.plan);
+      if (!planExists) {
+        console.error('❌ Plan not found:', cleanedData.plan);
+        res.status(400).json({ 
+          success: false, 
+          message: 'Plan not found' 
         });
         return;
       }
       console.log('✅ Plan validated:', planExists.planName);
     }
     
-    // ✅ Clean up request body
-    const updateData: any = { ...req.body };
-    
-    // If plan is empty string or undefined, set to null
-    if (!updateData.plan || updateData.plan === '') {
-      updateData.plan = null;
-      console.log('⚠️ Setting plan to null');
-    } else {
-      console.log('📋 Updating with plan:', updateData.plan);
+    // ✅ Validate branch if provided
+    if (cleanedData.branch) {
+      if (!mongoose.Types.ObjectId.isValid(cleanedData.branch)) {
+        res.status(400).json({ 
+          success: false, 
+          message: 'Invalid branch ID format' 
+        });
+        return;
+      }
+      
+      const branchExists = await Branch.findById(cleanedData.branch);
+      if (!branchExists) {
+        res.status(400).json({ 
+          success: false, 
+          message: 'Branch not found' 
+        });
+        return;
+      }
+      console.log('✅ Branch validated');
     }
     
-    console.log('Final update data:', JSON.stringify(updateData, null, 2));
+    console.log('🧹 Final update data:', JSON.stringify(cleanedData, null, 2));
     
     const enquiry = await Enquiry.findByIdAndUpdate(
       req.params.id,
-      updateData,
+      cleanedData,
       { new: true, runValidators: true }
     )
       .populate('branch', 'name city state')
@@ -166,13 +326,26 @@ export const updateEnquiry = async (req: Request, res: Response): Promise<void> 
     }
     
     console.log('✅ Enquiry updated successfully');
-    console.log('Branch:', enquiry.branch);
-    console.log('Plan:', enquiry.plan);
     
-    res.json({ success: true, data: enquiry });
+    res.json({ 
+      success: true, 
+      data: enquiry,
+      message: 'Enquiry updated successfully'
+    });
+    
   } catch (error: any) {
     console.error('=== UPDATE ENQUIRY ERROR ===');
-    console.error('Error:', error);
+    console.error('❌ Error:', error);
+    
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map((err: any) => err.message);
+      res.status(400).json({ 
+        success: false, 
+        message: `Validation failed: ${messages.join(', ')}` 
+      });
+      return;
+    }
+    
     res.status(500).json({ 
       success: false, 
       message: error.message || 'Failed to update enquiry' 
@@ -181,7 +354,7 @@ export const updateEnquiry = async (req: Request, res: Response): Promise<void> 
 };
 
 
-// Delete enquiry
+// ✅ DELETE ENQUIRY
 export const deleteEnquiry = async (req: Request, res: Response): Promise<void> => {
   try {
     const enquiry = await Enquiry.findByIdAndDelete(req.params.id);
@@ -199,16 +372,12 @@ export const deleteEnquiry = async (req: Request, res: Response): Promise<void> 
 };
 
 
-// ✅ FIXED: Get enquiry statistics
+// ✅ GET ENQUIRY STATISTICS
 export const getEnquiryStats = async (req: Request, res: Response): Promise<void> => {
   try {
-    // ✅ Count all enquiries
     const totalEnquiries = await Enquiry.countDocuments();
-    
-    // ✅ Count pending enquiries (not converted)
     const pending = await Enquiry.countDocuments({ status: 'pending' });
     
-    // ✅ Count this month's enquiries
     const thisMonth = await Enquiry.countDocuments({
       createdAt: {
         $gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
@@ -221,7 +390,7 @@ export const getEnquiryStats = async (req: Request, res: Response): Promise<void
       success: true,
       data: {
         total: totalEnquiries,
-        pending: pending, // ✅ Changed from 'confirmed' to 'pending'
+        pending: pending,
         thisMonth: thisMonth
       }
     });

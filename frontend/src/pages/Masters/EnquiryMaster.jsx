@@ -8,11 +8,10 @@ import planApi from '../../services/planApi';
 import memberApi from '../../services/memberApi';
 import './EnquiryMaster.css';
 
-
 const EnquiryMaster = () => {
   const [branches, setBranches] = useState([]);
   const [plans, setPlans] = useState([]);
-  const [stats, setStats] = useState({ total: 0, pending: 0, thisMonth: 0 }); // ✅ Changed 'confirmed' to 'pending'
+  const [stats, setStats] = useState({ total: 0, pending: 0, thisMonth: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
@@ -25,11 +24,9 @@ const EnquiryMaster = () => {
     paymentRemaining: 0
   });
 
-
   useEffect(() => {
     fetchInitialData();
   }, []);
-
 
   const fetchInitialData = async () => {
     setLoading(true);
@@ -48,7 +45,6 @@ const EnquiryMaster = () => {
     }
   };
 
-
   const fetchBranches = async () => {
     try {
       const response = await branchApi.getAll();
@@ -60,7 +56,6 @@ const EnquiryMaster = () => {
       setBranches([]);
     }
   };
-
 
   const fetchPlans = async () => {
     try {
@@ -74,21 +69,19 @@ const EnquiryMaster = () => {
     }
   };
 
-
   const fetchStats = async () => {
     try {
       const response = await enquiryApi.getStats();
       if (response.success && response.data) {
         setStats(response.data);
       } else {
-        setStats({ total: 0, pending: 0, thisMonth: 0 }); // ✅ Changed
+        setStats({ total: 0, pending: 0, thisMonth: 0 });
       }
     } catch (error) {
       console.error('Error fetching stats:', error);
-      setStats({ total: 0, pending: 0, thisMonth: 0 }); // ✅ Changed
+      setStats({ total: 0, pending: 0, thisMonth: 0 });
     }
   };
-
 
   const handleConvertToMember = (enquiry) => {
     setSelectedEnquiry(enquiry);
@@ -101,13 +94,11 @@ const EnquiryMaster = () => {
     setShowPaymentModal(true);
   };
 
-
   const handlePaymentChange = (e) => {
     const received = parseFloat(e.target.value) || 0;
     const selectedPlan = plans.find(p => p._id === paymentData.plan);
     const totalAmount = selectedPlan ? selectedPlan.price : 0;
     const remaining = totalAmount - received;
-
 
     setPaymentData({
       ...paymentData,
@@ -116,13 +107,11 @@ const EnquiryMaster = () => {
     });
   };
 
-
   const handlePlanChangeInPayment = (e) => {
     const planId = e.target.value;
     const selectedPlan = plans.find(p => p._id === planId);
     const totalAmount = selectedPlan ? selectedPlan.price : 0;
     const remaining = totalAmount - paymentData.paymentReceived;
-
 
     setPaymentData({
       ...paymentData,
@@ -131,22 +120,18 @@ const EnquiryMaster = () => {
     });
   };
 
-
   const handleSubmitPayment = async (e) => {
     e.preventDefault();
-
 
     if (!paymentData.plan || !paymentData.dateOfBirth || paymentData.paymentReceived <= 0) {
       alert('Please fill all required fields');
       return;
     }
 
-
     try {
       const dobDate = typeof paymentData.dateOfBirth === 'string' 
         ? new Date(paymentData.dateOfBirth) 
         : paymentData.dateOfBirth;
-
 
       const memberData = {
         name: selectedEnquiry.name,
@@ -163,15 +148,12 @@ const EnquiryMaster = () => {
         enquiryId: selectedEnquiry._id
       };
 
-
       console.log('Sending member data:', memberData);
-
 
       const response = await memberApi.create(memberData);
       console.log('Member created:', response);
       
       await enquiryApi.update(selectedEnquiry._id, { status: 'converted' });
-
 
       alert('✅ Enquiry converted to Member successfully!');
       setShowPaymentModal(false);
@@ -184,7 +166,6 @@ const EnquiryMaster = () => {
       alert(`❌ Failed to convert to member: ${errorMessage}`);
     }
   };
-
 
   const columns = [
     {
@@ -225,7 +206,6 @@ const EnquiryMaster = () => {
       )
     }
   ];
-
 
   const formFields = [
     {
@@ -289,17 +269,6 @@ const EnquiryMaster = () => {
       ]
     },
     {
-      name: 'status',
-      label: 'Status',
-      type: 'select',
-      required: false,
-      options: [
-        { value: '', label: 'Select Status' },
-        { value: 'pending', label: 'Pending' },
-        { value: 'rejected', label: 'Rejected' } // ✅ REMOVED 'confirmed'
-      ]
-    },
-    {
       name: 'followUpDate',
       label: 'Follow Up Date',
       type: 'date',
@@ -314,10 +283,8 @@ const EnquiryMaster = () => {
       required: false,
       placeholder: 'Add any additional notes or comments...'
     }
-  ];  
+  ];
 
-
-  // Filter configuration for Enquiry
   const filterConfig = [
     {
       name: 'status',
@@ -326,7 +293,7 @@ const EnquiryMaster = () => {
       options: [
         { value: '', label: 'All Status' },
         { value: 'pending', label: 'Pending' },
-        { value: 'rejected', label: 'Rejected' }, // ✅ REMOVED 'confirmed'
+        { value: 'rejected', label: 'Rejected' },
         { value: 'converted', label: 'Converted' }
       ]
     },
@@ -367,7 +334,6 @@ const EnquiryMaster = () => {
     }
   ];
 
-
   if (loading) {
     return (
       <div className="loading-container">
@@ -376,7 +342,6 @@ const EnquiryMaster = () => {
       </div>
     );
   }
-
 
   if (error) {
     return (
@@ -391,7 +356,6 @@ const EnquiryMaster = () => {
       </div>
     );
   }
-
 
   return (
     <div className="enquiry-master-page">
@@ -418,7 +382,6 @@ const EnquiryMaster = () => {
           </div>
         </div>
       </div>
-
 
       <GenericMaster
         title="Enquiry Master"
@@ -457,7 +420,6 @@ const EnquiryMaster = () => {
         )}
       />
 
-
       {showPaymentModal && (
         <div className="modal-overlay" onClick={() => setShowPaymentModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -480,7 +442,6 @@ const EnquiryMaster = () => {
                   <p style={{ margin: '0.25rem 0', color: '#64748b' }}><strong>Mobile:</strong> {selectedEnquiry?.mobileNumber}</p>
                 </div>
 
-
                 <div className="form-group">
                   <label>Membership Plan <span className="required">*</span></label>
                   <select
@@ -496,7 +457,6 @@ const EnquiryMaster = () => {
                     ))}
                   </select>
                 </div>
-
 
                 <div className="form-group">
                   <label>Date of Birth <span className="required">*</span></label>
@@ -517,7 +477,6 @@ const EnquiryMaster = () => {
                   />
                 </div>
 
-
                 <div className="form-group">
                   <label>Payment Received <span className="required">*</span></label>
                   <input
@@ -530,7 +489,6 @@ const EnquiryMaster = () => {
                   />
                 </div>
 
-
                 <div className="form-group">
                   <label>Payment Remaining</label>
                   <input
@@ -541,7 +499,6 @@ const EnquiryMaster = () => {
                     style={{ background: '#f1f5f9', cursor: 'not-allowed' }}
                   />
                 </div>
-
 
                 {paymentData.plan && (
                   <div style={{
@@ -574,6 +531,5 @@ const EnquiryMaster = () => {
     </div>
   );
 };
-
 
 export default EnquiryMaster;
