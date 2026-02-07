@@ -1,8 +1,8 @@
 .masters-layout {
   min-height: 100vh;
   background: #f5f7fa;
-  margin: 0;  /* ADD THIS */
-  padding: 0;  /* ADD THIS */
+  margin: 0;
+  padding: 0;
 }
 
 .masters-tabs {
@@ -12,7 +12,7 @@
   background: white;
   border-bottom: 2px solid #e1e8ed;
   overflow-x: auto;
-  margin: 0;  /* ADD THIS */
+  margin: 0;
 }
 
 .tab-btn {
@@ -29,15 +29,47 @@
 }
 
 .tab-btn:hover {
-  color: #3498db;
+  color: rgb(23, 171, 136);
 }
 
 .tab-btn.active {
-  color: #3498db;
-  border-bottom-color: #3498db;
+  color: rgb(23, 171, 136);
+  border-bottom-color: rgb(23, 171, 136);
 }
 
 .masters-content {
   padding: 0;
-  margin: 0;  /* ADD THIS */
+  margin: 0;
+}
+
+/* ✅ Green Theme Override for ALL Master Tabs */
+.masters-layout .master-table thead {
+  background: rgb(23, 171, 136) !important;
+}
+
+.masters-layout .master-table th {
+  background: transparent !important;
+  color: white !important;
+}
+
+.masters-layout .btn-create {
+  background: rgb(23, 171, 136) !important;
+  color: white !important;
+  box-shadow: 0 4px 15px rgba(23, 171, 136, 0.3) !important;
+}
+
+.masters-layout .btn-create:hover {
+  background: rgb(20, 150, 120) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(23, 171, 136, 0.4) !important;
+}
+
+/* Force for all tables in masters */
+.masters-layout table thead {
+  background: rgb(23, 171, 136) !important;
+}
+
+.masters-layout table th {
+  background: transparent !important;
+  color: white !important;
 }

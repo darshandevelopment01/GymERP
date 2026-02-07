@@ -23,11 +23,9 @@ const BranchMaster = () => {
       placeholder: 'Enter branch name',
     },
     {
-      name: 'address',
-      label: 'Address',
-      type: 'textarea',
-      required: true,
-      placeholder: 'Enter full address',
+      name: 'getLocation',
+      label: 'Get Current Location',
+      type: 'location-button',
     },
     {
       name: 'phone',
@@ -71,7 +69,6 @@ const BranchMaster = () => {
       required: true,
       placeholder: 'Enter radius (e.g., 100)',
     },
-    // ✅ CHANGED: Display latitude from location.coordinates[1]
     {
       name: 'latitude',
       label: 'Latitude',
@@ -86,7 +83,6 @@ const BranchMaster = () => {
         return '-';
       }
     },
-    // ✅ CHANGED: Display longitude from location.coordinates[0]
     {
       name: 'longitude',
       label: 'Longitude',
@@ -102,9 +98,11 @@ const BranchMaster = () => {
       }
     },
     {
-      name: 'getLocation',
-      label: 'Get Current Location',
-      type: 'location-button',
+      name: 'address',
+      label: 'Address',
+      type: 'textarea',
+      required: true,
+      placeholder: 'Enter full address',
     },
   ];
 

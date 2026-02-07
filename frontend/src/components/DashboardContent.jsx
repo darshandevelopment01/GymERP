@@ -2,10 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  LayoutDashboard, 
-  Store, 
-  Smile, 
-  Receipt,
+  Users,
+  Building2,
+  UsersRound,
+  IndianRupee,
   Menu
 } from 'lucide-react';
 import Sidebar from './Sidebar';
@@ -55,23 +55,31 @@ export default function DashboardContent() {
         finalStats = [
           { 
             label: 'Total Members', 
-            value: statsData.totalMembers || statsData.members || '0', 
-            growth: statsData.memberGrowth || '+0%' 
+            value: statsData.totalMembers || statsData.members || 0, 
+            growth: statsData.memberGrowth || '+0%',
+            icon: 'users',
+            color: '#3b82f6'
           },
           { 
             label: 'Active Branches', 
-            value: statsData.activeBranches || statsData.branches || '0', 
-            growth: statsData.branchGrowth || '+0' 
+            value: statsData.activeBranches || statsData.branches || 0, 
+            growth: statsData.branchGrowth || '+0',
+            icon: 'building',
+            color: '#10b981'
           },
           { 
             label: 'Total Employees', 
-            value: statsData.totalEmployees || statsData.employees || '0', 
-            growth: statsData.employeeGrowth || '+0%' 
+            value: statsData.totalEmployees || statsData.employees || 0, 
+            growth: statsData.employeeGrowth || '+0%',
+            icon: 'team',
+            color: '#f59e0b'
           },
           { 
             label: 'Revenue This Month', 
-            value: statsData.monthlyRevenue || statsData.revenue || '₹0', 
-            growth: statsData.revenueGrowth || '+0%' 
+            value: `₹${statsData.monthlyRevenue || statsData.revenue || 0}`, 
+            growth: statsData.revenueGrowth || '+0%',
+            icon: 'rupee',
+            color: '#17ab88'
           }
         ];
       }
@@ -95,7 +103,6 @@ export default function DashboardContent() {
   const handleMenuChange = (menu) => {
     setActiveMenu(menu);
     
-    // Navigate based on menu selection
     const routes = {
       'Dashboard': '/dashboard',
       'Masters': '/masters',
@@ -121,6 +128,16 @@ export default function DashboardContent() {
     setIsSidebarOpen(false);
   };
 
+  const getIcon = (iconName) => {
+    const iconMap = {
+      users: Users,
+      building: Building2,
+      team: UsersRound,
+      rupee: IndianRupee,
+    };
+    return iconMap[iconName] || Users;
+  };
+
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', color: '#fff' }}>
@@ -131,13 +148,13 @@ export default function DashboardContent() {
 
   return (
     <div className="dashboard-container">
-     <Sidebar 
-  activeMenu={activeMenu} 
-  onChange={handleMenuChange}
-  onLogout={handleLogout}
-  isOpen={false}  // FORCE FALSE on desktop
-  onClose={closeSidebar}
-/>
+      <Sidebar 
+        activeMenu={activeMenu} 
+        onChange={handleMenuChange}
+        onLogout={handleLogout}
+        isOpen={isSidebarOpen}
+        onClose={closeSidebar}
+      />
 
       <div className="dashboard-main">
         <div className="dashboard-mobile-header">
@@ -163,20 +180,20 @@ export default function DashboardContent() {
           <div className="stats-grid">
             {stats && stats.length > 0 ? (
               stats.map((stat, index) => {
-                const icons = [LayoutDashboard, Store, Smile, Receipt];
-                const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
-                const Icon = icons[index % 4];
+                const Icon = getIcon(stat.icon);
                 
                 return (
                   <div key={index} className="stat-card">
-                    <div className="stat-icon" style={{ backgroundColor: `${colors[index % 4]}20` }}>
-                      <Icon size={22} color={colors[index % 4]} />
+                    <div className="stat-icon" style={{ backgroundColor: `${stat.color}20` }}>
+                      <Icon size={28} color={stat.color} strokeWidth={2} />
                     </div>
                     <div className="stat-content">
                       <div className="stat-header">
                         <h2 className="stat-value">{stat.value}</h2>
                         {stat.growth && (
-                          <span className="stat-growth">{stat.growth}</span>
+                          <span className="stat-growth" style={{ color: stat.color }}>
+                            {stat.growth}
+                          </span>
                         )}
                       </div>
                       <p className="stat-label">{stat.label}</p>
@@ -259,61 +276,103 @@ export default function DashboardContent() {
               </div>
             </div>
 
-            {/* Membership Growth Chart */}
+            {/* Membership Growth Chart - FIXED */}
             <div className="chart-card">
               <h3 className="chart-title">Membership Growth</h3>
               <div className="chart-placeholder">
                 {membershipData && membershipData.length > 0 ? (
                   <>
                     <div className="line-chart">
-                      <svg viewBox="0 0 600 250" style={{ width: '100%', height: '100%' }}>
-                        <polyline
-                          fill="none"
-                          stroke="#10b981"
-                          strokeWidth="3"
-                          points={membershipData
+                      <svg viewBox="0 0 600 280" preserveAspectRatio="xMidYMid meet" style={{ width: '100%', height: '100%' }}>
+                        {/* Grid lines */}
+                        {[0, 1, 2, 3, 4, 5].map(i => (
+                          <line
+                            key={i}
+                            x1="20"
+                            y1={30 + i * 40}
+                            x2="580"
+                            y2={30 + i * 40}
+                            stroke="#e5e7eb"
+                            strokeWidth="1"
+                          />
+                        ))}
+                        
+                        {/* Line and circles */}
+                        {(() => {
+                          const maxMembers = Math.max(...membershipData.map(m => m.total || 0), 1);
+                          const points = membershipData
                             .map((d, i) => {
-                              const x = (i / (membershipData.length - 1)) * 560 + 20;
-                              const maxMembers = Math.max(...membershipData.map(m => m.total || 0));
-                              const y = 230 - ((d.total || 0) / maxMembers) * 200;
-                              return `${x},${y}`;
-                            })
-                            .join(' ')}
-                        />
-                        {membershipData.map((d, i) => {
-                          const x = (i / (membershipData.length - 1)) * 560 + 20;
-                          const maxMembers = Math.max(...membershipData.map(m => m.total || 0));
-                          const y = 230 - ((d.total || 0) / maxMembers) * 200;
+                              const x = membershipData.length > 1 
+                                ? (i / (membershipData.length - 1)) * 560 + 20
+                                : 300; // Center single point
+                              const y = 30 + (1 - (d.total || 0) / maxMembers) * 200;
+                              return { x, y, value: d.total || 0 };
+                            });
+
                           return (
-                            <circle
-                              key={i}
-                              cx={x}
-                              cy={y}
-                              r="5"
-                              fill="#10b981"
-                            />
+                            <>
+                              {/* Line */}
+                              {points.length > 1 && (
+                                <polyline
+                                  fill="none"
+                                  stroke="#17ab88"
+                                  strokeWidth="3"
+                                  points={points.map(p => `${p.x},${p.y}`).join(' ')}
+                                />
+                              )}
+                              
+                              {/* Circles and values */}
+                              {points.map((point, i) => (
+                                <g key={i}>
+                                  <circle
+                                    cx={point.x}
+                                    cy={point.y}
+                                    r="6"
+                                    fill="#17ab88"
+                                    stroke="white"
+                                    strokeWidth="2"
+                                  />
+                                  {/* Value label above circle */}
+                                  <text
+                                    x={point.x}
+                                    y={point.y - 12}
+                                    textAnchor="middle"
+                                    fontSize="11"
+                                    fill="#17ab88"
+                                    fontWeight="600"
+                                  >
+                                    {point.value}
+                                  </text>
+                                </g>
+                              ))}
+                              
+                              {/* Month labels */}
+                              {membershipData.map((d, i) => {
+                                const x = membershipData.length > 1 
+                                  ? (i / (membershipData.length - 1)) * 560 + 20
+                                  : 300;
+                                return (
+                                  <text
+                                    key={i}
+                                    x={x}
+                                    y={250}
+                                    textAnchor="middle"
+                                    fontSize="12"
+                                    fill="#6b7280"
+                                    fontWeight="500"
+                                  >
+                                    {d.month}
+                                  </text>
+                                );
+                              })}
+                            </>
                           );
-                        })}
-                        {membershipData.map((d, i) => {
-                          const x = (i / (membershipData.length - 1)) * 560 + 20;
-                          return (
-                            <text
-                              key={i}
-                              x={x}
-                              y={245}
-                              textAnchor="middle"
-                              fontSize="12"
-                              fill="#6b7280"
-                            >
-                              {d.month}
-                            </text>
-                          );
-                        })}
+                        })()}
                       </svg>
                     </div>
                     <div className="chart-legend">
                       <div className="legend-item">
-                        <div className="legend-dot" style={{ backgroundColor: '#10b981' }}></div>
+                        <div className="legend-dot" style={{ backgroundColor: '#17ab88' }}></div>
                         <span>Total Members</span>
                       </div>
                     </div>

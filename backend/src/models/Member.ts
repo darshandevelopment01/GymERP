@@ -102,4 +102,40 @@ const MemberSchema = new Schema<IMember>(
   }
 );
 
+MemberSchema.pre('save', async function() {
+  if (!this.memberId) {
+    try {
+      const date = new Date();
+      const dateStr = date.toISOString().slice(0, 10).replace(/-/g, '');
+      
+      const lastMember = await mongoose.model<IMember>('Member')
+        .findOne({ 
+          memberId: new RegExp(`^MEM-${dateStr}-\\d{4}$`) 
+        })
+        .sort({ memberId: -1 })
+        .select('memberId')
+        .lean();
+      
+      let sequence = 1;
+      
+      if (lastMember?.memberId) {
+        const parts = lastMember.memberId.split('-');
+        if (parts.length === 3 && parts[2]) {
+          const lastSequence = parseInt(parts[2], 10);
+          if (!isNaN(lastSequence) && lastSequence > 0) {
+            sequence = lastSequence + 1;
+          }
+        }
+      }
+      
+      this.memberId = `MEM-${dateStr}-${String(sequence).padStart(4, '0')}`;
+      console.log('✅ Generated memberId:', this.memberId);
+      
+    } catch (error) {
+      console.error('❌ Error generating memberId:', error);
+      this.memberId = `MEM-${Date.now()}`;
+    }
+  }
+});
+
 export default mongoose.model<IMember>('Member', MemberSchema);

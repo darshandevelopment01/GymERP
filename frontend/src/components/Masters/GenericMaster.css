@@ -57,14 +57,14 @@
 }
 
 .search-box:focus-within {
-  border-color: #667eea;
-  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+  border-color: rgb(23, 171, 136);
+  box-shadow: 0 0 0 4px rgba(23, 171, 136, 0.1);
   background: #ffffff;
 }
 
 .search-icon {
   margin-right: 0.75rem;
-  color: #667eea;
+  color: rgb(23, 171, 136);
   font-size: 1.1rem;
 }
 
@@ -107,16 +107,16 @@
 }
 
 .btn-filter:hover {
-  border-color: #667eea;
-  color: #667eea;
+  border-color: rgb(23, 171, 136);
+  color: rgb(23, 171, 136);
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.15);
+  box-shadow: 0 4px 8px rgba(23, 171, 136, 0.15);
 }
 
 .btn-filter.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: rgb(23, 171, 136);
   color: white;
-  border-color: #667eea;
+  border-color: rgb(23, 171, 136);
 }
 
 .filter-badge {
@@ -139,7 +139,7 @@
 
 /* Create Button */
 .btn-create {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: rgb(23, 171, 136);
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -148,19 +148,43 @@
   cursor: pointer;
   font-weight: 600;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 15px rgba(23, 171, 136, 0.3);
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
 .btn-create:hover {
+  background: rgb(20, 150, 120);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 6px 20px rgba(23, 171, 136, 0.4);
 }
 
 .btn-create:active {
   transform: translateY(0);
+}
+
+/* Export Button */
+.btn-export {
+  background: white;
+  color: rgb(23, 171, 136);
+  border: 2px solid rgb(23, 171, 136);
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-export:hover {
+  background: rgb(23, 171, 136);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(23, 171, 136, 0.3);
 }
 
 /* Filter Panel - Professional Design */
@@ -229,14 +253,14 @@
 .filter-item input[type="date"]:focus,
 .filter-item input[type="text"]:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: rgb(23, 171, 136);
+  box-shadow: 0 0 0 3px rgba(23, 171, 136, 0.1);
 }
 
 /* Custom select dropdown arrow */
 .filter-item select {
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23475569' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2317AB88' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 1rem center;
   padding-right: 2.5rem;
@@ -312,7 +336,7 @@
 }
 
 .master-table thead {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: rgb(23, 171, 136);
 }
 
 .master-table th {
@@ -380,13 +404,13 @@
 }
 
 .btn-edit {
-  color: #667eea;
-  background: #f0f4ff;
+  color: rgb(23, 171, 136);
+  background: #f0fdf9;
 }
 
 .btn-edit:hover {
-  background: #e3f2fd;
-  color: #5568d3;
+  background: #d1fae5;
+  color: rgb(20, 150, 120);
   transform: scale(1.1);
 }
 
@@ -405,7 +429,7 @@
 .loading {
   text-align: center;
   padding: 4rem;
-  color: #667eea;
+  color: rgb(23, 171, 136);
   font-size: 1.2rem;
   font-weight: 600;
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -431,7 +455,9 @@
   }
 }
 
-/* Modal Styles */
+/* ========== WHITE MODAL WITH GREEN HEADER ========== */
+
+/* Modal Overlay */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -449,7 +475,7 @@
 .modal-content {
   background: white;
   border-radius: 20px;
-  max-width: 600px;
+  max-width: 800px;
   width: 90%;
   max-height: 90vh;
   overflow: hidden;
@@ -458,13 +484,14 @@
   flex-direction: column;
 }
 
+/* Modal Header - Green */
 .modal-header {
+  background: rgb(23, 171, 136) !important;
   padding: 1.5rem 2rem;
   border-bottom: none;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   flex-shrink: 0;
 }
 
@@ -496,14 +523,16 @@
   transform: rotate(90deg);
 }
 
+/* Modal Form Content - WHITE Background with 2 Column Grid */
 .form-content {
   padding: 2rem;
   overflow-y: auto;
   max-height: calc(90vh - 180px);
   flex: 1;
   display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 1.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #ffffff !important;
 }
 
 .form-content::-webkit-scrollbar {
@@ -511,17 +540,17 @@
 }
 
 .form-content::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
+  background: #f1f5f9;
   border-radius: 10px;
 }
 
 .form-content::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
+  background: #cbd5e1;
   border-radius: 10px;
 }
 
 .form-content::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.5);
+  background: #94a3b8;
 }
 
 .form-group {
@@ -529,16 +558,21 @@
   flex-direction: column;
 }
 
+/* Full width for textarea */
+.form-group:has(textarea) {
+  grid-column: 1 / -1;
+}
+
 .form-group label {
   font-weight: 600;
-  color: #ffffff;
+  color: #1e293b;
   margin-bottom: 0.5rem;
   font-size: 0.95rem;
   letter-spacing: 0.3px;
 }
 
 .required {
-  color: #ff6b6b;
+  color: #ef4444;
   margin-left: 2px;
 }
 
@@ -546,8 +580,8 @@
 .form-group select,
 .form-group textarea {
   padding: 14px 18px;
-  background: rgba(255, 255, 255, 0.95);
-  border: 2px solid transparent;
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
   border-radius: 12px;
   font-size: 15px;
   color: #2d3748;
@@ -560,8 +594,8 @@
 .form-group textarea:focus {
   outline: none;
   background: #ffffff;
-  border-color: #ffd93d;
-  box-shadow: 0 0 0 4px rgba(255, 217, 61, 0.2);
+  border-color: rgb(23, 171, 136);
+  box-shadow: 0 0 0 4px rgba(23, 171, 136, 0.1);
   transform: translateY(-2px);
 }
 
@@ -572,7 +606,7 @@
 }
 
 .form-group input:disabled {
-  background: rgba(255, 255, 255, 0.6);
+  background: #f1f5f9;
   cursor: not-allowed;
   color: #718096;
 }
@@ -580,7 +614,7 @@
 .form-group select {
   cursor: pointer;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23667eea' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2317AB88' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 18px center;
   padding-right: 45px;
@@ -591,13 +625,14 @@
   min-height: 100px;
 }
 
+/* Modal Footer - WHITE Background */
 .modal-footer {
   padding: 1.5rem 2rem;
-  border-top: none;
+  border-top: 1px solid #e5e7eb;
   display: flex;
   justify-content: flex-end;
   gap: 1rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #ffffff !important;
   flex-shrink: 0;
 }
 
@@ -613,27 +648,28 @@
 }
 
 .btn-cancel {
-  background: rgba(255, 255, 255, 0.2);
-  color: #ffffff;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  background: #f1f5f9;
+  color: #475569;
+  border: 2px solid #e2e8f0;
 }
 
 .btn-cancel:hover {
-  background: rgba(255, 255, 255, 0.3);
-  border-color: rgba(255, 255, 255, 0.5);
+  background: #e2e8f0;
+  border-color: #cbd5e1;
   transform: translateY(-2px);
 }
 
 .btn-save {
-  background: linear-gradient(135deg, #ffd93d 0%, #ffb800 100%);
-  color: #2d3748;
+  background: rgb(23, 171, 136);
+  color: #ffffff;
   font-weight: 700;
-  box-shadow: 0 4px 15px rgba(255, 217, 61, 0.4);
+  box-shadow: 0 4px 15px rgba(23, 171, 136, 0.3);
 }
 
 .btn-save:hover {
+  background: rgb(20, 150, 120);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(255, 217, 61, 0.6);
+  box-shadow: 0 6px 20px rgba(23, 171, 136, 0.4);
 }
 
 .btn-save:active,
@@ -641,52 +677,7 @@
   transform: translateY(0);
 }
 
-/* View Modal - White Background */
-.view-modal-content .view-form-content {
-  background: #ffffff !important;
-}
-
-.view-modal-content .view-form-content::-webkit-scrollbar-track {
-  background: #f1f5f9;
-}
-
-.view-modal-content .view-form-content::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-}
-
-.view-modal-content .view-form-content::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-
-.view-modal-content .modal-footer {
-  background: #ffffff !important;
-  border-top: 1px solid #e5e7eb;
-}
-
-.view-modal-content .btn-cancel {
-  background: #f1f5f9;
-  color: #475569;
-  border: 2px solid #e2e8f0;
-}
-
-.view-modal-content .btn-cancel:hover {
-  background: #e2e8f0;
-  border-color: #cbd5e1;
-  transform: translateY(-2px);
-}
-
-.view-modal-content .btn-save {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #ffffff;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-}
-
-.view-modal-content .btn-save:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-}
-
-/* Custom React DatePicker Styles */
+/* Custom React DatePicker Styles - Green Theme */
 .react-datepicker-wrapper,
 .react-datepicker__input-container {
   width: 100%;
@@ -706,7 +697,7 @@
 }
 
 .react-datepicker__header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: rgb(23, 171, 136);
   border-bottom: none;
   padding: 1.5rem 1rem 1rem;
   border-radius: 0;
@@ -743,7 +734,7 @@
 }
 
 .react-datepicker__day-names {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: rgb(23, 171, 136);
   padding: 0.5rem 0;
 }
 
@@ -776,29 +767,29 @@
 }
 
 .react-datepicker__day:hover {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: rgb(23, 171, 136);
   color: #ffffff;
   transform: scale(1.1);
 }
 
 .react-datepicker__day--selected,
 .react-datepicker__day--keyboard-selected {
-  background: linear-gradient(135deg, #ffd93d 0%, #ffb800 100%);
-  color: #2d3748;
+  background: rgb(23, 171, 136);
+  color: #ffffff;
   font-weight: 700;
-  box-shadow: 0 4px 12px rgba(255, 217, 61, 0.4);
+  box-shadow: 0 4px 12px rgba(23, 171, 136, 0.4);
 }
 
 .react-datepicker__day--selected:hover {
-  background: linear-gradient(135deg, #ffb800 0%, #ffa000 100%);
-  color: #2d3748;
+  background: rgb(20, 150, 120);
+  color: #ffffff;
 }
 
 .react-datepicker__day--today {
-  background: rgba(102, 126, 234, 0.1);
-  color: #667eea;
+  background: rgba(23, 171, 136, 0.1);
+  color: rgb(23, 171, 136);
   font-weight: 600;
-  border: 2px solid #667eea;
+  border: 2px solid rgb(23, 171, 136);
 }
 
 .react-datepicker__day--disabled {
@@ -835,14 +826,14 @@
 
 .react-datepicker__month-option:hover,
 .react-datepicker__year-option:hover {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: rgb(23, 171, 136);
   color: #ffffff;
 }
 
 .react-datepicker__month-option--selected,
 .react-datepicker__year-option--selected {
-  background: linear-gradient(135deg, #ffd93d 0%, #ffb800 100%);
-  color: #2d3748;
+  background: rgb(23, 171, 136);
+  color: #ffffff;
   font-weight: 600;
 }
 
@@ -881,7 +872,7 @@
   pointer-events: none;
   width: 22px;
   height: 22px;
-  color: #667eea;
+  color: rgb(23, 171, 136);
   z-index: 1;
 }
 
@@ -890,7 +881,7 @@
 }
 
 .react-datepicker__close-icon::after {
-  background-color: #667eea;
+  background-color: rgb(23, 171, 136);
   border-radius: 50%;
   color: white;
   font-size: 12px;
@@ -901,7 +892,52 @@
 }
 
 .react-datepicker__close-icon:hover::after {
-  background-color: #764ba2;
+  background-color: rgb(20, 150, 120);
+}
+
+/* Filter Date Input Wrapper */
+.filter-date-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.filter-date-input {
+  width: 100%;
+  padding: 0.75rem 3rem 0.75rem 1rem !important;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #1e293b;
+  background: white;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.filter-date-input:hover {
+  border-color: #cbd5e1;
+}
+
+.filter-date-input:focus {
+  outline: none;
+  border-color: rgb(23, 171, 136);
+  box-shadow: 0 0 0 3px rgba(23, 171, 136, 0.1);
+}
+
+.filter-calendar-icon {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  width: 20px;
+  height: 20px;
+  color: rgb(23, 171, 136);
+  z-index: 1;
+}
+
+.filter-date-wrapper .react-datepicker__close-icon {
+  right: 3rem !important;
 }
 
 /* Empty State */
@@ -926,6 +962,10 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
+  .form-content {
+    grid-template-columns: 1fr;
+  }
+  
   .search-box {
     max-width: 100%;
   }
@@ -942,7 +982,8 @@
   }
   
   .btn-create,
-  .btn-filter {
+  .btn-filter,
+  .btn-export {
     flex: 1;
   }
   
@@ -999,67 +1040,4 @@
   .react-datepicker__current-month {
     font-size: 1rem;
   }
-}
-/* Filter Date Input Wrapper */
-.filter-date-wrapper {
-  position: relative;
-  width: 100%;
-}
-
-.filter-date-input {
-  width: 100%;
-  padding: 0.75rem 3rem 0.75rem 1rem !important;
-  border: 2px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: #1e293b;
-  background: white;
-  transition: all 0.2s ease;
-  cursor: pointer;
-}
-
-.filter-date-input:hover {
-  border-color: #cbd5e1;
-}
-
-.filter-date-input:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-.filter-calendar-icon {
-  position: absolute;
-  right: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none;
-  width: 20px;
-  height: 20px;
-  color: #667eea;
-  z-index: 1;
-}
-
-.filter-date-wrapper .react-datepicker__close-icon {
-  right: 3rem !important;
-}
-.btn-export {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 0.95rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.btn-export:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(16, 185, 129, 0.3);
 }

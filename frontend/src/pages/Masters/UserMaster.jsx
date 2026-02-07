@@ -2,15 +2,18 @@ import React, { useState, useEffect } from 'react';
 import GenericMaster from '../../components/Masters/GenericMaster';
 import { employeeAPI, designationAPI, shiftAPI, branchAPI } from '../../services/mastersApi';
 
+
 const UserMaster = () => {
   const [designations, setDesignations] = useState([]);
   const [shifts, setShifts] = useState([]);
   const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
 
+
   useEffect(() => {
     fetchMasterData();
   }, []);
+
 
   const fetchMasterData = async () => {
     try {
@@ -19,6 +22,7 @@ const UserMaster = () => {
         shiftAPI.getAll(),
         branchAPI.getAll()
       ]);
+
 
       setDesignations(designationsRes.data || []);
       setShifts(shiftsRes.data || []);
@@ -30,9 +34,10 @@ const UserMaster = () => {
     }
   };
 
+
   const columns = [
     { label: 'Employee', field: 'name' },
-    { label: 'Code', field: 'employeeCode' },
+    // ✅ REMOVED CODE COLUMN
     { label: 'Contact', field: 'phone' },
     { 
       label: 'Type', 
@@ -50,6 +55,7 @@ const UserMaster = () => {
       )
     },
   ];
+
 
   const formFields = [
     {
@@ -79,7 +85,7 @@ const UserMaster = () => {
       type: 'select',
       required: true,
       options: [
-        { value: '', label: 'Select Gender' }, // ✅ Added placeholder
+        { value: '', label: 'Select Gender' },
         { value: 'Male', label: 'Male' },
         { value: 'Female', label: 'Female' },
         { value: 'Other', label: 'Other' },
@@ -106,7 +112,7 @@ const UserMaster = () => {
       type: 'select',
       required: false,
       options: [
-        { value: '', label: 'Select Designation' }, // ✅ Single placeholder
+        { value: '', label: 'Select Designation' },
         ...designations.map(d => ({ 
           value: d._id, 
           label: d.designationName
@@ -125,7 +131,7 @@ const UserMaster = () => {
       type: 'select',
       required: false,
       options: [
-        { value: '', label: 'Select Shift Timing' }, // ✅ Single placeholder
+        { value: '', label: 'Select Shift Timing' },
         ...shifts.map(s => ({ 
           value: s._id, 
           label: `${s.shiftName} (${s.startTime} - ${s.endTime})`
@@ -146,7 +152,7 @@ const UserMaster = () => {
       type: 'select',
       required: true,
       options: [
-        { value: '', label: 'Select User Type' }, // ✅ Added placeholder
+        { value: '', label: 'Select User Type' },
         { value: 'Admin', label: 'Admin' },
         { value: 'User', label: 'User' },
       ],
@@ -157,7 +163,7 @@ const UserMaster = () => {
       type: 'select',
       required: true,
       options: [
-        { value: '', label: 'Select Branch' }, // ✅ Single placeholder
+        { value: '', label: 'Select Branch' },
         ...branches.map(b => ({ 
           value: b._id, 
           label: b.name 
@@ -173,20 +179,25 @@ const UserMaster = () => {
     },
   ];
 
+
   if (loading) {
     return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>;
   }
 
+
   return (
-    <GenericMaster
-      title="User Master"
-      apiService={employeeAPI}
-      columns={columns}
-      formFields={formFields}
-      searchPlaceholder="Search users..."
-      icon="👤"
-    />
+    <div className="user-master-page">
+      <GenericMaster
+        title="User Master"
+        apiService={employeeAPI}
+        columns={columns}
+        formFields={formFields}
+        searchPlaceholder="Search users..."
+        icon="👤"
+      />
+    </div>
   );
 };
+
 
 export default UserMaster;

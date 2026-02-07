@@ -5,7 +5,6 @@ import branchApi from '../../services/branchApi';
 import planApi from '../../services/planApi';
 import './MemberMaster.css';
 
-
 const MemberMaster = () => {
   const [branches, setBranches] = useState([]);
   const [plans, setPlans] = useState([]);
@@ -18,11 +17,9 @@ const MemberMaster = () => {
   const [selectedMember, setSelectedMember] = useState(null);
   const [additionalPayment, setAdditionalPayment] = useState(0);
 
-
   useEffect(() => {
     fetchInitialData();
   }, []);
-
 
   const fetchInitialData = async () => {
     setLoading(true);
@@ -41,7 +38,6 @@ const MemberMaster = () => {
     }
   };
 
-
   const fetchBranches = async () => {
     try {
       const response = await branchApi.getAll();
@@ -54,7 +50,6 @@ const MemberMaster = () => {
     }
   };
 
-
   const fetchPlans = async () => {
     try {
       const response = await planApi.getAll();
@@ -66,7 +61,6 @@ const MemberMaster = () => {
       setPlans([]);
     }
   };
-
 
   const fetchStats = async () => {
     try {
@@ -85,34 +79,28 @@ const MemberMaster = () => {
     }
   };
 
-
   const handleAddPayment = (member) => {
     setSelectedMember(member);
     setAdditionalPayment(0);
     setShowPaymentModal(true);
   };
 
-
   const handlePaymentSubmit = async (e) => {
     e.preventDefault();
-
 
     if (additionalPayment <= 0) {
       alert('Please enter a valid payment amount');
       return;
     }
 
-
     try {
       const updatedPaymentReceived = (selectedMember.paymentReceived || 0) + additionalPayment;
       const updatedPaymentRemaining = Math.max(0, (selectedMember.paymentRemaining || 0) - additionalPayment);
-
 
       const updateData = {
         paymentReceived: updatedPaymentReceived,
         paymentRemaining: updatedPaymentRemaining
       };
-
 
       await memberApi.update(selectedMember._id, updateData);
       
@@ -127,6 +115,16 @@ const MemberMaster = () => {
     }
   };
 
+  // Format date helper
+  const formatDate = (date) => {
+    if (!date) return '-';
+    const d = new Date(date);
+    return d.toLocaleDateString('en-IN', { 
+      day: '2-digit', 
+      month: 'short', 
+      year: 'numeric' 
+    });
+  };
 
   const columns = [
     {
@@ -184,7 +182,6 @@ const MemberMaster = () => {
       )
     }
   ];
-
 
   const formFields = [
     {
@@ -260,6 +257,20 @@ const MemberMaster = () => {
       placeholder: 'Enter amount'
     },
     {
+      name: 'membershipStartDate',
+      label: 'Membership Start Date',
+      type: 'date',
+      required: false,
+      displayValue: (item) => formatDate(item.membershipStartDate)
+    },
+    {
+      name: 'membershipEndDate',
+      label: 'Membership End Date',
+      type: 'date',
+      required: false,
+      displayValue: (item) => formatDate(item.membershipEndDate)
+    },
+    {
       name: 'status',
       label: 'Status',
       type: 'select',
@@ -268,12 +279,11 @@ const MemberMaster = () => {
         { value: '', label: 'Select Status' },
         { value: 'active', label: 'Active' },
         { value: 'inactive', label: 'Inactive' },
-        { value: 'expiring', label: 'Expiring' }, // ✅ ADDED EXPIRING
+        { value: 'expiring', label: 'Expiring' },
         { value: 'expired', label: 'Expired' }
       ]
     }
   ];
-
 
   const filterConfig = [
     {
@@ -284,7 +294,7 @@ const MemberMaster = () => {
         { value: '', label: 'All Status' },
         { value: 'active', label: 'Active' },
         { value: 'inactive', label: 'Inactive' },
-        { value: 'expiring', label: 'Expiring' }, // ✅ ADDED EXPIRING
+        { value: 'expiring', label: 'Expiring' },
         { value: 'expired', label: 'Expired' }
       ]
     },
@@ -334,7 +344,6 @@ const MemberMaster = () => {
     }
   ];
 
-
   if (loading) {
     return (
       <div className="loading-container">
@@ -343,7 +352,6 @@ const MemberMaster = () => {
       </div>
     );
   }
-
 
   if (error) {
     return (
@@ -358,7 +366,6 @@ const MemberMaster = () => {
       </div>
     );
   }
-
 
   return (
     <div className="member-master-page">
@@ -385,7 +392,6 @@ const MemberMaster = () => {
           </div>
         </div>
       </div>
-
 
       <GenericMaster
         title="Member Management"
@@ -423,7 +429,6 @@ const MemberMaster = () => {
         )}
       />
 
-
       {/* Add Payment Modal */}
       {showPaymentModal && selectedMember && (
         <div className="modal-overlay" onClick={() => setShowPaymentModal(false)}>
@@ -453,7 +458,6 @@ const MemberMaster = () => {
                   </p>
                 </div>
 
-
                 <div style={{
                   background: '#fef3c7',
                   padding: '1rem',
@@ -467,7 +471,6 @@ const MemberMaster = () => {
                     <strong>Pending Amount:</strong> ₹{selectedMember.paymentRemaining || 0}
                   </p>
                 </div>
-
 
                 <div className="form-group">
                   <label>Additional Payment Amount <span className="required">*</span></label>
@@ -488,7 +491,6 @@ const MemberMaster = () => {
                     Maximum: ₹{selectedMember.paymentRemaining}
                   </small>
                 </div>
-
 
                 {additionalPayment > 0 && (
                   <div style={{
@@ -524,6 +526,5 @@ const MemberMaster = () => {
     </div>
   );
 };
-
 
 export default MemberMaster;

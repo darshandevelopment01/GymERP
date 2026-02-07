@@ -1,254 +1,371 @@
 .enquiry-master-page {
-    padding: 0;
+  padding: 0;
+}
+
+/* Loading State */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(to bottom, #f8fafc 0%, #ffffff 100%);
+  gap: 1rem;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #e5e7eb;
+  border-top: 4px solid #8b5cf6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-container p {
+  color: #64748b;
+  font-size: 1rem;
+}
+
+/* Error State */
+.error-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(to bottom, #f8fafc 0%, #ffffff 100%);
+  padding: 2rem;
+}
+
+.error-message {
+  background: white;
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  max-width: 400px;
+}
+
+.error-message h3 {
+  color: #dc2626;
+  margin-bottom: 1rem;
+}
+
+.error-message p {
+  color: #64748b;
+  margin-bottom: 1.5rem;
+}
+
+.retry-btn {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: white;
+  border: none;
+  padding: 0.75rem 2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: transform 0.2s;
+}
+
+.retry-btn:hover {
+  transform: translateY(-2px);
+}
+
+/* Stats Cards - Updated Colors */
+.stats-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  padding: 2rem 2rem 0;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.stat-icon {
+  font-size: 2.5rem;
+  width: 75px;
+  height: 75px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Total Enquiries - Purple/Indigo */
+.stat-card.total::before {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+}
+
+.stat-card.total .stat-icon {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+}
+
+/* Pending - Orange */
+.stat-card.confirmed::before {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.stat-card.confirmed .stat-icon {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+}
+
+/* This Month - Teal/Green */
+.stat-card.this-month::before {
+  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+}
+
+.stat-card.this-month .stat-icon {
+  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+  box-shadow: 0 4px 15px rgba(20, 184, 166, 0.3);
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-content h3 {
+  font-size: 2.25rem;
+  color: #1e293b;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1;
+}
+
+.stat-content p {
+  color: #64748b;
+  font-size: 0.95rem;
+  margin: 0.5rem 0 0;
+  font-weight: 500;
+}
+
+/* Status Badges - Updated */
+.status-badge {
+  padding: 0.45rem 1rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  display: inline-block;
+  text-transform: capitalize;
+}
+
+.status-pending {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.status-confirmed {
+  background: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+
+.status-rejected {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.status-converted {
+  background: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .stats-container {
+    grid-template-columns: repeat(2, 1fr);
   }
-  
-  /* Loading State */
-  .loading-container {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    background: linear-gradient(to bottom, #f8fafc 0%, #ffffff 100%);
+}
+
+@media (max-width: 768px) {
+  .stats-container {
+    grid-template-columns: 1fr;
+    padding: 1rem 1rem 0;
     gap: 1rem;
   }
-  
-  .loading-spinner {
-    width: 50px;
-    height: 50px;
-    border: 4px solid #e5e7eb;
-    border-top: 4px solid #667eea;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-  }
-  
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-  
-  .loading-container p {
-    color: #64748b;
-    font-size: 1rem;
-  }
-  
-  /* Error State */
-  .error-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    background: linear-gradient(to bottom, #f8fafc 0%, #ffffff 100%);
-    padding: 2rem;
-  }
-  
-  .error-message {
-    background: white;
-    padding: 2rem;
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    text-align: center;
-    max-width: 400px;
-  }
-  
-  .error-message h3 {
-    color: #dc2626;
-    margin-bottom: 1rem;
-  }
-  
-  .error-message p {
-    color: #64748b;
-    margin-bottom: 1.5rem;
-  }
-  
-  .retry-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    padding: 0.75rem 2rem;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: transform 0.2s;
-  }
-  
-  .retry-btn:hover {
-    transform: translateY(-2px);
-  }
-  
-  /* Stats Cards */
-  .stats-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-    padding: 2rem 2rem 0;
-  }
-  
+
   .stat-card {
-    background: white;
-    border-radius: 16px;
-    padding: 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    position: relative;
-    overflow: hidden;
+    padding: 1.25rem;
   }
-  
-  .stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
-    height: 100%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  }
-  
-  .stat-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-  }
-  
+
   .stat-icon {
-    font-size: 3rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    width: 75px;
-    height: 75px;
-    border-radius: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-    flex-shrink: 0;
+    width: 65px;
+    height: 65px;
+    font-size: 2.2rem;
   }
-  
-  .stat-card.total::before {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  }
-  
-  .stat-card.total .stat-icon {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-  }
-  
-  .stat-card.confirmed::before {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  }
-  
-  .stat-card.confirmed .stat-icon {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
-  }
-  
-  .stat-card.this-month::before {
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  }
-  
-  .stat-card.this-month .stat-icon {
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
-  }
-  
-  .stat-content {
-    flex: 1;
-  }
-  
+
   .stat-content h3 {
-    font-size: 2.25rem;
-    color: #1e293b;
-    font-weight: 700;
-    margin: 0;
-    line-height: 1;
+    font-size: 1.75rem;
   }
-  
+
   .stat-content p {
-    color: #64748b;
-    font-size: 0.95rem;
-    margin: 0.5rem 0 0;
-    font-weight: 500;
+    font-size: 0.9rem;
   }
-  
-  /* Status Badges */
-  .status-badge {
-    padding: 0.45rem 1rem;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-    display: inline-block;
-    text-transform: capitalize;
+}
+
+@media (max-width: 480px) {
+  .stat-icon {
+    width: 55px;
+    height: 55px;
+    font-size: 1.8rem;
   }
-  
-  .status-pending {
-    background: #fef3c7;
-    color: #92400e;
-    border: 1px solid #fde68a;
+
+  .stat-content h3 {
+    font-size: 1.5rem;
   }
-  
-  .status-confirmed {
-    background: #d1fae5;
-    color: #065f46;
-    border: 1px solid #a7f3d0;
-  }
-  
-  .status-rejected {
-    background: #fee2e2;
-    color: #991b1b;
-    border: 1px solid #fecaca;
-  }
-  
-  .status-converted {
-    background: #dbeafe;
-    color: #1e40af;
-    border: 1px solid #bfdbfe;
-  }
-  
-  /* Responsive Design */
-  @media (max-width: 1024px) {
-    .stats-container {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-  
-  @media (max-width: 768px) {
-    .stats-container {
-      grid-template-columns: 1fr;
-      padding: 1rem 1rem 0;
-      gap: 1rem;
-    }
-  
-    .stat-card {
-      padding: 1.25rem;
-    }
-  
-    .stat-icon {
-      width: 65px;
-      height: 65px;
-      font-size: 2.5rem;
-    }
-  
-    .stat-content h3 {
-      font-size: 1.75rem;
-    }
-  
-    .stat-content p {
-      font-size: 0.9rem;
-    }
-  }
-  
-  @media (max-width: 480px) {
-    .stat-icon {
-      width: 55px;
-      height: 55px;
-      font-size: 2rem;
-    }
-  
-    .stat-content h3 {
-      font-size: 1.5rem;
-    }
-  }
-  
+}
+
+/* Override GenericMaster buttons and title colors for Enquiry Page */
+.enquiry-master-page .master-header {
+  background: transparent !important;
+  border-bottom: none !important;
+}
+
+.enquiry-master-page .master-header h1 {
+  color: #1e293b !important;
+  font-size: 1.75rem !important;
+  font-weight: 700 !important;
+}
+
+/* Export to Excel Button - Solid Green with Border */
+.enquiry-master-page .btn-export {
+  background: white !important;
+  color: rgb(23, 171, 136) !important;
+  border: 2px solid rgb(23, 171, 136) !important;
+  padding: 0.75rem 1.5rem !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  font-weight: 600 !important;
+  transition: all 0.2s !important;
+  box-shadow: none !important;
+}
+
+.enquiry-master-page .btn-export:hover {
+  background: rgb(23, 171, 136) !important;
+  color: white !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(23, 171, 136, 0.3) !important;
+}
+
+/* Create Enquiry Button - Solid Green */
+.enquiry-master-page .btn-create {
+  background: rgb(23, 171, 136) !important;
+  color: white !important;
+  border: none !important;
+  padding: 0.75rem 1.5rem !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  font-weight: 600 !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 4px 15px rgba(23, 171, 136, 0.3) !important;
+}
+
+.enquiry-master-page .btn-create:hover {
+  background: rgb(20, 150, 120) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(23, 171, 136, 0.4) !important;
+}
+
+/* Table Header - Purple */
+.enquiry-master-page .master-table thead {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important;
+}
+
+.enquiry-master-page .master-table th {
+  background: transparent !important;
+  color: white !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+}
+
+/* Filter Button - Purple when active */
+.enquiry-master-page .btn-filter.active {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important;
+  color: white !important;
+  border-color: #8b5cf6 !important;
+}
+
+.enquiry-master-page .btn-filter:hover {
+  border-color: #8b5cf6 !important;
+  color: #8b5cf6 !important;
+  box-shadow: 0 4px 8px rgba(139, 92, 246, 0.15) !important;
+}
+
+/* Modal Header - Purple */
+.enquiry-master-page .modal-header {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important;
+}
+
+/* Modal Form Content - Purple */
+.enquiry-master-page .form-content {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important;
+}
+
+/* Modal Footer - Purple */
+.enquiry-master-page .modal-footer {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important;
+}
+
+/* Save Button - Yellow/Gold */
+.enquiry-master-page .btn-save {
+  background: linear-gradient(135deg, #ffd93d 0%, #ffb800 100%) !important;
+  color: #2d3748 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 15px rgba(255, 217, 61, 0.4) !important;
+}
+
+.btn-save:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(255, 217, 61, 0.6) !important;
+}
+/* Force table header color - MUST be at the end */
+.enquiry-master-page table thead,
+.enquiry-master-page .master-table-container table thead,
+.enquiry-master-page .generic-master table thead {
+  background: rgb(23, 171, 136) !important;
+}
+
+.enquiry-master-page table th,
+.enquiry-master-page .master-table-container table th,
+.enquiry-master-page .generic-master table th {
+  background: transparent !important;
+  color: white !important;
+}

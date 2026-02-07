@@ -133,3 +133,86 @@
 .retry-btn:hover {
   background: #5568d3;
 }
+
+/* ========== GREEN THEME OVERRIDES ========== */
+
+/* Override Member Master specific styles */
+.member-master-page .btn-create {
+  background: rgb(23, 171, 136) !important;
+  color: white !important;
+  box-shadow: 0 4px 15px rgba(23, 171, 136, 0.3) !important;
+}
+
+.member-master-page .btn-create:hover {
+  background: rgb(20, 150, 120) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(23, 171, 136, 0.4) !important;
+}
+
+.member-master-page .master-table thead {
+  background: rgb(23, 171, 136) !important;
+}
+
+.member-master-page .master-table th {
+  background: transparent !important;
+  color: white !important;
+}
+
+.member-master-page .btn-filter.active {
+  background: rgb(23, 171, 136) !important;
+  color: white !important;
+  border-color: rgb(23, 171, 136) !important;
+}
+
+.member-master-page .btn-filter:hover {
+  border-color: rgb(23, 171, 136) !important;
+  color: rgb(23, 171, 136) !important;
+}
+
+/* Force table header for member master */
+.member-master-page table thead {
+  background: rgb(23, 171, 136) !important;
+}
+
+.member-master-page table th {
+  background: transparent !important;
+  color: white !important;
+}
+
+/* ========== GREEN ADD PAYMENT BUTTON ONLY ========== */
+
+/* Target ONLY the Add Payment button - exclude delete buttons */
+.member-master-page button[style*="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)"]:not(.btn-delete) {
+  background: rgb(23, 171, 136) !important;
+  color: white !important;
+  border: none !important;
+  padding: 0.5rem 1rem !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  font-weight: 600 !important;
+  font-size: 0.85rem !important;
+  transition: all 0.3s ease !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  box-shadow: 0 2px 8px rgba(23, 171, 136, 0.3) !important;
+}
+
+.member-master-page button[style*="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)"]:not(.btn-delete):hover {
+  background: rgb(20, 150, 120) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(23, 171, 136, 0.4) !important;
+}
+
+/* Specific class for Add Payment button */
+.btn-add-payment {
+  background: rgb(23, 171, 136) !important;
+  color: white !important;
+  box-shadow: 0 2px 8px rgba(23, 171, 136, 0.3) !important;
+}
+
+.btn-add-payment:hover {
+  background: rgb(20, 150, 120) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(23, 171, 136, 0.4) !important;
+}

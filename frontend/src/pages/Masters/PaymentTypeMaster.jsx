@@ -8,7 +8,7 @@ const PaymentTypeMaster = () => {
     { 
       label: 'Payment Type', 
       field: 'paymentType',
-      icon: '💳'
+      icon: ''
     },
   ];
 

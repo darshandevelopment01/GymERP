@@ -160,12 +160,8 @@ enquirySchema.pre('save', async function() {
       this.enquiryId = `ENQ-${Date.now()}`;
     }
   }
-  
-  // ✅ No next() call needed in modern Mongoose
 });
 
-
-// ✅ Indexes for better query performance
 enquirySchema.index({ branch: 1, status: 1 });
 enquirySchema.index({ mobileNumber: 1 });
 enquirySchema.index({ email: 1 });
