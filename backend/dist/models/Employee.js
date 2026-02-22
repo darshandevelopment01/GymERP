@@ -149,6 +149,8 @@ const EmployeeSchema = new mongoose_1.Schema({
         enum: ['active', 'inactive'],
         default: 'active',
     },
+    resetPasswordOtp: String,
+    resetOtpExpires: Date,
 }, {
     timestamps: true,
 });

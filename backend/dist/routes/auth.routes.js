@@ -15,9 +15,18 @@ const router = (0, express_1.Router)();
 // Login
 router.post('/login', async (req, res) => {
     try {
-        const { email, password } = req.body;
-        console.log('Login attempt:', email); // Debug log
-        const user = await User_1.default.findOne({ email });
+        const { email, identifier, password } = req.body;
+        const searchIdentifier = identifier || email;
+        if (!searchIdentifier) {
+            return res.status(400).json({ message: 'Email or phone number is required' });
+        }
+        console.log('Login attempt:', searchIdentifier); // Debug log
+        const user = await User_1.default.findOne({
+            $or: [
+                { email: searchIdentifier.toLowerCase() },
+                { phone: searchIdentifier }
+            ]
+        });
         if (!user) {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
@@ -101,6 +110,99 @@ router.get('/me', auth_middleware_1.authMiddleware, async (req, res) => {
     catch (error) {
         console.error('Get profile error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+// Forgot Password (OTP Generation)
+router.post('/forgot-password', async (req, res) => {
+    try {
+        const { identifier } = req.body;
+        if (!identifier) {
+            return res.status(400).json({ message: 'Email or phone number is required' });
+        }
+        // Find the user in either User or Employee collection
+        const searchCondition = {
+            $or: [
+                { email: identifier.toLowerCase() },
+                { phone: identifier }
+            ]
+        };
+        let userModel = await User_1.default.findOne(searchCondition);
+        let isEmployee = false;
+        if (!userModel) {
+            userModel = await Employee_1.default.findOne(searchCondition);
+            isEmployee = true;
+        }
+        if (!userModel) {
+            return res.status(404).json({ message: 'Account not found with this email or phone' });
+        }
+        // Generate 6-digit OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        // Set expiry (15 minutes from now)
+        const expires = new Date(Date.now() + 15 * 60 * 1000);
+        const updateFields = { resetPasswordOtp: otp, resetOtpExpires: expires };
+        if (isEmployee) {
+            await Employee_1.default.updateOne({ _id: userModel._id }, { $set: updateFields });
+        }
+        else {
+            await User_1.default.updateOne({ _id: userModel._id }, { $set: updateFields });
+        }
+        console.log(`\n================================`);
+        console.log(`🔑 MOCK SMS/EMAIL SENT`);
+        console.log(`To: ${identifier}`);
+        console.log(`OTP: ${otp}`);
+        console.log(`================================\n`);
+        res.json({
+            success: true,
+            message: 'If the account exists, an OTP has been sent. Check terminal logs for the OTP.'
+        });
+    }
+    catch (error) {
+        console.error('Forgot password error:', error);
+        res.status(500).json({ message: 'Failed to process forgot password request', error: error.message });
+    }
+});
+// Reset Password (OTP Verification)
+router.post('/reset-password', async (req, res) => {
+    try {
+        const { identifier, otp, newPassword } = req.body;
+        if (!identifier || !otp || !newPassword) {
+            return res.status(400).json({ message: 'Identifier, OTP, and new password are required' });
+        }
+        if (newPassword.length < 6) {
+            return res.status(400).json({ message: 'Password must be at least 6 characters long' });
+        }
+        const searchCondition = {
+            $or: [
+                { email: identifier.toLowerCase() },
+                { phone: identifier }
+            ],
+            resetPasswordOtp: otp,
+            resetOtpExpires: { $gt: Date.now() }
+        };
+        let userModel = await User_1.default.findOne(searchCondition);
+        let isEmployee = false;
+        if (!userModel) {
+            userModel = await Employee_1.default.findOne(searchCondition);
+            isEmployee = true;
+        }
+        if (!userModel) {
+            return res.status(400).json({ message: 'Invalid or expired OTP' });
+        }
+        // Hash the password if it's an Employee (User model uses pre-save hook)
+        if (isEmployee) {
+            userModel.password = await bcryptjs_1.default.hash(newPassword, 10);
+        }
+        else {
+            userModel.password = newPassword;
+        }
+        userModel.resetPasswordOtp = undefined;
+        userModel.resetOtpExpires = undefined;
+        await userModel.save();
+        res.json({ success: true, message: 'Password reset completely successfully. You can now log in.' });
+    }
+    catch (error) {
+        console.error('Reset password error:', error);
+        res.status(500).json({ message: 'Failed to reset password', error: error.message });
     }
 });
 exports.default = router;

@@ -129,8 +129,8 @@ const forgotPassword = async (req, res) => {
         // Generate reset token
         const resetToken = crypto_1.default.randomBytes(32).toString('hex');
         const hashedToken = crypto_1.default.createHash('sha256').update(resetToken).digest('hex');
-        user.resetPasswordToken = hashedToken;
-        user.resetPasswordExpires = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+        user.resetPasswordOtp = hashedToken;
+        user.resetOtpExpires = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
         await user.save();
         // In production, send email/SMS
         res.json({
@@ -157,15 +157,15 @@ const resetPassword = async (req, res) => {
         }
         const hashedToken = crypto_1.default.createHash('sha256').update(token).digest('hex');
         const user = await User_1.default.findOne({
-            resetPasswordToken: hashedToken,
-            resetPasswordExpires: { $gt: Date.now() }
+            resetPasswordOtp: hashedToken,
+            resetOtpExpires: { $gt: Date.now() }
         });
         if (!user) {
             return res.status(400).json({ error: 'Invalid or expired reset token' });
         }
         user.password = newPassword;
-        user.resetPasswordToken = undefined;
-        user.resetPasswordExpires = undefined;
+        user.resetPasswordOtp = undefined;
+        user.resetOtpExpires = undefined;
         await user.save();
         res.json({ message: 'Password reset successful. You can now login with your new password.' });
     }
