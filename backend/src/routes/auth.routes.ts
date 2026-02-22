@@ -12,11 +12,22 @@ const router = Router();
 // Login
 router.post('/login', async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body;
+    const { email, identifier, password } = req.body;
+    const searchIdentifier = identifier || email;
 
-    console.log('Login attempt:', email); // Debug log
+    if (!searchIdentifier) {
+      return res.status(400).json({ message: 'Email or phone number is required' });
+    }
 
-    const user = await User.findOne({ email });
+    console.log('Login attempt:', searchIdentifier); // Debug log
+
+    const user = await User.findOne({
+      $or: [
+        { email: searchIdentifier.toLowerCase() },
+        { phone: searchIdentifier }
+      ]
+    });
+
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
