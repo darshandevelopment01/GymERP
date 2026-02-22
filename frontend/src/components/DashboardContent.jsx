@@ -12,12 +12,23 @@ import {
 import Sidebar from './Sidebar';
 
 export default function DashboardContent() {
+  const cacheKeyStats = 'cache_dash_stats';
+  const cacheKeyWeekly = 'cache_dash_weekly';
+  const cacheKeyMembership = 'cache_dash_membership';
+
+  const getInitialCache = (key, defaultVal) => {
+    const cached = sessionStorage.getItem(key);
+    return cached ? JSON.parse(cached) : defaultVal;
+  };
+
+  const hasCache = !!sessionStorage.getItem(cacheKeyStats);
+
   const [activeMenu, setActiveMenu] = useState('Dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [stats, setStats] = useState([]);
-  const [weeklyData, setWeeklyData] = useState([]);
-  const [membershipData, setMembershipData] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState(getInitialCache(cacheKeyStats, []));
+  const [weeklyData, setWeeklyData] = useState(getInitialCache(cacheKeyWeekly, []));
+  const [membershipData, setMembershipData] = useState(getInitialCache(cacheKeyMembership, []));
+  const [loading, setLoading] = useState(!hasCache);
   const navigate = useNavigate();
 
   useEffect(() => {

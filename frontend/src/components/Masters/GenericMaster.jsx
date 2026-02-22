@@ -21,15 +21,26 @@ const GenericMaster = ({
   showEditDeleteButtons = true, // ✅ NEW PROP - Hide edit/delete buttons
   refreshKey // ✅ Change this to trigger data re-fetch from parent
 }) => {
-  const [data, setData] = useState([]);
-  const [filteredData, setFilteredData] = useState([]);
+  const cacheKey = `cache_${title.replace(/\s+/g, '_')}`;
+
+  // Synchronous cache lookup for instant mount state
+  const getInitialData = () => {
+    const cached = sessionStorage.getItem(cacheKey);
+    return cached ? JSON.parse(cached) : [];
+  };
+
+  const hasCache = !!sessionStorage.getItem(cacheKey);
+
+  const [data, setData] = useState(getInitialData);
+  const [filteredData, setFilteredData] = useState(getInitialData);
+  const [loading, setLoading] = useState(!hasCache);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [viewingItem, setViewingItem] = useState(null);
   const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({});
-  const [loading, setLoading] = useState(false);
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [exporting, setExporting] = useState(false);

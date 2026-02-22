@@ -4,13 +4,23 @@ import followupApi from '../../services/followupApi';
 import './FollowUpMaster.css';
 
 const FollowUpMaster = () => {
-  const [stats, setStats] = useState({
+  const cacheKeyStats = 'cache_followup_stats';
+
+  const getInitialCache = (key, defaultVal) => {
+    const cached = sessionStorage.getItem(key);
+    return cached ? JSON.parse(cached) : defaultVal;
+  };
+
+  // We check if the actual data list (rendered by GenericMaster cache_Follow-ups_Management) exists
+  const hasCache = !!sessionStorage.getItem('cache_Follow-ups_Management');
+
+  const [stats, setStats] = useState(getInitialCache(cacheKeyStats, {
     total: 0,
     pending: 0,
     completed: 0,
     expired: 0
-  });
-  const [loading, setLoading] = useState(true);
+  }));
+  const [loading, setLoading] = useState(!hasCache);
   const [error, setError] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -30,7 +40,7 @@ const FollowUpMaster = () => {
   }, []);
 
   const fetchInitialData = async () => {
-    setLoading(true);
+    if (!hasCache) setLoading(true);
     setError(null);
     try {
       await fetchFollowUps();
@@ -42,12 +52,14 @@ const FollowUpMaster = () => {
         });
         const meData = await meRes.json();
         if (meData.data?.userType === 'Admin') setIsAdmin(true);
-      } catch (e) { console.error('Admin check failed:', e); }
+      } catch (e) {
+        console.error('Admin check failed:', e);
+      }
     } catch (err) {
       console.error('Error loading data:', err);
       setError('Failed to load data. Please try again.');
     } finally {
-      setLoading(false);
+      if (!hasCache) setLoading(false);
     }
   };
 
@@ -76,12 +88,14 @@ const FollowUpMaster = () => {
         });
 
         // Calculate stats
-        setStats({
+        const newStats = {
           total: updatedData.length,
           pending: updatedData.filter(f => f.status === 'pending').length,
           completed: updatedData.filter(f => f.status === 'completed').length,
           expired: updatedData.filter(f => f.status === 'expired').length
-        });
+        };
+        setStats(newStats);
+        sessionStorage.setItem(cacheKeyStats, JSON.stringify(newStats));
       }
     } catch (error) {
       console.error('Error fetching follow-ups:', error);

@@ -9,10 +9,21 @@ import 'react-datepicker/dist/react-datepicker.css';
 import './MemberMaster.css';
 
 const MemberMaster = () => {
-  const [branches, setBranches] = useState([]);
-  const [plans, setPlans] = useState([]);
-  const [stats, setStats] = useState({ total: 0, active: 0, expired: 0 });
-  const [loading, setLoading] = useState(true);
+  const cacheKeyBranches = 'cache_member_branches';
+  const cacheKeyPlans = 'cache_member_plans';
+  const cacheKeyStats = 'cache_member_stats';
+
+  const getInitialCache = (key, defaultVal) => {
+    const cached = sessionStorage.getItem(key);
+    return cached ? JSON.parse(cached) : defaultVal;
+  };
+
+  const hasCache = !!sessionStorage.getItem(cacheKeyBranches);
+
+  const [branches, setBranches] = useState(getInitialCache(cacheKeyBranches, []));
+  const [plans, setPlans] = useState(getInitialCache(cacheKeyPlans, []));
+  const [stats, setStats] = useState(getInitialCache(cacheKeyStats, { total: 0, active: 0, expired: 0 }));
+  const [loading, setLoading] = useState(!hasCache);
   const [error, setError] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -33,7 +44,7 @@ const MemberMaster = () => {
   }, []);
 
   const fetchInitialData = async () => {
-    setLoading(true);
+    if (!hasCache) setLoading(true);
     setError(null);
     try {
       await Promise.all([
@@ -54,7 +65,7 @@ const MemberMaster = () => {
       console.error('Error loading data:', err);
       setError('Failed to load data. Please try again.');
     } finally {
-      setLoading(false);
+      if (!hasCache) setLoading(false);
     }
   };
 
@@ -64,9 +75,9 @@ const MemberMaster = () => {
       const branchData = Array.isArray(response) ? response : (response.data || []);
       const activeBranches = branchData.filter(b => b.status === 'active');
       setBranches(activeBranches);
+      sessionStorage.setItem(cacheKeyBranches, JSON.stringify(activeBranches));
     } catch (error) {
       console.error('Error fetching branches:', error);
-      setBranches([]);
     }
   };
 
@@ -76,9 +87,9 @@ const MemberMaster = () => {
       const planData = response.data || [];
       const activePlans = planData.filter(p => p.status === 'active');
       setPlans(activePlans);
+      sessionStorage.setItem(cacheKeyPlans, JSON.stringify(activePlans));
     } catch (error) {
       console.error('Error fetching plans:', error);
-      setPlans([]);
     }
   };
 
@@ -87,15 +98,16 @@ const MemberMaster = () => {
       const response = await memberApi.getAll();
       if (response.success && response.data) {
         const members = response.data;
-        setStats({
+        const newStats = {
           total: members.length,
           active: members.filter(m => m.status === 'active').length,
           expired: members.filter(m => m.status === 'expired').length
-        });
+        };
+        setStats(newStats);
+        sessionStorage.setItem(cacheKeyStats, JSON.stringify(newStats));
       }
     } catch (error) {
       console.error('Error fetching stats:', error);
-      setStats({ total: 0, active: 0, expired: 0 });
     }
   };
 

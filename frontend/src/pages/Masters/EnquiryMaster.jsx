@@ -11,16 +11,29 @@ import { taxSlabAPI, planCategoryAPI } from '../../services/mastersApi';
 import './EnquiryMaster.css';
 
 const EnquiryMaster = () => {
-  const [branches, setBranches] = useState([]);
-  const [plans, setPlans] = useState([]);
-  const [stats, setStats] = useState({ total: 0, pending: 0, thisMonth: 0 });
-  const [loading, setLoading] = useState(true);
+  const cacheKeyBranches = 'cache_enq_branches';
+  const cacheKeyPlans = 'cache_enq_plans';
+  const cacheKeyStats = 'cache_enq_stats';
+  const cacheKeyTaxSlabs = 'cache_enq_taxSlabs';
+  const cacheKeyPlanCategories = 'cache_enq_planCategories';
+
+  const getInitialCache = (key, defaultVal) => {
+    const cached = sessionStorage.getItem(key);
+    return cached ? JSON.parse(cached) : defaultVal;
+  };
+
+  const hasCache = !!sessionStorage.getItem(cacheKeyBranches);
+
+  const [branches, setBranches] = useState(getInitialCache(cacheKeyBranches, []));
+  const [plans, setPlans] = useState(getInitialCache(cacheKeyPlans, []));
+  const [stats, setStats] = useState(getInitialCache(cacheKeyStats, { total: 0, pending: 0, thisMonth: 0 }));
+  const [loading, setLoading] = useState(!hasCache);
   const [error, setError] = useState(null);
   const [maxDiscountPercentage, setMaxDiscountPercentage] = useState(0);
   const [noDiscountLimit, setNoDiscountLimit] = useState(false);
   const [discountOptions, setDiscountOptions] = useState([]);
-  const [taxSlabs, setTaxSlabs] = useState([]);
-  const [planCategories, setPlanCategories] = useState([]);
+  const [taxSlabs, setTaxSlabs] = useState(getInitialCache(cacheKeyTaxSlabs, []));
+  const [planCategories, setPlanCategories] = useState(getInitialCache(cacheKeyPlanCategories, []));
   const [isAdmin, setIsAdmin] = useState(false);
 
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -48,7 +61,7 @@ const EnquiryMaster = () => {
   }, []);
 
   const fetchInitialData = async () => {
-    setLoading(true);
+    if (!hasCache) setLoading(true);
     setError(null);
     try {
       await Promise.all([
@@ -67,12 +80,14 @@ const EnquiryMaster = () => {
         });
         const meData = await meRes.json();
         if (meData.data?.userType === 'Admin') setIsAdmin(true);
-      } catch (e) { console.error('Admin check failed:', e); }
+      } catch (e) {
+        console.error('Admin check failed:', e);
+      }
     } catch (err) {
       console.error('Error loading data:', err);
       setError('Failed to load data. Please try again.');
     } finally {
-      setLoading(false);
+      if (!hasCache) setLoading(false);
     }
   };
 
@@ -82,9 +97,9 @@ const EnquiryMaster = () => {
       const branchData = Array.isArray(response) ? response : (response.data || []);
       const activeBranches = branchData.filter(b => b.status === 'active');
       setBranches(activeBranches);
+      sessionStorage.setItem(cacheKeyBranches, JSON.stringify(activeBranches));
     } catch (error) {
       console.error('Error fetching branches:', error);
-      setBranches([]);
     }
   };
 
@@ -94,9 +109,9 @@ const EnquiryMaster = () => {
       const planData = response.data || [];
       const activePlans = planData.filter(p => p.status === 'active');
       setPlans(activePlans);
+      sessionStorage.setItem(cacheKeyPlans, JSON.stringify(activePlans));
     } catch (error) {
       console.error('Error fetching plans:', error);
-      setPlans([]);
     }
   };
 
@@ -105,12 +120,10 @@ const EnquiryMaster = () => {
       const response = await enquiryApi.getStats();
       if (response.success && response.data) {
         setStats(response.data);
-      } else {
-        setStats({ total: 0, pending: 0, thisMonth: 0 });
+        sessionStorage.setItem(cacheKeyStats, JSON.stringify(response.data));
       }
     } catch (error) {
       console.error('Error fetching stats:', error);
-      setStats({ total: 0, pending: 0, thisMonth: 0 });
     }
   };
 
