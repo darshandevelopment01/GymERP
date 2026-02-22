@@ -130,6 +130,11 @@ body {
 
 /* Desktop override to match the original left-aligned look but fluidly */
 @media (min-width: 1024px) {
+  .login-container {
+    background-size: 100% 100%;
+    background-position: center center;
+  }
+
   .overlay {
     justify-content: flex-start;
     padding-left: 8%;
