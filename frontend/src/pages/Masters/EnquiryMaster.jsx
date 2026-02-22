@@ -325,10 +325,6 @@ const EnquiryMaster = () => {
 
   const columns = [
     {
-      label: 'Enquiry ID',
-      field: 'enquiryId'
-    },
-    {
       label: 'Name',
       field: 'name'
     },

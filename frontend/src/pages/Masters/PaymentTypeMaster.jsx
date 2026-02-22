@@ -4,9 +4,8 @@ import { paymentTypeAPI } from '../../services/mastersApi';
 
 const PaymentTypeMaster = () => {
   const columns = [
-    { label: 'ID', field: 'paymentTypeId' },
-    { 
-      label: 'Payment Type', 
+    {
+      label: 'Payment Type',
       field: 'paymentType',
       icon: ''
     },

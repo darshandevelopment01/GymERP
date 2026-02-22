@@ -4,9 +4,8 @@ import { branchAPI } from '../../services/mastersApi';
 
 const BranchMaster = () => {
   const columns = [
-    { label: 'ID', field: 'branchId' },
-    { 
-      label: 'Branch Name', 
+    {
+      label: 'Branch Name',
       field: 'name',
       icon: '🏢'
     },

@@ -39,7 +39,6 @@ const PlanMaster = () => {
 
   // ── Plan columns & fields ──
   const planColumns = [
-    { label: 'ID', field: 'planId' },
     {
       label: 'Category',
       field: 'category',
@@ -91,7 +90,6 @@ const PlanMaster = () => {
 
   // ── Plan Category columns & fields ──
   const categoryColumns = [
-    { label: 'ID', field: 'planCategoryId' },
     { label: 'Category Name', field: 'categoryName', icon: '🏷️' },
   ];
 

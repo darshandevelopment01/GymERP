@@ -186,10 +186,6 @@ const MemberMaster = () => {
 
   const columns = [
     {
-      label: 'Member ID',
-      field: 'memberId'
-    },
-    {
       label: 'Name',
       field: 'name'
     },

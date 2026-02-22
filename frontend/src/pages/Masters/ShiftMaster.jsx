@@ -4,24 +4,23 @@ import { shiftAPI } from '../../services/mastersApi';
 
 const ShiftMaster = () => {
   const columns = [
-    { label: 'ID', field: 'shiftId' },
-    { 
-      label: 'Shift Name', 
+    {
+      label: 'Shift Name',
       field: 'shiftName',
       icon: '🕐'
     },
-    { 
-      label: 'Time', 
+    {
+      label: 'Time',
       field: 'time',
       render: (item) => `${item.startTime} - ${item.endTime}`
     },
-    { 
-      label: 'Half Day', 
+    {
+      label: 'Half Day',
       field: 'halfDayHours',
       render: (item) => `${item.halfDayHours} hrs`
     },
-    { 
-      label: 'Full Day', 
+    {
+      label: 'Full Day',
       field: 'fullDayHours',
       render: (item) => `${item.fullDayHours} hrs`
     },

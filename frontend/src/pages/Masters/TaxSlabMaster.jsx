@@ -4,9 +4,8 @@ import { taxSlabAPI } from '../../services/mastersApi';
 
 const TaxSlabMaster = () => {
   const columns = [
-    { label: 'ID', field: 'taxSlabId' },
-    { 
-      label: 'Tax Slab (%)', 
+    {
+      label: 'Tax Slab (%)',
       field: 'taxPercentage',
       icon: '📊',
       render: (item) => `${item.taxPercentage}%`

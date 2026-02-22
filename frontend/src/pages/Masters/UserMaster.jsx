@@ -137,7 +137,7 @@ const UserMaster = () => {
 
 
   const columns = [
-    { label: 'Employee', field: 'name' },
+    { label: 'User Name', field: 'name' },
     // ✅ REMOVED CODE COLUMN
     { label: 'Contact', field: 'phone' },
     {
@@ -167,7 +167,7 @@ const UserMaster = () => {
     },
     {
       name: 'name',
-      label: 'Name of Employee',
+      label: 'Full Name',
       type: 'text',
       required: true,
       placeholder: 'Enter full name',
@@ -204,14 +204,6 @@ const UserMaster = () => {
       type: 'date',
       required: false,
       placeholder: 'dd-mm-yyyy',
-    },
-    {
-      name: 'employeeCode',
-      label: 'Employee Code',
-      type: 'text',
-      required: true,
-      disabled: false,
-      placeholder: 'Enter employee code (e.g., EMP001)',
     },
     {
       name: 'designation',

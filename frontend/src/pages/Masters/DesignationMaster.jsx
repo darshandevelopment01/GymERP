@@ -4,13 +4,12 @@ import { designationAPI } from '../../services/mastersApi';
 
 const DesignationMaster = () => {
   const columns = [
-    { label: 'ID', field: 'designationId' },
-    { 
-      label: 'Designation Name', 
+    {
+      label: 'Designation Name',
       field: 'designationName',
     },
-    { 
-      label: 'Max Discount', 
+    {
+      label: 'Max Discount',
       field: 'maxDiscountPercentage',
       render: (item) => `${item.maxDiscountPercentage}%`
     },
