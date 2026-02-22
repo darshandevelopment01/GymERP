@@ -329,6 +329,8 @@ body {
 
 .sidebar-footer {
   padding: 16px;
+  padding-bottom: max(16px, env(safe-area-inset-bottom, 16px));
+  /* Prevents logout hiding behind phone nav bar */
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   flex-shrink: 0;
   /* Never squeeze the logout section off-screen */
