@@ -38,42 +38,40 @@ export default function LoginCard() {
   return (
     <div className="login-container" style={{ backgroundImage: `url(${bg})` }}>
       <div className="overlay">
-        <div className="login-wrapper large-align">
-          <div className="login-card">
-            <img src={logo} alt="Logo" className="logo" />
-            
-            {error && <div className="error-message">{error}</div>}
-            
-            <form onSubmit={handleLogin}>
-              <div className="input-group">
-                <label className="label">Email Address</label>
-                <input
-                  type="email"
-                  className="input"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
+        <div className="login-card">
+          <img src={logo} alt="Logo" className="logo" />
 
-              <div className="input-group">
-                <label className="label">Password</label>
-                <input
-                  type="password"
-                  className="input"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
+          {error && <div className="error-message">{error}</div>}
 
-              <button type="submit" className="sign-in-button">
-                <span className="sign-in-text">Sign In</span>
-              </button>
-            </form>
-          </div>
+          <form onSubmit={handleLogin}>
+            <div className="input-group">
+              <label className="label">Email Address</label>
+              <input
+                type="email"
+                className="input"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="input-group">
+              <label className="label">Password</label>
+              <input
+                type="password"
+                className="input"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+
+            <button type="submit" className="sign-in-button">
+              <span className="sign-in-text">Sign In</span>
+            </button>
+          </form>
         </div>
       </div>
     </div>
