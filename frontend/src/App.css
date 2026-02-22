@@ -865,10 +865,15 @@ body {
     position: fixed;
     top: 0;
     left: -280px;
+    height: 100dvh;
     height: 100vh;
     z-index: 999;
     transition: left 0.3s ease-in-out;
     box-shadow: none;
+    overflow-y: auto;
+    /* Make sidebar scrollable on mobile */
+    -webkit-overflow-scrolling: touch;
+    /* Smooth scroll on iOS */
   }
 
   /* Show Sidebar when Open */
