@@ -493,6 +493,8 @@
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   display: flex;
   flex-direction: column;
+  /* Ensure the modal itself never overflows the viewport */
+  box-sizing: border-box;
 }
 
 /* Modal Header - Green */
@@ -538,12 +540,16 @@
 .form-content {
   padding: 2rem;
   overflow-y: auto;
-  max-height: calc(90vh - 180px);
   flex: 1;
+  /* Take remaining space between header and footer */
+  min-height: 0;
+  /* Allow shrinking below content size so footer is visible */
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1.5rem;
   background: #ffffff !important;
+  align-content: start;
+  /* Don't stretch rows to fill available height */
 }
 
 .form-content::-webkit-scrollbar {
@@ -645,6 +651,7 @@
   gap: 1rem;
   background: #ffffff !important;
   flex-shrink: 0;
+  /* Never allow the footer to be squeezed off screen */
 }
 
 .btn-cancel,

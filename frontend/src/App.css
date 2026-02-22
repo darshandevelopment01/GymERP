@@ -267,7 +267,10 @@ body {
 .sidebar-menu {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 0 12px;
+  min-height: 0;
+  /* Allow flex child to shrink below its content size */
 }
 
 .sidebar-item {
@@ -325,6 +328,8 @@ body {
 .sidebar-footer {
   padding: 16px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+  /* Never squeeze the logout section off-screen */
 }
 
 .user-card {
