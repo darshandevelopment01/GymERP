@@ -1,7 +1,7 @@
 // src/components/DashboardContent.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
+import {
   Users,
   Building2,
   UsersRound,
@@ -20,22 +20,27 @@ export default function DashboardContent() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchDashboardData();
+    const controller = new AbortController();
+    fetchDashboardData(controller.signal);
+    return () => controller.abort();
   }, []);
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = async (signal) => {
     try {
       const token = localStorage.getItem('token');
-      
+
       const [statsRes, weeklyRes, membershipRes] = await Promise.all([
         fetch(`${import.meta.env.VITE_API_URL}/dashboard/stats`, {
-          headers: { 'Authorization': `Bearer ${token}` }
+          headers: { 'Authorization': `Bearer ${token}` },
+          signal
         }),
         fetch(`${import.meta.env.VITE_API_URL}/dashboard/attendance-weekly`, {
-          headers: { 'Authorization': `Bearer ${token}` }
+          headers: { 'Authorization': `Bearer ${token}` },
+          signal
         }),
         fetch(`${import.meta.env.VITE_API_URL}/dashboard/membership-growth`, {
-          headers: { 'Authorization': `Bearer ${token}` }
+          headers: { 'Authorization': `Bearer ${token}` },
+          signal
         })
       ]);
 
@@ -53,30 +58,30 @@ export default function DashboardContent() {
         finalStats = statsData;
       } else if (statsData && typeof statsData === 'object') {
         finalStats = [
-          { 
-            label: 'Total Members', 
-            value: statsData.totalMembers || statsData.members || 0, 
+          {
+            label: 'Total Members',
+            value: statsData.totalMembers || statsData.members || 0,
             growth: statsData.memberGrowth || '+0%',
             icon: 'users',
             color: '#3b82f6'
           },
-          { 
-            label: 'Active Branches', 
-            value: statsData.activeBranches || statsData.branches || 0, 
+          {
+            label: 'Active Branches',
+            value: statsData.activeBranches || statsData.branches || 0,
             growth: statsData.branchGrowth || '+0',
             icon: 'building',
             color: '#10b981'
           },
-          { 
-            label: 'Total Employees', 
-            value: statsData.totalEmployees || statsData.employees || 0, 
+          {
+            label: 'Total Employees',
+            value: statsData.totalEmployees || statsData.employees || 0,
             growth: statsData.employeeGrowth || '+0%',
             icon: 'team',
             color: '#f59e0b'
           },
-          { 
-            label: 'Revenue This Month', 
-            value: `₹${statsData.monthlyRevenue || statsData.revenue || 0}`, 
+          {
+            label: 'Revenue This Month',
+            value: `₹${statsData.monthlyRevenue || statsData.revenue || 0}`,
             growth: statsData.revenueGrowth || '+0%',
             icon: 'rupee',
             color: '#17ab88'
@@ -89,6 +94,10 @@ export default function DashboardContent() {
       setMembershipData(Array.isArray(membership) ? membership : []);
 
     } catch (error) {
+      if (error.name === 'AbortError') {
+        console.log('Dashboard fetch aborted');
+        return;
+      }
       console.error('Error fetching dashboard:', error);
     } finally {
       setLoading(false);
@@ -102,7 +111,7 @@ export default function DashboardContent() {
 
   const handleMenuChange = (menu) => {
     setActiveMenu(menu);
-    
+
     // ✅ UPDATED: Added Follow Ups route
     const routes = {
       'Dashboard': '/dashboard',
@@ -112,11 +121,11 @@ export default function DashboardContent() {
       'Attendance': '/attendance',
       'Masters': '/masters',
     };
-    
+
     if (routes[menu]) {
       navigate(routes[menu]);
     }
-    
+
     closeSidebar();
   };
 
@@ -148,8 +157,8 @@ export default function DashboardContent() {
 
   return (
     <div className="dashboard-container">
-      <Sidebar 
-        activeMenu={activeMenu} 
+      <Sidebar
+        activeMenu={activeMenu}
         onChange={handleMenuChange}
         onLogout={handleLogout}
         isOpen={isSidebarOpen}
@@ -168,11 +177,11 @@ export default function DashboardContent() {
           <div className="dashboard-header">
             <h1 className="dashboard-page-title">Dashboard</h1>
             <p className="dashboard-date">
-              {new Date().toLocaleDateString('en-US', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
+              {new Date().toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
               })}
             </p>
           </div>
@@ -181,7 +190,7 @@ export default function DashboardContent() {
             {stats && stats.length > 0 ? (
               stats.map((stat, index) => {
                 const Icon = getIcon(stat.icon);
-                
+
                 return (
                   <div key={index} className="stat-card">
                     <div className="stat-icon" style={{ backgroundColor: `${stat.color}20` }}>
@@ -242,12 +251,12 @@ export default function DashboardContent() {
                             return (
                               <div key={idx} className="bar-group">
                                 <div className="bar-stack">
-                                  <div 
-                                    className="bar bar-present" 
+                                  <div
+                                    className="bar bar-present"
                                     style={{ height: `${presentHeight}%` }}
                                   />
-                                  <div 
-                                    className="bar bar-absent" 
+                                  <div
+                                    className="bar bar-absent"
                                     style={{ height: `${absentHeight}%` }}
                                   />
                                 </div>
@@ -296,13 +305,13 @@ export default function DashboardContent() {
                             strokeWidth="1"
                           />
                         ))}
-                        
+
                         {/* Line and circles */}
                         {(() => {
                           const maxMembers = Math.max(...membershipData.map(m => m.total || 0), 1);
                           const points = membershipData
                             .map((d, i) => {
-                              const x = membershipData.length > 1 
+                              const x = membershipData.length > 1
                                 ? (i / (membershipData.length - 1)) * 560 + 20
                                 : 300;
                               const y = 30 + (1 - (d.total || 0) / maxMembers) * 200;
@@ -320,7 +329,7 @@ export default function DashboardContent() {
                                   points={points.map(p => `${p.x},${p.y}`).join(' ')}
                                 />
                               )}
-                              
+
                               {/* Circles and values */}
                               {points.map((point, i) => (
                                 <g key={i}>
@@ -344,10 +353,10 @@ export default function DashboardContent() {
                                   </text>
                                 </g>
                               ))}
-                              
+
                               {/* Month labels */}
                               {membershipData.map((d, i) => {
-                                const x = membershipData.length > 1 
+                                const x = membershipData.length > 1
                                   ? (i / (membershipData.length - 1)) * 560 + 20
                                   : 300;
                                 return (

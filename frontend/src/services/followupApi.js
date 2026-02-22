@@ -29,13 +29,14 @@ class FollowUpApiService {
     }
   }
 
-  async getAll() {
+  async getAll(options = {}) {
     try {
       const response = await fetch(`${API_URL}/followups`, {
         headers: {
           'Authorization': `Bearer ${this.getToken()}`,
           'Content-Type': 'application/json'
         },
+        signal: options.signal
       });
 
       if (!response.ok) {

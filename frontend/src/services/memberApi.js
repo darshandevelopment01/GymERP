@@ -3,19 +3,20 @@ const API_URL = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL}
 const getToken = () => localStorage.getItem('token');
 
 const memberApi = {
-  async getAll() {
+  async getAll(options = {}) {
     try {
       const response = await fetch(`${API_URL}/members`, {
         headers: {
           'Authorization': `Bearer ${getToken()}`,
           'Content-Type': 'application/json'
-        }
+        },
+        signal: options.signal
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch members');
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('Get members error:', error);
@@ -31,11 +32,11 @@ const memberApi = {
           'Content-Type': 'application/json'
         }
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch member');
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('Get member error:', error);
@@ -53,11 +54,11 @@ const memberApi = {
         },
         body: JSON.stringify(data)
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to create member');
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('Create member error:', error);
@@ -75,11 +76,11 @@ const memberApi = {
         },
         body: JSON.stringify(data)
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to update member');
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('Update member error:', error);
@@ -96,11 +97,11 @@ const memberApi = {
           'Content-Type': 'application/json'
         }
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to delete member');
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('Delete member error:', error);

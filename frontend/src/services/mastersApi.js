@@ -12,8 +12,8 @@ class MastersAPI {
     return response.json();
   }
 
-  async getAllPaymentTypes() {
-    const response = await fetch(`${API_URL}/payment-types`);
+  async getAllPaymentTypes(options = {}) {
+    const response = await fetch(`${API_URL}/payment-types`, { signal: options.signal });
     if (!response.ok) throw new Error('Failed to fetch payment types');
     return response.json();
   }
@@ -47,8 +47,8 @@ class MastersAPI {
     return response.json();
   }
 
-  async getAllPlanCategories() {
-    const response = await fetch(`${API_URL}/plan-categories`);
+  async getAllPlanCategories(options = {}) {
+    const response = await fetch(`${API_URL}/plan-categories`, { signal: options.signal });
     if (!response.ok) throw new Error('Failed to fetch plan categories');
     return response.json();
   }
@@ -82,8 +82,8 @@ class MastersAPI {
     return response.json();
   }
 
-  async getAllPlans() {
-    const response = await fetch(`${API_URL}/plans`);
+  async getAllPlans(options = {}) {
+    const response = await fetch(`${API_URL}/plans`, { signal: options.signal });
     if (!response.ok) throw new Error('Failed to fetch plans');
     return response.json();
   }
@@ -118,8 +118,8 @@ class MastersAPI {
     return response.json();
   }
 
-  async getAllTaxSlabs() {
-    const response = await fetch(`${API_URL}/tax-slabs`);
+  async getAllTaxSlabs(options = {}) {
+    const response = await fetch(`${API_URL}/tax-slabs`, { signal: options.signal });
     if (!response.ok) throw new Error('Failed to fetch tax slabs');
     return response.json();
   }
@@ -153,8 +153,8 @@ class MastersAPI {
     return response.json();
   }
 
-  async getAllShifts() {
-    const response = await fetch(`${API_URL}/shifts`);
+  async getAllShifts(options = {}) {
+    const response = await fetch(`${API_URL}/shifts`, { signal: options.signal });
     if (!response.ok) throw new Error('Failed to fetch shifts');
     return response.json();
   }
@@ -188,8 +188,8 @@ class MastersAPI {
     return response.json();
   }
 
-  async getAllDesignations() {
-    const response = await fetch(`${API_URL}/designations`);
+  async getAllDesignations(options = {}) {
+    const response = await fetch(`${API_URL}/designations`, { signal: options.signal });
     if (!response.ok) throw new Error('Failed to fetch designations');
     return response.json();
   }
@@ -223,8 +223,8 @@ class MastersAPI {
     return response.json();
   }
 
-  async getAllBranches() {
-    const response = await fetch(`${API_URL}/branches`);
+  async getAllBranches(options = {}) {
+    const response = await fetch(`${API_URL}/branches`, { signal: options.signal });
     if (!response.ok) throw new Error('Failed to fetch branches');
     return response.json();
   }
@@ -258,8 +258,8 @@ class MastersAPI {
     return response.json();
   }
 
-  async getAllEmployees() {
-    const response = await fetch(`${API_URL}/employees`);
+  async getAllEmployees(options = {}) {
+    const response = await fetch(`${API_URL}/employees`, { signal: options.signal });
     if (!response.ok) throw new Error('Failed to fetch employees');
     return response.json();
   }
@@ -295,56 +295,56 @@ const mastersAPI = new MastersAPI();
 // ADD THESE EXPORTS AT THE END
 export const paymentTypeAPI = {
   create: (data) => mastersAPI.createPaymentType(data),
-  getAll: () => mastersAPI.getAllPaymentTypes(),
+  getAll: (options) => mastersAPI.getAllPaymentTypes(options),
   update: (id, data) => mastersAPI.updatePaymentType(id, data),
   delete: (id) => mastersAPI.deletePaymentType(id),
 };
 
 export const planCategoryAPI = {
   create: (data) => mastersAPI.createPlanCategory(data),
-  getAll: () => mastersAPI.getAllPlanCategories(),
+  getAll: (options) => mastersAPI.getAllPlanCategories(options),
   update: (id, data) => mastersAPI.updatePlanCategory(id, data),
   delete: (id) => mastersAPI.deletePlanCategory(id),
 };
 
 export const planAPI = {
   create: (data) => mastersAPI.createPlan(data),
-  getAll: () => mastersAPI.getAllPlans(),
+  getAll: (options) => mastersAPI.getAllPlans(options),
   update: (id, data) => mastersAPI.updatePlan(id, data),
   delete: (id) => mastersAPI.deletePlan(id),
 };
 
 export const taxSlabAPI = {
   create: (data) => mastersAPI.createTaxSlab(data),
-  getAll: () => mastersAPI.getAllTaxSlabs(),
+  getAll: (options) => mastersAPI.getAllTaxSlabs(options),
   update: (id, data) => mastersAPI.updateTaxSlab(id, data),
   delete: (id) => mastersAPI.deleteTaxSlab(id),
 };
 
 export const shiftAPI = {
   create: (data) => mastersAPI.createShift(data),
-  getAll: () => mastersAPI.getAllShifts(),
+  getAll: (options) => mastersAPI.getAllShifts(options),
   update: (id, data) => mastersAPI.updateShift(id, data),
   delete: (id) => mastersAPI.deleteShift(id),
 };
 
 export const designationAPI = {
   create: (data) => mastersAPI.createDesignation(data),
-  getAll: () => mastersAPI.getAllDesignations(),
+  getAll: (options) => mastersAPI.getAllDesignations(options),
   update: (id, data) => mastersAPI.updateDesignation(id, data),
   delete: (id) => mastersAPI.deleteDesignation(id),
 };
 
 export const branchAPI = {
   create: (data) => mastersAPI.createBranch(data),
-  getAll: () => mastersAPI.getAllBranches(),
+  getAll: (options) => mastersAPI.getAllBranches(options),
   update: (id, data) => mastersAPI.updateBranch(id, data),
   delete: (id) => mastersAPI.deleteBranch(id),
 };
 
 export const employeeAPI = {
   create: (data) => mastersAPI.createEmployee(data),
-  getAll: () => mastersAPI.getAllEmployees(),
+  getAll: (options) => mastersAPI.getAllEmployees(options),
   update: (id, data) => mastersAPI.updateEmployee(id, data),
   delete: (id) => mastersAPI.deleteEmployee(id),
 };

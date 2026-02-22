@@ -38,22 +38,28 @@ const GenericMaster = ({
   const [filters, setFilters] = useState({});
 
   useEffect(() => {
-    fetchData();
+    const controller = new AbortController();
+    fetchData(controller.signal);
+    return () => controller.abort();
   }, [refreshKey]);
 
   useEffect(() => {
     applyFiltersAndSearch();
   }, [searchQuery, data, filters]);
 
-  const fetchData = async () => {
+  const fetchData = async (signal) => {
     try {
       setLoading(true);
-      const response = await apiService.getAll();
+      const response = await apiService.getAll({ signal });
       const fetchedData = response.data || [];
 
       setData(fetchedData);
       setFilteredData(fetchedData);
     } catch (error) {
+      if (error.name === 'CanceledError' || error.name === 'AbortError') {
+        console.log('API request aborted due to component unmount');
+        return;
+      }
       console.error('Error fetching data:', error);
       alert('Failed to fetch data');
     } finally {
