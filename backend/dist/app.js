@@ -14,13 +14,11 @@ const employee_routes_1 = __importDefault(require("./routes/employee.routes"));
 const branch_routes_1 = __importDefault(require("./routes/branch.routes"));
 const masters_routes_1 = __importDefault(require("./routes/masters.routes"));
 const enquiry_routes_1 = __importDefault(require("./routes/enquiry.routes"));
-const followup_routes_1 = __importDefault(require("./routes/followup.routes")); // ✅ ADD THIS
+const followup_routes_1 = __importDefault(require("./routes/followup.routes"));
 const upload_routes_1 = __importDefault(require("./routes/upload.routes"));
 const activityLog_routes_1 = __importDefault(require("./routes/activityLog.routes"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
-// Connect to MongoDB
-(0, db_1.default)();
 // Middleware
 app.use((0, cors_1.default)({
     origin: '*',
@@ -32,29 +30,33 @@ app.use((req, res, next) => {
     console.log(`${req.method} ${req.path}`);
     next();
 });
-// Health check - FIRST
+// Health check - doesn't need DB
 app.get('/health', (req, res) => {
     res.json({ status: 'ok', message: 'Server is running' });
 });
-// Root route - SECOND
+// Root route - doesn't need DB
 app.get('/', (req, res) => {
     res.json({
         message: 'MuscleTime ERP API',
         status: 'running',
-        endpoints: {
-            health: '/health',
-            auth: '/api/auth',
-            dashboard: '/api/dashboard',
-            members: '/api/members',
-            employees: '/api/employees',
-            branches: '/api/branches',
-            masters: '/api/masters',
-            enquiries: '/api/enquiries',
-            followups: '/api/followups' // ✅ ADD THIS
-        }
     });
 });
-// API Routes - LAST
+// ✅ DB Connection Middleware - runs BEFORE all API routes
+// This ensures MongoDB is connected before any DB query is attempted
+app.use(async (req, res, next) => {
+    try {
+        await (0, db_1.default)();
+        next();
+    }
+    catch (error) {
+        console.error('DB Connection failed:', error.message);
+        res.status(503).json({
+            message: 'Database connection failed. Please try again.',
+            error: error.message
+        });
+    }
+});
+// API Routes
 app.use('/api/auth', auth_routes_1.default);
 app.use('/api/dashboard', dashboard_routes_1.default);
 app.use('/api/members', member_routes_1.default);
@@ -62,7 +64,7 @@ app.use('/api/employees', employee_routes_1.default);
 app.use('/api/branches', branch_routes_1.default);
 app.use('/api/masters', masters_routes_1.default);
 app.use('/api/enquiries', enquiry_routes_1.default);
-app.use('/api/followups', followup_routes_1.default); // ✅ ADD THIS
+app.use('/api/followups', followup_routes_1.default);
 app.use('/api/upload', upload_routes_1.default);
 app.use('/api/activity-logs', activityLog_routes_1.default);
 exports.default = app;
