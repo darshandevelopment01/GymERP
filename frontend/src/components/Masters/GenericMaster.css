@@ -986,9 +986,9 @@
 /* Large tablets (800px and below) */
 @media (max-width: 800px) {
 
-  /* Reduce outer padding to give more room */
+  /* Remove outer padding to give 100% width */
   .generic-master {
-    padding: 1rem;
+    padding: 0.5rem;
   }
 
   /* Stack header items */
@@ -1110,7 +1110,7 @@
 @media (max-width: 480px) {
 
   .generic-master {
-    padding: 0.75rem;
+    padding: 0.25rem;
   }
 
   .master-header h1 {
