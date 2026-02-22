@@ -50,20 +50,40 @@ const GenericMaster = ({
   }, [searchQuery, data, filters]);
 
   const fetchData = async (signal) => {
+    const cacheKey = `cache_${title.replace(/\s+/g, '_')}`;
     try {
-      setLoading(true);
+      // 1. Instantly load from cache if available (Stale-While-Revalidate)
+      const cachedData = sessionStorage.getItem(cacheKey);
+      if (cachedData) {
+        const parsed = JSON.parse(cachedData);
+        setData(parsed);
+        setFilteredData(parsed);
+      } else {
+        // Only show full-page loading spinner if we have no cache
+        setLoading(true);
+      }
+
       setFetchError(null);
+
+      // 2. Fetch fresh data in the background
       const response = await apiService.getAll({ signal });
-      const fetchedData = response.data || [];
+      const fetchedData = response.data || response || [];
+
+      // 3. Update UI and Cache with fresh data
       setData(fetchedData);
       setFilteredData(fetchedData);
+      sessionStorage.setItem(cacheKey, JSON.stringify(fetchedData));
+
     } catch (error) {
       if (error.name === 'CanceledError' || error.name === 'AbortError') {
         console.log('API request aborted due to component unmount');
         return;
       }
       console.error('Error fetching data:', error);
-      setFetchError('Failed to load data. Please check your connection.');
+      // Only show error UI if we have absolutely nothing to display
+      if (data.length === 0) {
+        setFetchError('Failed to load data. Please check your connection.');
+      }
     } finally {
       setLoading(false);
     }

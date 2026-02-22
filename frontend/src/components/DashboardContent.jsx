@@ -28,6 +28,25 @@ export default function DashboardContent() {
 
   const fetchDashboardData = async (signal) => {
     try {
+      // 1. Instantly load from cache if available (Stale-While-Revalidate)
+      const cacheKeyStats = 'cache_dash_stats';
+      const cacheKeyWeekly = 'cache_dash_weekly';
+      const cacheKeyMembership = 'cache_dash_membership';
+
+      const cachedStats = sessionStorage.getItem(cacheKeyStats);
+      const cachedWeekly = sessionStorage.getItem(cacheKeyWeekly);
+      const cachedMembership = sessionStorage.getItem(cacheKeyMembership);
+
+      if (cachedStats && cachedWeekly && cachedMembership) {
+        setStats(JSON.parse(cachedStats));
+        setWeeklyData(JSON.parse(cachedWeekly));
+        setMembershipData(JSON.parse(cachedMembership));
+      } else {
+        // Only show full-page loading spinner if no cache exists
+        setLoading(true);
+      }
+
+      // 2. Fetch fresh data in the background
       const [statsRes, weeklyRes, membershipRes] = await Promise.all([
         fetchWithAuth(`${import.meta.env.VITE_API_URL}/dashboard/stats`, { signal }),
         fetchWithAuth(`${import.meta.env.VITE_API_URL}/dashboard/attendance-weekly`, { signal }),
@@ -79,9 +98,17 @@ export default function DashboardContent() {
         ];
       }
 
+      // 3. Update UI and Cache with fresh data
       setStats(finalStats);
-      setWeeklyData(Array.isArray(weekly) ? weekly : []);
-      setMembershipData(Array.isArray(membership) ? membership : []);
+      const finalWeekly = Array.isArray(weekly) ? weekly : [];
+      const finalMembership = Array.isArray(membership) ? membership : [];
+
+      setWeeklyData(finalWeekly);
+      setMembershipData(finalMembership);
+
+      sessionStorage.setItem(cacheKeyStats, JSON.stringify(finalStats));
+      sessionStorage.setItem(cacheKeyWeekly, JSON.stringify(finalWeekly));
+      sessionStorage.setItem(cacheKeyMembership, JSON.stringify(finalMembership));
 
     } catch (error) {
       if (error.name === 'AbortError') {
