@@ -1,11 +1,11 @@
 // src/components/Sidebar.jsx
 import React from 'react';
-import { 
-  LayoutDashboard, 
-  UserPlus, 
-  Users, 
-  ClipboardCheck, 
-  Settings, 
+import {
+  LayoutDashboard,
+  UserPlus,
+  Users,
+  ClipboardCheck,
+  Settings,
   LogOut,
   X, // Close icon
   CalendarClock // Follow ups icon
@@ -25,6 +25,11 @@ const MENU = [
 export default function Sidebar({ activeMenu, onChange, onLogout, isOpen, onClose }) {
   return (
     <>
+      {/* Mobile Overlay */}
+      {isOpen && (
+        <div className="sidebar-overlay" onClick={onClose} />
+      )}
+
       {/* Sidebar */}
       <div className={`sidebar ${isOpen ? 'sidebar-open' : ''}`}>
         {/* Mobile Close Button */}
