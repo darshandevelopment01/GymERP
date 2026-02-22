@@ -1084,13 +1084,17 @@
     text-align: center;
   }
 
-  /* Table tweaks */
+  /* Table: keep nowrap so text doesn't become vertical — keep overflow scroll */
   .master-table th,
   .master-table td {
     padding: 0.75rem 0.5rem;
     font-size: 0.8rem;
-    white-space: normal;
-    word-break: break-word;
+    white-space: nowrap;
+  }
+
+  /* Hide marked columns on mobile */
+  .col-mobile-hide {
+    display: none;
   }
 }
 
@@ -1372,8 +1376,7 @@
   .master-table td {
     padding: 0.75rem 0.5rem;
     font-size: 0.8rem;
-    white-space: normal;
-    word-break: break-word;
+    white-space: nowrap;
   }
 }
 

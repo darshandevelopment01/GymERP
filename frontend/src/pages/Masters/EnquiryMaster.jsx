@@ -335,6 +335,7 @@ const EnquiryMaster = () => {
     {
       label: 'Email',
       field: 'email',
+      mobileHide: true,
       render: (item) => (
         <span style={{ fontSize: '0.9rem' }}>{item.email}</span>
       )
@@ -342,11 +343,13 @@ const EnquiryMaster = () => {
     {
       label: 'Branch',
       field: 'branch',
+      mobileHide: true,
       render: (item) => item.branch?.name || '-'
     },
     {
       label: 'Source',
-      field: 'source'
+      field: 'source',
+      mobileHide: true,
     },
     {
       label: 'Status',
@@ -361,6 +364,7 @@ const EnquiryMaster = () => {
     ...(isAdmin ? [{
       label: 'Created By',
       field: 'createdBy',
+      mobileHide: true,
       render: (item) => (
         <span style={{ fontSize: '0.85rem', color: '#6366f1', fontWeight: '600' }}>
           {item.createdBy?.name || '-'}

@@ -531,7 +531,7 @@ const GenericMaster = ({
             <thead>
               <tr>
                 {columns.map((col, idx) => (
-                  <th key={idx}>{col.label}</th>
+                  <th key={idx} className={col.mobileHide ? 'col-mobile-hide' : ''}>{col.label}</th>
                 ))}
                 <th>Actions</th>
               </tr>
@@ -552,7 +552,7 @@ const GenericMaster = ({
                     className="table-row-hover"
                   >
                     {columns.map((col, idx) => (
-                      <td key={idx}>
+                      <td key={idx} className={col.mobileHide ? 'col-mobile-hide' : ''}>
                         {col.icon && <span className="icon">{col.icon}</span>}
                         {col.render ? col.render(item) : item[col.field]}
                       </td>
