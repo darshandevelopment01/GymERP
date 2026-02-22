@@ -488,12 +488,12 @@
   border-radius: 20px;
   max-width: 800px;
   width: 90%;
-  max-height: 90vh;
+  max-height: 85dvh;
+  max-height: 85vh;
   overflow: hidden;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   display: flex;
   flex-direction: column;
-  /* Ensure the modal itself never overflows the viewport */
   box-sizing: border-box;
 }
 
@@ -540,16 +540,17 @@
 .form-content {
   padding: 2rem;
   overflow-y: auto;
-  flex: 1;
-  /* Take remaining space between header and footer */
+  -webkit-overflow-scrolling: touch;
+  /* Smooth scrolling on iOS */
+  flex: 1 1 0%;
+  /* Take remaining space, allow shrinking to 0 */
   min-height: 0;
-  /* Allow shrinking below content size so footer is visible */
+  /* CRITICAL: lets flex child shrink below content */
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1.5rem;
   background: #ffffff !important;
   align-content: start;
-  /* Don't stretch rows to fill available height */
 }
 
 .form-content::-webkit-scrollbar {
@@ -1143,15 +1144,12 @@
     font-size: 0.85rem;
   }
 
-  /* Modal on phones: keep centered, restrict height to leave room for footer */
+  /* Modal on phones: bottom sheet, limited height for footer visibility */
   .modal-content {
     width: 100%;
-    max-height: 92dvh;
-    /* dvh = dynamic viewport height, excludes browser chrome */
-    max-height: 92vh;
-    /* Fallback for older browsers */
+    max-height: 80dvh;
+    max-height: 80vh;
     border-radius: 16px 16px 0 0;
-    /* Sheet-style rounded top */
     margin: 0;
   }
 

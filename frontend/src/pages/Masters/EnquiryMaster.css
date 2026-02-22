@@ -494,8 +494,8 @@
   /* Modal: 100% width, limited height so footer is visible */
   .enquiry-master-page .modal-content {
     width: 100% !important;
-    max-height: 92dvh !important;
-    max-height: 92vh !important;
+    max-height: 80dvh !important;
+    max-height: 80vh !important;
     border-radius: 16px 16px 0 0 !important;
   }
 
