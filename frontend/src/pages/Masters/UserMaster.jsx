@@ -26,7 +26,7 @@ const UserMaster = () => {
   const checkAdminStatus = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3001/api/auth/me', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/me`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const result = await response.json();
@@ -43,7 +43,7 @@ const UserMaster = () => {
     setLogsLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:3001/api/activity-logs?page=${page}&limit=20`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/activity-logs?page=${page}&limit=20`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const result = await response.json();

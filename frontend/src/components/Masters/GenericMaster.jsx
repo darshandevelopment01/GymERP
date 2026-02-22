@@ -706,7 +706,7 @@ const GenericMaster = ({
                                   const fd = new FormData();
                                   fd.append('photo', file);
                                   const token = localStorage.getItem('token');
-                                  const res = await fetch('http://localhost:3001/api/upload/profile-photo', {
+                                  const res = await fetch(`${import.meta.env.VITE_API_URL}/upload/profile-photo`, {
                                     method: 'POST',
                                     headers: { 'Authorization': `Bearer ${token}` },
                                     body: fd

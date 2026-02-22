@@ -62,7 +62,7 @@ const EnquiryMaster = () => {
       // Check if user is admin
       try {
         const token = localStorage.getItem('token');
-        const meRes = await fetch('http://localhost:3001/api/auth/me', {
+        const meRes = await fetch(`${import.meta.env.VITE_API_URL}/auth/me`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const meData = await meRes.json();
@@ -117,7 +117,7 @@ const EnquiryMaster = () => {
   const fetchCurrentUserDiscount = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3001/api/auth/me', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/me`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const result = await response.json();

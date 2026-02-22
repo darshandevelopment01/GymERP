@@ -28,13 +28,13 @@ export default function DashboardContent() {
       const token = localStorage.getItem('token');
       
       const [statsRes, weeklyRes, membershipRes] = await Promise.all([
-        fetch('http://localhost:3001/api/dashboard/stats', {
+        fetch(`${import.meta.env.VITE_API_URL}/dashboard/stats`, {
           headers: { 'Authorization': `Bearer ${token}` }
         }),
-        fetch('http://localhost:3001/api/dashboard/attendance-weekly', {
+        fetch(`${import.meta.env.VITE_API_URL}/dashboard/attendance-weekly`, {
           headers: { 'Authorization': `Bearer ${token}` }
         }),
-        fetch('http://localhost:3001/api/dashboard/membership-growth', {
+        fetch(`${import.meta.env.VITE_API_URL}/dashboard/membership-growth`, {
           headers: { 'Authorization': `Bearer ${token}` }
         })
       ]);

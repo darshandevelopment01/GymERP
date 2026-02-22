@@ -44,7 +44,7 @@ const MemberMaster = () => {
       // Check if user is admin
       try {
         const token = localStorage.getItem('token');
-        const meRes = await fetch('http://localhost:3001/api/auth/me', {
+        const meRes = await fetch(`${import.meta.env.VITE_API_URL}/auth/me`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const meData = await meRes.json();
