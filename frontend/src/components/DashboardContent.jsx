@@ -1,6 +1,7 @@
 // src/components/DashboardContent.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import fetchWithAuth from '../services/fetchWithAuth';
 import {
   Users,
   Building2,
@@ -27,21 +28,10 @@ export default function DashboardContent() {
 
   const fetchDashboardData = async (signal) => {
     try {
-      const token = localStorage.getItem('token');
-
       const [statsRes, weeklyRes, membershipRes] = await Promise.all([
-        fetch(`${import.meta.env.VITE_API_URL}/dashboard/stats`, {
-          headers: { 'Authorization': `Bearer ${token}` },
-          signal
-        }),
-        fetch(`${import.meta.env.VITE_API_URL}/dashboard/attendance-weekly`, {
-          headers: { 'Authorization': `Bearer ${token}` },
-          signal
-        }),
-        fetch(`${import.meta.env.VITE_API_URL}/dashboard/membership-growth`, {
-          headers: { 'Authorization': `Bearer ${token}` },
-          signal
-        })
+        fetchWithAuth(`${import.meta.env.VITE_API_URL}/dashboard/stats`, { signal }),
+        fetchWithAuth(`${import.meta.env.VITE_API_URL}/dashboard/attendance-weekly`, { signal }),
+        fetchWithAuth(`${import.meta.env.VITE_API_URL}/dashboard/membership-growth`, { signal }),
       ]);
 
       const statsData = await statsRes.json();

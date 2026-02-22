@@ -1,22 +1,12 @@
-const API_URL = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL}`;
+import fetchWithAuth from './fetchWithAuth';
 
-const getToken = () => localStorage.getItem('token');
+const API_URL = import.meta.env.VITE_API_URL;
 
 const branchApi = {
   async getAll(options = {}) {
     try {
-      const response = await fetch(`${API_URL}/branches`, {
-        headers: {
-          'Authorization': `Bearer ${getToken()}`,
-          'Content-Type': 'application/json'
-        },
-        signal: options.signal
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch branches');
-      }
-
+      const response = await fetchWithAuth(`${API_URL}/branches`, { signal: options.signal });
+      if (!response.ok) throw new Error('Failed to fetch branches');
       return await response.json();
     } catch (error) {
       console.error('Get branches error:', error);
@@ -26,17 +16,8 @@ const branchApi = {
 
   async getById(id) {
     try {
-      const response = await fetch(`${API_URL}/branches/${id}`, {
-        headers: {
-          'Authorization': `Bearer ${getToken()}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch branch');
-      }
-
+      const response = await fetchWithAuth(`${API_URL}/branches/${id}`);
+      if (!response.ok) throw new Error('Failed to fetch branch');
       return await response.json();
     } catch (error) {
       console.error('Get branch error:', error);
@@ -46,19 +27,11 @@ const branchApi = {
 
   async create(data) {
     try {
-      const response = await fetch(`${API_URL}/branches`, {
+      const response = await fetchWithAuth(`${API_URL}/branches`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${getToken()}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to create branch');
-      }
-
+      if (!response.ok) throw new Error('Failed to create branch');
       return await response.json();
     } catch (error) {
       console.error('Create branch error:', error);
@@ -68,19 +41,11 @@ const branchApi = {
 
   async update(id, data) {
     try {
-      const response = await fetch(`${API_URL}/branches/${id}`, {
+      const response = await fetchWithAuth(`${API_URL}/branches/${id}`, {
         method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${getToken()}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to update branch');
-      }
-
+      if (!response.ok) throw new Error('Failed to update branch');
       return await response.json();
     } catch (error) {
       console.error('Update branch error:', error);
@@ -90,24 +55,14 @@ const branchApi = {
 
   async delete(id) {
     try {
-      const response = await fetch(`${API_URL}/branches/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${getToken()}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete branch');
-      }
-
+      const response = await fetchWithAuth(`${API_URL}/branches/${id}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Failed to delete branch');
       return await response.json();
     } catch (error) {
       console.error('Delete branch error:', error);
       throw error;
     }
-  }
+  },
 };
 
 export default branchApi;

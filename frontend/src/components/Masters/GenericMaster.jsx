@@ -37,6 +37,8 @@ const GenericMaster = ({
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({});
 
+  const [fetchError, setFetchError] = useState(null);
+
   useEffect(() => {
     const controller = new AbortController();
     fetchData(controller.signal);
@@ -50,9 +52,9 @@ const GenericMaster = ({
   const fetchData = async (signal) => {
     try {
       setLoading(true);
+      setFetchError(null);
       const response = await apiService.getAll({ signal });
       const fetchedData = response.data || [];
-
       setData(fetchedData);
       setFilteredData(fetchedData);
     } catch (error) {
@@ -61,7 +63,7 @@ const GenericMaster = ({
         return;
       }
       console.error('Error fetching data:', error);
-      alert('Failed to fetch data');
+      setFetchError('Failed to load data. Please check your connection.');
     } finally {
       setLoading(false);
     }
@@ -483,6 +485,41 @@ const GenericMaster = ({
               Showing {filteredData.length} of {data.length} results
             </span>
           </div>
+        </div>
+      )}
+
+      {fetchError && (
+        <div style={{
+          backgroundColor: '#fef2f2',
+          border: '1px solid #fecaca',
+          borderRadius: '8px',
+          padding: '12px 16px',
+          margin: '16px 0',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          color: '#dc2626',
+          fontSize: '14px',
+        }}>
+          <span>⚠️ {fetchError}</span>
+          <button
+            onClick={() => {
+              const controller = new AbortController();
+              fetchData(controller.signal);
+            }}
+            style={{
+              background: '#dc2626',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '6px 12px',
+              cursor: 'pointer',
+              fontSize: '13px',
+              marginLeft: '12px',
+            }}
+          >
+            Retry
+          </button>
         </div>
       )}
 

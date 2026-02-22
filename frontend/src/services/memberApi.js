@@ -1,22 +1,12 @@
-const API_URL = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL}`;
+import fetchWithAuth from './fetchWithAuth';
 
-const getToken = () => localStorage.getItem('token');
+const API_URL = import.meta.env.VITE_API_URL;
 
 const memberApi = {
   async getAll(options = {}) {
     try {
-      const response = await fetch(`${API_URL}/members`, {
-        headers: {
-          'Authorization': `Bearer ${getToken()}`,
-          'Content-Type': 'application/json'
-        },
-        signal: options.signal
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch members');
-      }
-
+      const response = await fetchWithAuth(`${API_URL}/members`, { signal: options.signal });
+      if (!response.ok) throw new Error('Failed to fetch members');
       return await response.json();
     } catch (error) {
       console.error('Get members error:', error);
@@ -26,17 +16,8 @@ const memberApi = {
 
   async getById(id) {
     try {
-      const response = await fetch(`${API_URL}/members/${id}`, {
-        headers: {
-          'Authorization': `Bearer ${getToken()}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch member');
-      }
-
+      const response = await fetchWithAuth(`${API_URL}/members/${id}`);
+      if (!response.ok) throw new Error('Failed to fetch member');
       return await response.json();
     } catch (error) {
       console.error('Get member error:', error);
@@ -46,19 +27,11 @@ const memberApi = {
 
   async create(data) {
     try {
-      const response = await fetch(`${API_URL}/members`, {
+      const response = await fetchWithAuth(`${API_URL}/members`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${getToken()}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to create member');
-      }
-
+      if (!response.ok) throw new Error('Failed to create member');
       return await response.json();
     } catch (error) {
       console.error('Create member error:', error);
@@ -68,19 +41,11 @@ const memberApi = {
 
   async update(id, data) {
     try {
-      const response = await fetch(`${API_URL}/members/${id}`, {
+      const response = await fetchWithAuth(`${API_URL}/members/${id}`, {
         method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${getToken()}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to update member');
-      }
-
+      if (!response.ok) throw new Error('Failed to update member');
       return await response.json();
     } catch (error) {
       console.error('Update member error:', error);
@@ -90,24 +55,14 @@ const memberApi = {
 
   async delete(id) {
     try {
-      const response = await fetch(`${API_URL}/members/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${getToken()}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete member');
-      }
-
+      const response = await fetchWithAuth(`${API_URL}/members/${id}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error('Failed to delete member');
       return await response.json();
     } catch (error) {
       console.error('Delete member error:', error);
       throw error;
     }
-  }
+  },
 };
 
 export default memberApi;
