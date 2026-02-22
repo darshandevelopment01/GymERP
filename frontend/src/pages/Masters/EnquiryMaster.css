@@ -23,8 +23,13 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .loading-container p {
@@ -457,9 +462,9 @@
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 800px) {
   .stats-container {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
     padding: 1rem 1rem 0;
     gap: 1rem;
   }
@@ -469,9 +474,9 @@
   }
 
   .stat-icon {
-    width: 65px;
-    height: 65px;
-    font-size: 2.2rem;
+    width: 60px;
+    height: 60px;
+    font-size: 2rem;
   }
 
   .stat-content h3 {
@@ -483,18 +488,58 @@
   }
 
   .enquiry-master-page .modal-content {
-    max-width: 95% !important;
+    width: 95% !important;
+    max-height: 95vh !important;
+  }
+
+  .enquiry-master-page .form-content {
+    padding: 1.25rem !important;
+  }
+
+  .enquiry-master-page .modal-footer {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+  }
+
+  .enquiry-master-page .btn-cancel,
+  .enquiry-master-page .btn-save {
+    width: 100% !important;
+    text-align: center !important;
   }
 }
 
 @media (max-width: 480px) {
+  .stats-container {
+    grid-template-columns: 1fr;
+    padding: 0.75rem 0.75rem 0;
+  }
+
   .stat-icon {
-    width: 55px;
-    height: 55px;
-    font-size: 1.8rem;
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
   }
 
   .stat-content h3 {
     font-size: 1.5rem;
+  }
+
+  /* Full-screen modal on phones */
+  .enquiry-master-page .modal-content {
+    width: 100% !important;
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+  }
+
+  .enquiry-master-page .form-content {
+    padding: 1rem !important;
+    max-height: calc(100vh - 160px) !important;
+  }
+
+  /* Fix font-size to prevent iOS zoom */
+  .enquiry-master-page .form-group input,
+  .enquiry-master-page .form-group select,
+  .enquiry-master-page .form-group textarea {
+    font-size: max(16px, 1rem) !important;
   }
 }

@@ -1,176 +1,202 @@
 .followup-master-page {
-    padding: 2rem;
-    background: #f8fafc;
-    min-height: 100vh;
+  padding: 2rem;
+  background: #f8fafc;
+  min-height: 100vh;
+}
+
+.stats-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.stat-card.total {
+  border-left: 4px solid #3b82f6;
+}
+
+.stat-card.pending {
+  border-left: 4px solid #f59e0b;
+}
+
+.stat-card.completed {
+  border-left: 4px solid #10b981;
+}
+
+.stat-card.expired {
+  border-left: 4px solid #ef4444;
+}
+
+.stat-icon {
+  font-size: 2.5rem;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  border-radius: 12px;
+}
+
+.stat-content h3 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 0.25rem 0;
+}
+
+.stat-content p {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin: 0;
+  font-weight: 500;
+}
+
+.loading-container,
+.error-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 60vh;
+  flex-direction: column;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #e2e8f0;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
-  
+}
+
+.error-message {
+  background: #fee2e2;
+  padding: 2rem;
+  border-radius: 12px;
+  text-align: center;
+  max-width: 400px;
+}
+
+.error-message h3 {
+  color: #dc2626;
+  margin: 0 0 1rem 0;
+}
+
+.error-message p {
+  color: #991b1b;
+  margin: 0 0 1.5rem 0;
+}
+
+.retry-btn {
+  background: #dc2626;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.retry-btn:hover {
+  background: #b91c1c;
+}
+
+/* Status badges */
+.status-badge {
+  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.status-pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-completed {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-expired {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* Responsive Design */
+@media (max-width: 800px) {
+  .followup-master-page {
+    padding: 1rem;
+  }
+
   .stats-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-  }
-  
-  .stat-card {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    display: flex;
-    align-items: center;
+    grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s, box-shadow 0.2s;
   }
-  
-  .stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+  .stat-card {
+    padding: 1rem;
   }
-  
-  .stat-card.total {
-    border-left: 4px solid #3b82f6;
-  }
-  
-  .stat-card.pending {
-    border-left: 4px solid #f59e0b;
-  }
-  
-  .stat-card.completed {
-    border-left: 4px solid #10b981;
-  }
-  
-  .stat-card.expired {
-    border-left: 4px solid #ef4444;
-  }
-  
+
   .stat-icon {
-    font-size: 2.5rem;
-    width: 60px;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #f1f5f9;
-    border-radius: 12px;
-  }
-  
-  .stat-content h3 {
     font-size: 2rem;
-    font-weight: 700;
-    color: #1e293b;
-    margin: 0 0 0.25rem 0;
-  }
-  
-  .stat-content p {
-    font-size: 0.9rem;
-    color: #64748b;
-    margin: 0;
-    font-weight: 500;
-  }
-  
-  .loading-container,
-  .error-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 60vh;
-    flex-direction: column;
-  }
-  
-  .loading-spinner {
     width: 50px;
     height: 50px;
-    border: 4px solid #e2e8f0;
-    border-top-color: #3b82f6;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
   }
-  
-  @keyframes spin {
-    to { transform: rotate(360deg); }
+
+  .stat-content h3 {
+    font-size: 1.5rem;
   }
-  
-  .error-message {
-    background: #fee2e2;
-    padding: 2rem;
-    border-radius: 12px;
-    text-align: center;
-    max-width: 400px;
+}
+
+@media (max-width: 480px) {
+  .followup-master-page {
+    padding: 0.75rem;
   }
-  
-  .error-message h3 {
-    color: #dc2626;
-    margin: 0 0 1rem 0;
+
+  .stats-container {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
   }
-  
-  .error-message p {
-    color: #991b1b;
-    margin: 0 0 1.5rem 0;
+
+  .stat-card {
+    padding: 0.875rem;
   }
-  
-  .retry-btn {
-    background: #dc2626;
-    color: white;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: background 0.2s;
+
+  .stat-icon {
+    font-size: 1.75rem;
+    width: 45px;
+    height: 45px;
   }
-  
-  .retry-btn:hover {
-    background: #b91c1c;
+
+  .stat-content h3 {
+    font-size: 1.25rem;
   }
-  
-  /* Status badges */
-  .status-badge {
-    display: inline-block;
-    padding: 0.35rem 0.75rem;
-    border-radius: 6px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    text-transform: capitalize;
-  }
-  
-  .status-pending {
-    background: #fef3c7;
-    color: #92400e;
-  }
-  
-  .status-completed {
-    background: #d1fae5;
-    color: #065f46;
-  }
-  
-  .status-expired {
-    background: #fee2e2;
-    color: #991b1b;
-  }
-  
-  /* Responsive Design */
-  @media (max-width: 768px) {
-    .followup-master-page {
-      padding: 1rem;
-    }
-  
-    .stats-container {
-      grid-template-columns: 1fr;
-      gap: 1rem;
-    }
-  
-    .stat-card {
-      padding: 1rem;
-    }
-  
-    .stat-icon {
-      font-size: 2rem;
-      width: 50px;
-      height: 50px;
-    }
-  
-    .stat-content h3 {
-      font-size: 1.5rem;
-    }
-  }
-  
+}
