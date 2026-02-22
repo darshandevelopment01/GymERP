@@ -62,6 +62,8 @@ export interface IEmployee extends Document {
   profilePhoto?: string;
 
   status: 'active' | 'inactive';
+  resetPasswordOtp?: string;
+  resetOtpExpires?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -187,6 +189,8 @@ const EmployeeSchema = new Schema<IEmployee>(
       enum: ['active', 'inactive'],
       default: 'active',
     },
+    resetPasswordOtp: String,
+    resetOtpExpires: Date,
   },
   {
     timestamps: true,

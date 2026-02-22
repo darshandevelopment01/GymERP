@@ -15,8 +15,8 @@ export interface IUser extends Document {
   gymBranchId?: mongoose.Types.ObjectId;
   shiftId?: mongoose.Types.ObjectId;
   isActive: boolean;
-  resetPasswordToken?: string;
-  resetPasswordExpires?: Date;
+  resetPasswordOtp?: string;
+  resetOtpExpires?: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
@@ -72,22 +72,22 @@ const UserSchema = new Schema<IUser>({
     type: Boolean,
     default: true
   },
-  resetPasswordToken: String,
-  resetPasswordExpires: Date
+  resetPasswordOtp: String,
+  resetOtpExpires: Date
 }, {
   timestamps: true
 });
 
 // Hash password before saving
-UserSchema.pre('save', async function() {
+UserSchema.pre('save', async function () {
   if (!this.isModified('password')) return;
-  
+
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
 });
 
 // Auto-generate employee code
-UserSchema.pre('save', async function() {
+UserSchema.pre('save', async function () {
   if (!this.employeeCode && this.userType === 'user') {
     const count = await mongoose.model('User').countDocuments({ userType: 'user' });
     this.employeeCode = `EMP${String(count + 1).padStart(4, '0')}`;
@@ -95,7 +95,7 @@ UserSchema.pre('save', async function() {
 });
 
 // Compare password method
-UserSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
+UserSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
   return bcrypt.compare(candidatePassword, this.password);
 };
 

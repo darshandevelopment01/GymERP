@@ -143,9 +143,9 @@ export const forgotPassword = async (req: Request, res: Response) => {
     // Generate reset token
     const resetToken = crypto.randomBytes(32).toString('hex');
     const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-    
-    user.resetPasswordToken = hashedToken;
-    user.resetPasswordExpires = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+
+    user.resetPasswordOtp = hashedToken;
+    user.resetOtpExpires = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
     await user.save();
 
     // In production, send email/SMS
@@ -176,8 +176,8 @@ export const resetPassword = async (req: Request, res: Response) => {
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
     const user = await User.findOne({
-      resetPasswordToken: hashedToken,
-      resetPasswordExpires: { $gt: Date.now() }
+      resetPasswordOtp: hashedToken,
+      resetOtpExpires: { $gt: Date.now() }
     });
 
     if (!user) {
@@ -185,8 +185,8 @@ export const resetPassword = async (req: Request, res: Response) => {
     }
 
     user.password = newPassword;
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpires = undefined;
+    user.resetPasswordOtp = undefined;
+    user.resetOtpExpires = undefined;
     await user.save();
 
     res.json({ message: 'Password reset successful. You can now login with your new password.' });

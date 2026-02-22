@@ -115,5 +115,114 @@ router.get('/me', authMiddleware, async (req: Request, res: Response) => {
   }
 });
 
+// Forgot Password (OTP Generation)
+router.post('/forgot-password', async (req: Request, res: Response) => {
+  try {
+    const { identifier } = req.body;
+    if (!identifier) {
+      return res.status(400).json({ message: 'Email or phone number is required' });
+    }
+
+    // Find the user in either User or Employee collection
+    const searchCondition = {
+      $or: [
+        { email: identifier.toLowerCase() },
+        { phone: identifier }
+      ]
+    };
+
+    let userModel: any = await User.findOne(searchCondition);
+    let isEmployee = false;
+
+    if (!userModel) {
+      userModel = await Employee.findOne(searchCondition);
+      isEmployee = true;
+    }
+
+    if (!userModel) {
+      return res.status(404).json({ message: 'Account not found with this email or phone' });
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Set expiry (15 minutes from now)
+    const expires = new Date(Date.now() + 15 * 60 * 1000);
+
+    userModel.resetPasswordOtp = otp;
+    userModel.resetOtpExpires = expires;
+    await userModel.save();
+
+    console.log(`\n================================`);
+    console.log(`🔑 MOCK SMS/EMAIL SENT`);
+    console.log(`To: ${identifier}`);
+    console.log(`OTP: ${otp}`);
+    console.log(`================================\n`);
+
+    res.json({
+      success: true,
+      message: 'If the account exists, an OTP has been sent. Check terminal logs for the OTP.'
+    });
+
+  } catch (error: any) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({ message: 'Failed to process forgot password request', error: error.message });
+  }
+});
+
+// Reset Password (OTP Verification)
+router.post('/reset-password', async (req: Request, res: Response) => {
+  try {
+    const { identifier, otp, newPassword } = req.body;
+
+    if (!identifier || !otp || !newPassword) {
+      return res.status(400).json({ message: 'Identifier, OTP, and new password are required' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters long' });
+    }
+
+    const searchCondition = {
+      $or: [
+        { email: identifier.toLowerCase() },
+        { phone: identifier }
+      ],
+      resetPasswordOtp: otp,
+      resetOtpExpires: { $gt: Date.now() }
+    };
+
+    let userModel: any = await User.findOne(searchCondition);
+    let isEmployee = false;
+
+    if (!userModel) {
+      userModel = await Employee.findOne(searchCondition);
+      isEmployee = true;
+    }
+
+    if (!userModel) {
+      return res.status(400).json({ message: 'Invalid or expired OTP' });
+    }
+
+    // Hash the password if it's an Employee (User model uses pre-save hook)
+    if (isEmployee) {
+      userModel.password = await bcrypt.hash(newPassword, 10);
+    } else {
+      userModel.password = newPassword;
+    }
+
+    userModel.resetPasswordOtp = undefined;
+    userModel.resetOtpExpires = undefined;
+
+    await userModel.save();
+
+    res.json({ success: true, message: 'Password reset completely successfully. You can now log in.' });
+
+  } catch (error: any) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ message: 'Failed to reset password', error: error.message });
+  }
+});
+
 export default router;
 
