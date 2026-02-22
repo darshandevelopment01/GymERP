@@ -218,17 +218,19 @@ router.post('/reset-password', async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Invalid or expired OTP' });
     }
 
-    // Hash the password if it's an Employee (User model uses pre-save hook)
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    const updateFields = {
+      password: hashedPassword,
+      resetPasswordOtp: null,
+      resetOtpExpires: null
+    };
+
     if (isEmployee) {
-      userModel.password = await bcrypt.hash(newPassword, 10);
+      await Employee.updateOne({ _id: userModel._id }, { $set: updateFields });
     } else {
-      userModel.password = newPassword;
+      await User.updateOne({ _id: userModel._id }, { $set: updateFields });
     }
-
-    userModel.resetPasswordOtp = undefined;
-    userModel.resetOtpExpires = undefined;
-
-    await userModel.save();
 
     res.json({ success: true, message: 'Password reset completely successfully. You can now log in.' });
 
