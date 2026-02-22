@@ -34,60 +34,42 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
-const BranchSchema = new mongoose_1.Schema({
-    branchId: {
+const activityLogSchema = new mongoose_1.Schema({
+    action: {
         type: String,
         required: true,
-        unique: true,
+        enum: ['enquiry_created', 'enquiry_updated', 'followup_created', 'followup_updated', 'member_converted', 'member_updated']
     },
-    name: {
+    performedBy: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
+    performedByName: {
+        type: String,
+        required: true
+    },
+    targetType: {
         type: String,
         required: true,
+        enum: ['Enquiry', 'FollowUp', 'Member']
     },
-    address: {
+    targetId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        required: true
+    },
+    targetName: {
         type: String,
-        required: true,
+        required: true
     },
-    phone: {
+    details: {
         type: String,
-        required: true,
-    },
-    email: {
-        type: String,
-    },
-    city: {
-        type: String,
-    },
-    state: {
-        type: String,
-    },
-    zipCode: {
-        type: String,
-    },
-    radiusInMeters: {
-        type: Number,
-        required: true,
-        default: 100,
-        min: 0,
-    },
-    location: {
-        type: {
-            type: String,
-            enum: ['Point'],
-            default: 'Point',
-        },
-        coordinates: {
-            type: [Number],
-            default: [0, 0],
-        },
-    },
-    status: {
-        type: String,
-        enum: ['active', 'inactive'],
-        default: 'active',
-    },
+        required: true
+    }
 }, {
-    timestamps: true,
+    timestamps: { createdAt: true, updatedAt: false }
 });
-BranchSchema.index({ location: '2dsphere' });
-exports.default = mongoose_1.default.model('Branch', BranchSchema);
+activityLogSchema.index({ createdAt: -1 });
+activityLogSchema.index({ performedBy: 1 });
+activityLogSchema.index({ action: 1 });
+exports.default = mongoose_1.default.model('ActivityLog', activityLogSchema);

@@ -34,60 +34,21 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
-const BranchSchema = new mongoose_1.Schema({
-    branchId: {
+const PaymentTypeSchema = new mongoose_1.Schema({
+    paymentTypeId: {
         type: String,
         required: true,
-        unique: true,
+        unique: true
     },
-    name: {
+    paymentType: {
         type: String,
         required: true,
-    },
-    address: {
-        type: String,
-        required: true,
-    },
-    phone: {
-        type: String,
-        required: true,
-    },
-    email: {
-        type: String,
-    },
-    city: {
-        type: String,
-    },
-    state: {
-        type: String,
-    },
-    zipCode: {
-        type: String,
-    },
-    radiusInMeters: {
-        type: Number,
-        required: true,
-        default: 100,
-        min: 0,
-    },
-    location: {
-        type: {
-            type: String,
-            enum: ['Point'],
-            default: 'Point',
-        },
-        coordinates: {
-            type: [Number],
-            default: [0, 0],
-        },
+        trim: true
     },
     status: {
         type: String,
         enum: ['active', 'inactive'],
-        default: 'active',
-    },
-}, {
-    timestamps: true,
-});
-BranchSchema.index({ location: '2dsphere' });
-exports.default = mongoose_1.default.model('Branch', BranchSchema);
+        default: 'active'
+    }
+}, { timestamps: true });
+exports.default = mongoose_1.default.model('PaymentType', PaymentTypeSchema);

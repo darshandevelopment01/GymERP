@@ -33,61 +33,44 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
+// backend/src/models/FollowUp.ts
 const mongoose_1 = __importStar(require("mongoose"));
-const BranchSchema = new mongoose_1.Schema({
-    branchId: {
+const FollowUpSchema = new mongoose_1.Schema({
+    member: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: 'Member',
+        required: false
+    },
+    enquiry: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: 'Enquiry',
+        required: false
+    },
+    note: {
         type: String,
         required: true,
-        unique: true,
+        trim: true
     },
-    name: {
+    followUpDate: {
+        type: Date,
+        required: false
+    },
+    followUpTime: {
         type: String,
-        required: true,
-    },
-    address: {
-        type: String,
-        required: true,
-    },
-    phone: {
-        type: String,
-        required: true,
-    },
-    email: {
-        type: String,
-    },
-    city: {
-        type: String,
-    },
-    state: {
-        type: String,
-    },
-    zipCode: {
-        type: String,
-    },
-    radiusInMeters: {
-        type: Number,
-        required: true,
-        default: 100,
-        min: 0,
-    },
-    location: {
-        type: {
-            type: String,
-            enum: ['Point'],
-            default: 'Point',
-        },
-        coordinates: {
-            type: [Number],
-            default: [0, 0],
-        },
+        required: false
     },
     status: {
         type: String,
-        enum: ['active', 'inactive'],
-        default: 'active',
+        enum: ['pending', 'completed', 'cancelled', 'expired'],
+        default: 'pending'
     },
+    createdBy: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: 'User',
+        required: false
+    }
 }, {
-    timestamps: true,
+    timestamps: true
 });
-BranchSchema.index({ location: '2dsphere' });
-exports.default = mongoose_1.default.model('Branch', BranchSchema);
+// ✅ REMOVED the pre-save validation - it was causing issues
+exports.default = mongoose_1.default.model('FollowUp', FollowUpSchema);

@@ -16,7 +16,7 @@ router.get('/stats', auth_middleware_1.authMiddleware, async (req, res) => {
         const totalMembers = await Member_1.default.countDocuments({ status: 'active' });
         const totalEmployees = await Employee_1.default.countDocuments({ status: 'active' });
         const activeBranches = await Branch_1.default.countDocuments({ status: 'active' });
-        console.log('📊 Fetching dashboard stats:', { totalMembers, totalEmployees, activeBranches }); // Debug log
+        console.log('📊 Fetching dashboard stats:', { totalMembers, totalEmployees, activeBranches });
         const revenue = 840000;
         res.json({
             totalMembers,
@@ -45,7 +45,7 @@ router.get('/attendance-weekly', auth_middleware_1.authMiddleware, async (req, r
         monday.setDate(today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1));
         monday.setHours(0, 0, 0, 0);
         const totalMembers = await Member_1.default.countDocuments({ status: 'active' });
-        console.log('📊 Generating attendance data for', totalMembers, 'members'); // Debug log
+        console.log('📊 Generating attendance data for', totalMembers, 'members');
         const weeklyData = [];
         const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
         for (let i = 0; i < 7; i++) {
@@ -67,7 +67,7 @@ router.get('/attendance-weekly', auth_middleware_1.authMiddleware, async (req, r
                 date: date.toISOString().split('T')[0]
             });
         }
-        console.log('📊 Weekly attendance data:', weeklyData); // Debug log
+        console.log('📊 Weekly attendance data:', weeklyData);
         res.json(weeklyData);
     }
     catch (error) {
@@ -75,29 +75,38 @@ router.get('/attendance-weekly', auth_middleware_1.authMiddleware, async (req, r
         res.status(500).json({ message: 'Error fetching attendance', error: error.message });
     }
 });
-// Membership growth data (last 6 months)
+// Membership growth data (last 6 months) - Using membershipStartDate
 router.get('/membership-growth', auth_middleware_1.authMiddleware, async (req, res) => {
     try {
         const growthData = [];
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         const today = new Date();
+        console.log('📊 Starting membership growth calculation...');
+        console.log('📊 Current date:', today.toISOString());
+        // Check total members first
+        const totalMembers = await Member_1.default.countDocuments();
+        console.log('📊 Total members in database:', totalMembers);
         for (let i = 5; i >= 0; i--) {
-            const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
-            const nextMonth = new Date(today.getFullYear(), today.getMonth() - i + 1, 1);
+            const monthEnd = new Date(today.getFullYear(), today.getMonth() - i + 1, 0);
+            monthEnd.setHours(23, 59, 59, 999);
+            const monthName = months[new Date(today.getFullYear(), today.getMonth() - i, 1).getMonth()];
+            console.log(`📊 Checking ${monthName}: counting members with membershipStartDate <= ${monthEnd.toISOString()}`);
+            // Count cumulative members up to end of this month using membershipStartDate
             const count = await Member_1.default.countDocuments({
-                joinDate: { $lt: nextMonth }
+                membershipStartDate: { $lte: monthEnd }
             });
+            console.log(`📊 Total members up to ${monthName}: ${count}`);
             growthData.push({
-                month: months[date.getMonth()],
+                month: monthName,
                 total: count,
-                year: date.getFullYear()
+                year: monthEnd.getFullYear()
             });
         }
-        console.log('📊 Membership growth data:', growthData); // Debug log
+        console.log('📊 Final membership growth data:', JSON.stringify(growthData, null, 2));
         res.json(growthData);
     }
     catch (error) {
-        console.error('Growth data error:', error);
+        console.error('❌ Growth data error:', error);
         res.status(500).json({ message: 'Error fetching growth data', error: error.message });
     }
 });

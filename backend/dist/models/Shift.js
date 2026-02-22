@@ -34,60 +34,39 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
-const BranchSchema = new mongoose_1.Schema({
-    branchId: {
+const ShiftSchema = new mongoose_1.Schema({
+    shiftId: {
         type: String,
         required: true,
-        unique: true,
+        unique: true
     },
-    name: {
+    shiftName: {
         type: String,
         required: true,
+        trim: true
     },
-    address: {
+    startTime: {
         type: String,
-        required: true,
+        required: true
     },
-    phone: {
+    endTime: {
         type: String,
-        required: true,
+        required: true
     },
-    email: {
-        type: String,
-    },
-    city: {
-        type: String,
-    },
-    state: {
-        type: String,
-    },
-    zipCode: {
-        type: String,
-    },
-    radiusInMeters: {
+    halfDayHours: {
         type: Number,
         required: true,
-        default: 100,
-        min: 0,
+        min: 0
     },
-    location: {
-        type: {
-            type: String,
-            enum: ['Point'],
-            default: 'Point',
-        },
-        coordinates: {
-            type: [Number],
-            default: [0, 0],
-        },
+    fullDayHours: {
+        type: Number,
+        required: true,
+        min: 0
     },
     status: {
         type: String,
         enum: ['active', 'inactive'],
-        default: 'active',
-    },
-}, {
-    timestamps: true,
-});
-BranchSchema.index({ location: '2dsphere' });
-exports.default = mongoose_1.default.model('Branch', BranchSchema);
+        default: 'active'
+    }
+}, { timestamps: true });
+exports.default = mongoose_1.default.model('Shift', ShiftSchema);

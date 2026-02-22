@@ -34,124 +34,94 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
-const MemberSchema = new mongoose_1.Schema({
-    memberId: {
+const enquirySchema = new mongoose_1.Schema({
+    enquiryId: {
         type: String,
         unique: true,
         required: false
-    },
-    name: {
-        type: String,
-        required: true,
-        trim: true
-    },
-    email: {
-        type: String,
-        required: true,
-        trim: true,
-        lowercase: true
-    },
-    mobileNumber: {
-        type: String,
-        required: true,
-        trim: true
-    },
-    dateOfBirth: {
-        type: Date,
-        required: true
-    },
-    gender: {
-        type: String,
-        enum: ['Male', 'Female', 'Other'],
-        required: true
-    },
-    address: {
-        type: String,
-        required: false,
-        default: ''
     },
     branch: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'Branch',
         required: true
     },
+    name: {
+        type: String,
+        required: true,
+        trim: true
+    },
+    mobileNumber: {
+        type: String,
+        required: true,
+        trim: true,
+        validate: {
+            validator: function (v) {
+                return /^[0-9]{10}$/.test(v);
+            },
+            message: 'Mobile number must be 10 digits'
+        }
+    },
+    email: {
+        type: String,
+        required: true,
+        trim: true,
+        lowercase: true,
+        validate: {
+            validator: function (v) {
+                return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+            },
+            message: 'Invalid email format'
+        }
+    },
+    dateOfBirth: {
+        type: Date,
+        required: false,
+        default: null
+    },
+    gender: {
+        type: String,
+        enum: ['Male', 'Female', 'Other'],
+        required: true
+    },
     plan: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'Plan',
+        required: false,
+        default: null
+    },
+    source: {
+        type: String,
+        enum: ['Walk-in', 'Social Media', 'Referral', 'Website', 'Phone Call'],
         required: true
-    },
-    membershipStartDate: {
-        type: Date,
-        required: true,
-        default: Date.now
-    },
-    membershipEndDate: {
-        type: Date,
-        required: false
-    },
-    // Pricing breakdown
-    taxSlab: {
-        type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'TaxSlab',
-        required: false
-    },
-    planAmount: {
-        type: Number,
-        required: false,
-        default: 0
-    },
-    discountPercentage: {
-        type: Number,
-        required: false,
-        default: 0,
-        min: 0,
-        max: 100
-    },
-    discountAmount: {
-        type: Number,
-        required: false,
-        default: 0
-    },
-    taxPercentage: {
-        type: Number,
-        required: false,
-        default: 0
-    },
-    taxAmount: {
-        type: Number,
-        required: false,
-        default: 0
-    },
-    totalAmount: {
-        type: Number,
-        required: false,
-        default: 0
-    },
-    paymentReceived: {
-        type: Number,
-        required: true,
-        default: 0
-    },
-    paymentRemaining: {
-        type: Number,
-        required: false,
-        default: 0
     },
     status: {
         type: String,
-        enum: ['active', 'inactive', 'expired'],
-        default: 'active'
+        enum: ['pending', 'confirmed', 'rejected', 'converted'],
+        default: 'pending',
+        required: true
     },
     profilePhoto: {
         type: String,
         default: null
     },
-    enquiryId: {
-        type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'Enquiry',
-        required: false
+    notes: {
+        type: String,
+        default: ''
     },
-    convertedBy: {
+    followUpDate: {
+        type: Date,
+        default: null
+    },
+    convertedToMember: {
+        type: Boolean,
+        default: false
+    },
+    convertedMemberId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: 'Member',
+        default: null
+    },
+    createdBy: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'User',
         default: null
@@ -159,35 +129,49 @@ const MemberSchema = new mongoose_1.Schema({
 }, {
     timestamps: true
 });
-MemberSchema.pre('save', async function () {
-    if (!this.memberId) {
+// ✅ Pre-save middleware to auto-generate enquiryId (FIXED - removed next callback)
+enquirySchema.pre('save', async function () {
+    // Only generate ID if it doesn't exist (for new documents)
+    if (!this.enquiryId) {
         try {
+            // Generate enquiry ID: ENQ-YYYYMMDD-XXXX
             const date = new Date();
             const dateStr = date.toISOString().slice(0, 10).replace(/-/g, '');
-            const lastMember = await mongoose_1.default.model('Member')
+            // Find the last enquiry created today with proper format validation
+            const lastEnquiry = await mongoose_1.default.model('Enquiry')
                 .findOne({
-                memberId: new RegExp(`^MEM-${dateStr}-\\d{4}$`)
+                enquiryId: new RegExp(`^ENQ-${dateStr}-\\d{4}$`)
             })
-                .sort({ memberId: -1 })
-                .select('memberId')
+                .sort({ enquiryId: -1 })
+                .select('enquiryId')
                 .lean();
             let sequence = 1;
-            if (lastMember?.memberId) {
-                const parts = lastMember.memberId.split('-');
+            // ✅ Proper null checks and validation
+            if (lastEnquiry?.enquiryId) {
+                const parts = lastEnquiry.enquiryId.split('-');
+                // Validate parts array has correct structure [ENQ, YYYYMMDD, XXXX]
                 if (parts.length === 3 && parts[2]) {
                     const lastSequence = parseInt(parts[2], 10);
+                    // Validate parsed number is valid
                     if (!isNaN(lastSequence) && lastSequence > 0) {
                         sequence = lastSequence + 1;
                     }
                 }
             }
-            this.memberId = `MEM-${dateStr}-${String(sequence).padStart(4, '0')}`;
-            console.log('✅ Generated memberId:', this.memberId);
+            // Generate the new enquiry ID
+            this.enquiryId = `ENQ-${dateStr}-${String(sequence).padStart(4, '0')}`;
+            console.log('✅ Generated enquiryId:', this.enquiryId);
         }
         catch (error) {
-            console.error('❌ Error generating memberId:', error);
-            this.memberId = `MEM-${Date.now()}`;
+            console.error('❌ Error generating enquiryId:', error);
+            // Fallback to timestamp-based ID
+            this.enquiryId = `ENQ-${Date.now()}`;
         }
     }
 });
-exports.default = mongoose_1.default.model('Member', MemberSchema);
+enquirySchema.index({ branch: 1, status: 1 });
+enquirySchema.index({ mobileNumber: 1 });
+enquirySchema.index({ email: 1 });
+enquirySchema.index({ createdAt: -1 });
+enquirySchema.index({ enquiryId: 1 });
+exports.default = mongoose_1.default.model('Enquiry', enquirySchema);

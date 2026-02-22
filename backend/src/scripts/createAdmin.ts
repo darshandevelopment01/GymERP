@@ -1,3 +1,4 @@
+// @ts-nocheck
 // backend/src/scripts/createAdmin.ts
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
@@ -23,7 +24,7 @@ const createAdmin = async () => {
     console.log('✅ Admin user created!');
     console.log('Email: admin@muscletime.com');
     console.log('Password: admin123');
-    
+
     process.exit(0);
   } catch (error) {
     console.error('Error:', error);

@@ -34,60 +34,36 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
-const BranchSchema = new mongoose_1.Schema({
-    branchId: {
+const PlanSchema = new mongoose_1.Schema({
+    planId: {
         type: String,
         required: true,
-        unique: true,
+        unique: true
     },
-    name: {
+    planName: {
         type: String,
         required: true,
+        trim: true
     },
-    address: {
+    category: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: 'PlanCategory',
+        required: true
+    },
+    duration: {
         type: String,
-        required: true,
+        enum: ['Monthly', 'Quarterly', 'Yearly'],
+        required: true
     },
-    phone: {
-        type: String,
-        required: true,
-    },
-    email: {
-        type: String,
-    },
-    city: {
-        type: String,
-    },
-    state: {
-        type: String,
-    },
-    zipCode: {
-        type: String,
-    },
-    radiusInMeters: {
+    price: {
         type: Number,
         required: true,
-        default: 100,
-        min: 0,
-    },
-    location: {
-        type: {
-            type: String,
-            enum: ['Point'],
-            default: 'Point',
-        },
-        coordinates: {
-            type: [Number],
-            default: [0, 0],
-        },
+        min: 0
     },
     status: {
         type: String,
         enum: ['active', 'inactive'],
-        default: 'active',
-    },
-}, {
-    timestamps: true,
-});
-BranchSchema.index({ location: '2dsphere' });
-exports.default = mongoose_1.default.model('Branch', BranchSchema);
+        default: 'active'
+    }
+}, { timestamps: true });
+exports.default = mongoose_1.default.model('Plan', PlanSchema);
