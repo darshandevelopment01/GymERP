@@ -23,13 +23,7 @@ const app = (0, express_1.default)();
 (0, db_1.default)();
 // Middleware
 app.use((0, cors_1.default)({
-    origin: [
-        'http://localhost:5173',
-        'http://localhost:5174',
-        'http://localhost:3000',
-        'https://muscletime-backend.vercel.app',
-        /^https:\/\/.*\.vercel\.app$/
-    ],
+    origin: '*',
     credentials: true
 }));
 app.use(express_1.default.json());
