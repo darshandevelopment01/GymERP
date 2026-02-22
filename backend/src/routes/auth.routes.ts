@@ -160,9 +160,12 @@ router.post('/forgot-password', async (req: Request, res: Response) => {
     // Set expiry (15 minutes from now)
     const expires = new Date(Date.now() + 15 * 60 * 1000);
 
-    userModel.resetPasswordOtp = otp;
-    userModel.resetOtpExpires = expires;
-    await userModel.save();
+    const updateFields = { resetPasswordOtp: otp, resetOtpExpires: expires };
+    if (isEmployee) {
+      await Employee.updateOne({ _id: userModel._id }, { $set: updateFields });
+    } else {
+      await User.updateOne({ _id: userModel._id }, { $set: updateFields });
+    }
 
     console.log(`\n================================`);
     console.log(`🔑 MOCK SMS/EMAIL SENT`);
