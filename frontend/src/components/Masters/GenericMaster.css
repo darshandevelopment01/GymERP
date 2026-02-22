@@ -1057,19 +1057,20 @@
   }
 
   .modal-footer {
-    padding: 1rem 1.25rem;
-    gap: 0.75rem;
-  }
-
-  /* Stack footer buttons */
-  .modal-footer {
-    flex-direction: column;
+    padding: 0.875rem 1rem;
+    gap: 0.5rem;
+    /* Keep buttons side-by-side so both Save and Cancel are always visible */
+    flex-direction: row;
+    flex-wrap: nowrap;
   }
 
   .btn-cancel,
   .btn-save {
-    width: 100%;
+    flex: 1;
+    /* Equal width, both visible */
     min-width: 0;
+    padding: 12px 10px;
+    font-size: 0.9rem;
   }
 
   /* Reduce filter grid */
@@ -1184,13 +1185,18 @@
   }
 
   .modal-footer {
-    padding: 0.875rem 1rem;
+    padding: 0.75rem 0.875rem;
+    gap: 0.5rem;
+    flex-direction: row;
+    flex-wrap: nowrap;
   }
 
   .btn-cancel,
   .btn-save {
-    padding: 12px 20px;
-    font-size: 0.95rem;
+    flex: 1;
+    min-width: 0;
+    padding: 10px 8px;
+    font-size: 0.85rem;
   }
 
   /* Table: reduce padding further */

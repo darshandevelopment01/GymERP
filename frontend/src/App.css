@@ -223,6 +223,8 @@ body {
   flex-direction: column;
   height: 100vh;
   flex-shrink: 0;
+  overflow: hidden;
+  /* Prevent sidebar from overflowing viewport */
 }
 
 .sidebar-header {
