@@ -10,7 +10,9 @@ import employeeRoutes from './routes/employee.routes';
 import branchRoutes from './routes/branch.routes';
 import mastersRoutes from './routes/masters.routes';
 import enquiryRoutes from './routes/enquiry.routes';
-
+import followupRoutes from './routes/followup.routes'; // ✅ ADD THIS
+import uploadRoutes from './routes/upload.routes';
+import activityLogRoutes from './routes/activityLog.routes';
 
 dotenv.config();
 
@@ -39,7 +41,7 @@ app.get('/health', (req, res) => {
 
 // Root route - SECOND
 app.get('/', (req, res) => {
-  res.json({ 
+  res.json({
     message: 'MuscleTime ERP API',
     status: 'running',
     endpoints: {
@@ -49,7 +51,9 @@ app.get('/', (req, res) => {
       members: '/api/members',
       employees: '/api/employees',
       branches: '/api/branches',
-      masters: '/api/masters'  // ADD THIS
+      masters: '/api/masters',
+      enquiries: '/api/enquiries',
+      followups: '/api/followups' // ✅ ADD THIS
     }
   });
 });
@@ -60,7 +64,10 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/members', memberRoutes);
 app.use('/api/employees', employeeRoutes);
 app.use('/api/branches', branchRoutes);
-app.use('/api/masters', mastersRoutes);  
+app.use('/api/masters', mastersRoutes);
 app.use('/api/enquiries', enquiryRoutes);
+app.use('/api/followups', followupRoutes); // ✅ ADD THIS
+app.use('/api/upload', uploadRoutes);
+app.use('/api/activity-logs', activityLogRoutes);
 
 export default app;

@@ -15,17 +15,17 @@ export default function MastersContent() {
     navigate('/login');
   };
 
+  // ✅ UPDATED: Added Follow Ups route
   const handleMenuChange = (menu) => {
     setActiveMenu(menu);
     
     const routes = {
       'Dashboard': '/dashboard',
-      'Masters': '/masters',
       'Enquiry': '/enquiry',
+      'Follow Ups': '/followups', // ✅ ADD THIS
       'Members': '/members',
-      'Employees': '/employees',
       'Attendance': '/attendance',
-      'Reports': '/reports',
+      'Masters': '/masters',
     };
     
     if (routes[menu]) {

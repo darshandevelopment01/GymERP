@@ -17,7 +17,7 @@
   width: 50px;
   height: 50px;
   border: 4px solid #e5e7eb;
-  border-top: 4px solid #8b5cf6;
+  border-top: 4px solid rgb(23, 171, 136);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -62,7 +62,7 @@
 }
 
 .retry-btn {
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  background: rgb(23, 171, 136);
   color: white;
   border: none;
   padding: 0.75rem 2rem;
@@ -74,9 +74,10 @@
 
 .retry-btn:hover {
   transform: translateY(-2px);
+  background: rgb(20, 150, 120);
 }
 
-/* Stats Cards - Updated Colors */
+/* Stats Cards - Green Theme */
 .stats-container {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -123,24 +124,24 @@
   flex-shrink: 0;
 }
 
-/* Total Enquiries - Purple/Indigo */
+/* Total Enquiries - Green */
 .stat-card.total::before {
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, rgb(23, 171, 136) 0%, rgb(20, 150, 120) 100%);
 }
 
 .stat-card.total .stat-icon {
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+  background: linear-gradient(135deg, rgb(23, 171, 136) 0%, rgb(20, 150, 120) 100%);
+  box-shadow: 0 4px 15px rgba(23, 171, 136, 0.3);
 }
 
-/* Pending - Orange */
+/* Pending - Dark Gray/Black */
 .stat-card.confirmed::before {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
 }
 
 .stat-card.confirmed .stat-icon {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+  background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+  box-shadow: 0 4px 15px rgba(55, 65, 81, 0.3);
 }
 
 /* This Month - Teal/Green */
@@ -172,7 +173,7 @@
   font-weight: 500;
 }
 
-/* Status Badges - Updated */
+/* Status Badges */
 .status-badge {
   padding: 0.45rem 1rem;
   border-radius: 20px;
@@ -202,9 +203,251 @@
 }
 
 .status-converted {
-  background: #dbeafe;
-  color: #1e40af;
-  border: 1px solid #bfdbfe;
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+/* ========== GREEN/BLACK MODAL THEME ========== */
+
+/* Modal Header - Green */
+.enquiry-master-page .modal-header {
+  background: rgb(23, 171, 136) !important;
+  color: white !important;
+  padding: 1.5rem 2rem !important;
+  border-radius: 20px 20px 0 0 !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+
+.enquiry-master-page .modal-header h2 {
+  color: white !important;
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  margin: 0 !important;
+}
+
+.enquiry-master-page .btn-close {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+  border: 2px solid white !important;
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 50% !important;
+  font-size: 1.5rem !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+}
+
+.enquiry-master-page .btn-close:hover {
+  background: white !important;
+  color: rgb(23, 171, 136) !important;
+  transform: rotate(90deg) !important;
+}
+
+/* Modal Form Content - WHITE Background */
+.enquiry-master-page .form-content {
+  background: #ffffff !important;
+  padding: 2rem !important;
+  overflow-y: auto !important;
+  max-height: calc(80vh - 200px) !important;
+}
+
+/* Form Groups */
+.enquiry-master-page .form-group {
+  margin-bottom: 1.5rem !important;
+}
+
+.enquiry-master-page .form-group label {
+  display: block !important;
+  font-weight: 600 !important;
+  color: #1e293b !important;
+  margin-bottom: 0.5rem !important;
+  font-size: 0.95rem !important;
+}
+
+.enquiry-master-page .form-group input,
+.enquiry-master-page .form-group select,
+.enquiry-master-page .form-group textarea {
+  width: 100% !important;
+  padding: 0.75rem 1rem !important;
+  border: 2px solid #e2e8f0 !important;
+  border-radius: 8px !important;
+  font-size: 1rem !important;
+  transition: all 0.3s ease !important;
+  background: white !important;
+  color: #1e293b !important;
+}
+
+.enquiry-master-page .form-group input:focus,
+.enquiry-master-page .form-group select:focus,
+.enquiry-master-page .form-group textarea:focus {
+  outline: none !important;
+  border-color: rgb(23, 171, 136) !important;
+  box-shadow: 0 0 0 3px rgba(23, 171, 136, 0.1) !important;
+}
+
+/* DatePicker Styling */
+.enquiry-master-page .custom-datepicker {
+  width: 100% !important;
+  padding: 0.75rem 1rem !important;
+  border: 2px solid #e2e8f0 !important;
+  border-radius: 8px !important;
+  font-size: 1rem !important;
+  background: white !important;
+  color: #1e293b !important;
+}
+
+.enquiry-master-page .datepicker-wrapper {
+  width: 100% !important;
+}
+
+/* Info Boxes */
+.enquiry-master-page .enquiry-info {
+  background: #f0fdf4 !important;
+  border: 2px solid #bbf7d0 !important;
+  padding: 1rem !important;
+  border-radius: 8px !important;
+  margin-bottom: 1.5rem !important;
+}
+
+.enquiry-master-page .enquiry-info h3 {
+  margin: 0 0 0.75rem 0 !important;
+  color: #166534 !important;
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+}
+
+.enquiry-master-page .enquiry-info p {
+  margin: 0.35rem 0 !important;
+  color: #15803d !important;
+  font-size: 0.9rem !important;
+}
+
+/* Modal Footer - Dark Gray/Black */
+.enquiry-master-page .modal-footer {
+  background: #1f2937 !important;
+  padding: 1.25rem 2rem !important;
+  border-radius: 0 0 20px 20px !important;
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 1rem !important;
+}
+
+/* Cancel Button */
+.enquiry-master-page .btn-cancel {
+  background: transparent !important;
+  color: white !important;
+  border: 2px solid white !important;
+  padding: 0.75rem 1.5rem !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  font-weight: 600 !important;
+  transition: all 0.3s ease !important;
+}
+
+.enquiry-master-page .btn-cancel:hover {
+  background: white !important;
+  color: #1f2937 !important;
+}
+
+/* Save Button - Green */
+.enquiry-master-page .btn-save {
+  background: rgb(23, 171, 136) !important;
+  color: white !important;
+  border: none !important;
+  padding: 0.75rem 1.5rem !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  font-weight: 600 !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 4px 15px rgba(23, 171, 136, 0.3) !important;
+}
+
+.enquiry-master-page .btn-save:hover {
+  background: rgb(20, 150, 120) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(23, 171, 136, 0.4) !important;
+}
+
+/* Required Asterisk */
+.enquiry-master-page .required {
+  color: #ef4444 !important;
+  margin-left: 0.25rem !important;
+}
+
+/* ========== BUTTON OVERRIDES ========== */
+
+/* Export to Excel Button */
+.enquiry-master-page .btn-export {
+  background: white !important;
+  color: rgb(23, 171, 136) !important;
+  border: 2px solid rgb(23, 171, 136) !important;
+  padding: 0.75rem 1.5rem !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  font-weight: 600 !important;
+  transition: all 0.2s !important;
+  box-shadow: none !important;
+}
+
+.enquiry-master-page .btn-export:hover {
+  background: rgb(23, 171, 136) !important;
+  color: white !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(23, 171, 136, 0.3) !important;
+}
+
+/* Create Enquiry Button */
+.enquiry-master-page .btn-create {
+  background: rgb(23, 171, 136) !important;
+  color: white !important;
+  border: none !important;
+  padding: 0.75rem 1.5rem !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  font-weight: 600 !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 4px 15px rgba(23, 171, 136, 0.3) !important;
+}
+
+.enquiry-master-page .btn-create:hover {
+  background: rgb(20, 150, 120) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(23, 171, 136, 0.4) !important;
+}
+
+/* Table Header - Green */
+.enquiry-master-page .master-table thead,
+.enquiry-master-page table thead,
+.enquiry-master-page .master-table-container table thead,
+.enquiry-master-page .generic-master table thead {
+  background: rgb(23, 171, 136) !important;
+}
+
+.enquiry-master-page .master-table th,
+.enquiry-master-page table th,
+.enquiry-master-page .master-table-container table th,
+.enquiry-master-page .generic-master table th {
+  background: transparent !important;
+  color: white !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+}
+
+/* Filter Button */
+.enquiry-master-page .btn-filter.active {
+  background: rgb(23, 171, 136) !important;
+  color: white !important;
+  border-color: rgb(23, 171, 136) !important;
+}
+
+.enquiry-master-page .btn-filter:hover {
+  border-color: rgb(23, 171, 136) !important;
+  color: rgb(23, 171, 136) !important;
+  box-shadow: 0 4px 8px rgba(23, 171, 136, 0.15) !important;
 }
 
 /* Responsive Design */
@@ -238,6 +481,10 @@
   .stat-content p {
     font-size: 0.9rem;
   }
+
+  .enquiry-master-page .modal-content {
+    max-width: 95% !important;
+  }
 }
 
 @media (max-width: 480px) {
@@ -250,122 +497,4 @@
   .stat-content h3 {
     font-size: 1.5rem;
   }
-}
-
-/* Override GenericMaster buttons and title colors for Enquiry Page */
-.enquiry-master-page .master-header {
-  background: transparent !important;
-  border-bottom: none !important;
-}
-
-.enquiry-master-page .master-header h1 {
-  color: #1e293b !important;
-  font-size: 1.75rem !important;
-  font-weight: 700 !important;
-}
-
-/* Export to Excel Button - Solid Green with Border */
-.enquiry-master-page .btn-export {
-  background: white !important;
-  color: rgb(23, 171, 136) !important;
-  border: 2px solid rgb(23, 171, 136) !important;
-  padding: 0.75rem 1.5rem !important;
-  border-radius: 8px !important;
-  cursor: pointer !important;
-  font-weight: 600 !important;
-  transition: all 0.2s !important;
-  box-shadow: none !important;
-}
-
-.enquiry-master-page .btn-export:hover {
-  background: rgb(23, 171, 136) !important;
-  color: white !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 4px 12px rgba(23, 171, 136, 0.3) !important;
-}
-
-/* Create Enquiry Button - Solid Green */
-.enquiry-master-page .btn-create {
-  background: rgb(23, 171, 136) !important;
-  color: white !important;
-  border: none !important;
-  padding: 0.75rem 1.5rem !important;
-  border-radius: 8px !important;
-  cursor: pointer !important;
-  font-weight: 600 !important;
-  transition: all 0.3s ease !important;
-  box-shadow: 0 4px 15px rgba(23, 171, 136, 0.3) !important;
-}
-
-.enquiry-master-page .btn-create:hover {
-  background: rgb(20, 150, 120) !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 6px 20px rgba(23, 171, 136, 0.4) !important;
-}
-
-/* Table Header - Purple */
-.enquiry-master-page .master-table thead {
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important;
-}
-
-.enquiry-master-page .master-table th {
-  background: transparent !important;
-  color: white !important;
-  font-weight: 600 !important;
-  text-transform: uppercase !important;
-  letter-spacing: 1px !important;
-}
-
-/* Filter Button - Purple when active */
-.enquiry-master-page .btn-filter.active {
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important;
-  color: white !important;
-  border-color: #8b5cf6 !important;
-}
-
-.enquiry-master-page .btn-filter:hover {
-  border-color: #8b5cf6 !important;
-  color: #8b5cf6 !important;
-  box-shadow: 0 4px 8px rgba(139, 92, 246, 0.15) !important;
-}
-
-/* Modal Header - Purple */
-.enquiry-master-page .modal-header {
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important;
-}
-
-/* Modal Form Content - Purple */
-.enquiry-master-page .form-content {
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important;
-}
-
-/* Modal Footer - Purple */
-.enquiry-master-page .modal-footer {
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important;
-}
-
-/* Save Button - Yellow/Gold */
-.enquiry-master-page .btn-save {
-  background: linear-gradient(135deg, #ffd93d 0%, #ffb800 100%) !important;
-  color: #2d3748 !important;
-  font-weight: 700 !important;
-  box-shadow: 0 4px 15px rgba(255, 217, 61, 0.4) !important;
-}
-
-.btn-save:hover {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 6px 20px rgba(255, 217, 61, 0.6) !important;
-}
-/* Force table header color - MUST be at the end */
-.enquiry-master-page table thead,
-.enquiry-master-page .master-table-container table thead,
-.enquiry-master-page .generic-master table thead {
-  background: rgb(23, 171, 136) !important;
-}
-
-.enquiry-master-page table th,
-.enquiry-master-page .master-table-container table th,
-.enquiry-master-page .generic-master table th {
-  background: transparent !important;
-  color: white !important;
 }

@@ -7,14 +7,16 @@ import {
   ClipboardCheck, 
   Settings, 
   LogOut,
-  X // Close icon
+  X, // Close icon
+  CalendarClock // Follow ups icon
 } from 'lucide-react';
 import logo from '../assets/logo.png';
 
-// ✅ REMOVED: Employees and Reports
+// ✅ ADDED: Follow Ups menu item
 const MENU = [
   { label: 'Dashboard', icon: LayoutDashboard },
   { label: 'Enquiry', icon: UserPlus },
+  { label: 'Follow Ups', icon: CalendarClock }, // ✅ NEW
   { label: 'Members', icon: Users },
   { label: 'Attendance', icon: ClipboardCheck },
   { label: 'Masters', icon: Settings },

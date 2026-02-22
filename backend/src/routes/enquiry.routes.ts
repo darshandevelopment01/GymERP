@@ -7,6 +7,7 @@ import {
   deleteEnquiry,
   getEnquiryStats
 } from '../controllers/enquiry.controller';
+import { authMiddleware } from '../middleware/auth.middleware';
 
 const router: Router = express.Router();
 
@@ -14,8 +15,8 @@ const router: Router = express.Router();
 router.get('/stats/summary', getEnquiryStats);
 router.get('/', getAllEnquiries);
 router.get('/:id', getEnquiryById);
-router.post('/', createEnquiry);
-router.put('/:id', updateEnquiry);
+router.post('/', authMiddleware, createEnquiry);
+router.put('/:id', authMiddleware, updateEnquiry);
 router.delete('/:id', deleteEnquiry);
 
 export default router;

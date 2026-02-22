@@ -23,9 +23,8 @@ export default function MemberScreen() {
       'Masters': '/masters',
       'Enquiry': '/enquiry',
       'Members': '/members',
-      'Employees': '/employees',
       'Attendance': '/attendance',
-      'Reports': '/reports',
+      'Follow Ups': '/followups',
     };
     
     if (routes[menu]) {

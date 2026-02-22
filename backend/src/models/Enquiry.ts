@@ -17,6 +17,7 @@ export interface IEnquiry extends Document {
   followUpDate?: Date;
   convertedToMember: boolean;
   convertedMemberId?: mongoose.Types.ObjectId;
+  createdBy?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -43,7 +44,7 @@ const enquirySchema = new Schema<IEnquiry>({
     required: true,
     trim: true,
     validate: {
-      validator: function(v: string) {
+      validator: function (v: string) {
         return /^[0-9]{10}$/.test(v);
       },
       message: 'Mobile number must be 10 digits'
@@ -55,7 +56,7 @@ const enquirySchema = new Schema<IEnquiry>({
     trim: true,
     lowercase: true,
     validate: {
-      validator: function(v: string) {
+      validator: function (v: string) {
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
       },
       message: 'Invalid email format'
@@ -108,6 +109,11 @@ const enquirySchema = new Schema<IEnquiry>({
     type: Schema.Types.ObjectId,
     ref: 'Member',
     default: null
+  },
+  createdBy: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
   }
 }, {
   timestamps: true
@@ -115,45 +121,45 @@ const enquirySchema = new Schema<IEnquiry>({
 
 
 // ✅ Pre-save middleware to auto-generate enquiryId (FIXED - removed next callback)
-enquirySchema.pre('save', async function() {
+enquirySchema.pre('save', async function () {
   // Only generate ID if it doesn't exist (for new documents)
   if (!this.enquiryId) {
     try {
       // Generate enquiry ID: ENQ-YYYYMMDD-XXXX
       const date = new Date();
       const dateStr = date.toISOString().slice(0, 10).replace(/-/g, '');
-      
+
       // Find the last enquiry created today with proper format validation
       const lastEnquiry = await mongoose.model<IEnquiry>('Enquiry')
-        .findOne({ 
-          enquiryId: new RegExp(`^ENQ-${dateStr}-\\d{4}$`) 
+        .findOne({
+          enquiryId: new RegExp(`^ENQ-${dateStr}-\\d{4}$`)
         })
         .sort({ enquiryId: -1 })
         .select('enquiryId')
         .lean();
-      
+
       let sequence = 1;
-      
+
       // ✅ Proper null checks and validation
       if (lastEnquiry?.enquiryId) {
         const parts = lastEnquiry.enquiryId.split('-');
-        
+
         // Validate parts array has correct structure [ENQ, YYYYMMDD, XXXX]
         if (parts.length === 3 && parts[2]) {
           const lastSequence = parseInt(parts[2], 10);
-          
+
           // Validate parsed number is valid
           if (!isNaN(lastSequence) && lastSequence > 0) {
             sequence = lastSequence + 1;
           }
         }
       }
-      
+
       // Generate the new enquiry ID
       this.enquiryId = `ENQ-${dateStr}-${String(sequence).padStart(4, '0')}`;
-      
+
       console.log('✅ Generated enquiryId:', this.enquiryId);
-      
+
     } catch (error) {
       console.error('❌ Error generating enquiryId:', error);
       // Fallback to timestamp-based ID

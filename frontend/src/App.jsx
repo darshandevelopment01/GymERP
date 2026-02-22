@@ -1,10 +1,10 @@
-// src/App.jsx
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LoginScreen from './screens/LoginScreen';
 import DashboardScreen from './screens/DashboardScreen';
 import MastersScreen from './screens/MastersScreen';
 import EnquiryScreen from './screens/EnquiryScreen';
-import MemberScreen from './screens/MemberScreen';  // ✅ Add this import
+import MemberScreen from './screens/MemberScreen';
+import FollowUpsScreen from './screens/FollowUpsScreen';
 import './App.css';
 
 function PrivateRoute({ children }) {
@@ -21,6 +21,7 @@ function App() {
   return (
     <Router>
       <Routes>
+        {/* Public Route */}
         <Route 
           path="/login" 
           element={
@@ -29,6 +30,8 @@ function App() {
             </PublicRoute>
           } 
         />
+
+        {/* Private Routes */}
         <Route 
           path="/dashboard" 
           element={
@@ -37,6 +40,7 @@ function App() {
             </PrivateRoute>
           } 
         />
+        
         <Route 
           path="/masters" 
           element={
@@ -45,6 +49,7 @@ function App() {
             </PrivateRoute>
           } 
         />
+        
         <Route 
           path="/enquiry" 
           element={
@@ -53,7 +58,7 @@ function App() {
             </PrivateRoute>
           } 
         />
-        {/* ✅ Add Members route */}
+        
         <Route 
           path="/members" 
           element={
@@ -62,9 +67,26 @@ function App() {
             </PrivateRoute>
           } 
         />
+        
+        <Route 
+          path="/followups" 
+          element={
+            <PrivateRoute>
+              <FollowUpsScreen />
+            </PrivateRoute>
+          } 
+        />
+
+        {/* Default Route */}
         <Route 
           path="/" 
           element={<Navigate to="/login" />} 
+        />
+
+        {/* Catch all - 404 redirect */}
+        <Route 
+          path="*" 
+          element={<Navigate to="/dashboard" />} 
         />
       </Routes>
     </Router>

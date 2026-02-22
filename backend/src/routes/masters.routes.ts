@@ -10,6 +10,13 @@ router.get('/payment-types/:id', mastersController.getPaymentTypeById);
 router.put('/payment-types/:id', mastersController.updatePaymentType);
 router.delete('/payment-types/:id', mastersController.deletePaymentType);
 
+// Plan Category Routes
+router.post('/plan-categories', mastersController.createPlanCategory);
+router.get('/plan-categories', mastersController.getAllPlanCategories);
+router.get('/plan-categories/:id', mastersController.getPlanCategoryById);
+router.put('/plan-categories/:id', mastersController.updatePlanCategory);
+router.delete('/plan-categories/:id', mastersController.deletePlanCategory);
+
 // Plan Routes
 router.post('/plans', mastersController.createPlan);
 router.get('/plans', mastersController.getAllPlans);

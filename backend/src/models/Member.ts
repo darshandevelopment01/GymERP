@@ -12,10 +12,20 @@ export interface IMember extends Document {
   plan: mongoose.Types.ObjectId;
   membershipStartDate: Date;
   membershipEndDate: Date;
+  // Pricing breakdown
+  taxSlab?: mongoose.Types.ObjectId;
+  planAmount: number;
+  discountPercentage: number;
+  discountAmount: number;
+  taxPercentage: number;
+  taxAmount: number;
+  totalAmount: number;
   paymentReceived: number;
   paymentRemaining: number;
   status: 'active' | 'inactive' | 'expired';
+  profilePhoto?: string;
   enquiryId?: mongoose.Types.ObjectId;
+  convertedBy?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -76,6 +86,44 @@ const MemberSchema = new Schema<IMember>(
       type: Date,
       required: false
     },
+    // Pricing breakdown
+    taxSlab: {
+      type: Schema.Types.ObjectId,
+      ref: 'TaxSlab',
+      required: false
+    },
+    planAmount: {
+      type: Number,
+      required: false,
+      default: 0
+    },
+    discountPercentage: {
+      type: Number,
+      required: false,
+      default: 0,
+      min: 0,
+      max: 100
+    },
+    discountAmount: {
+      type: Number,
+      required: false,
+      default: 0
+    },
+    taxPercentage: {
+      type: Number,
+      required: false,
+      default: 0
+    },
+    taxAmount: {
+      type: Number,
+      required: false,
+      default: 0
+    },
+    totalAmount: {
+      type: Number,
+      required: false,
+      default: 0
+    },
     paymentReceived: {
       type: Number,
       required: true,
@@ -91,10 +139,19 @@ const MemberSchema = new Schema<IMember>(
       enum: ['active', 'inactive', 'expired'],
       default: 'active'
     },
+    profilePhoto: {
+      type: String,
+      default: null
+    },
     enquiryId: {
       type: Schema.Types.ObjectId,
       ref: 'Enquiry',
       required: false
+    },
+    convertedBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      default: null
     }
   },
   {
@@ -102,22 +159,22 @@ const MemberSchema = new Schema<IMember>(
   }
 );
 
-MemberSchema.pre('save', async function() {
+MemberSchema.pre('save', async function () {
   if (!this.memberId) {
     try {
       const date = new Date();
       const dateStr = date.toISOString().slice(0, 10).replace(/-/g, '');
-      
+
       const lastMember = await mongoose.model<IMember>('Member')
-        .findOne({ 
-          memberId: new RegExp(`^MEM-${dateStr}-\\d{4}$`) 
+        .findOne({
+          memberId: new RegExp(`^MEM-${dateStr}-\\d{4}$`)
         })
         .sort({ memberId: -1 })
         .select('memberId')
         .lean();
-      
+
       let sequence = 1;
-      
+
       if (lastMember?.memberId) {
         const parts = lastMember.memberId.split('-');
         if (parts.length === 3 && parts[2]) {
@@ -127,10 +184,10 @@ MemberSchema.pre('save', async function() {
           }
         }
       }
-      
+
       this.memberId = `MEM-${dateStr}-${String(sequence).padStart(4, '0')}`;
       console.log('✅ Generated memberId:', this.memberId);
-      
+
     } catch (error) {
       console.error('❌ Error generating memberId:', error);
       this.memberId = `MEM-${Date.now()}`;

@@ -36,6 +36,41 @@ class MastersAPI {
     return response.json();
   }
 
+  // Plan Categories
+  async createPlanCategory(data) {
+    const response = await fetch(`${API_URL}/plan-categories`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to create plan category');
+    return response.json();
+  }
+
+  async getAllPlanCategories() {
+    const response = await fetch(`${API_URL}/plan-categories`);
+    if (!response.ok) throw new Error('Failed to fetch plan categories');
+    return response.json();
+  }
+
+  async updatePlanCategory(id, data) {
+    const response = await fetch(`${API_URL}/plan-categories/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to update plan category');
+    return response.json();
+  }
+
+  async deletePlanCategory(id) {
+    const response = await fetch(`${API_URL}/plan-categories/${id}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) throw new Error('Failed to delete plan category');
+    return response.json();
+  }
+
   // Plans
   async createPlan(data) {
     const response = await fetch(`${API_URL}/plans`, {
@@ -70,6 +105,7 @@ class MastersAPI {
     if (!response.ok) throw new Error('Failed to delete plan');
     return response.json();
   }
+
 
   // Tax Slabs
   async createTaxSlab(data) {
@@ -262,6 +298,13 @@ export const paymentTypeAPI = {
   getAll: () => mastersAPI.getAllPaymentTypes(),
   update: (id, data) => mastersAPI.updatePaymentType(id, data),
   delete: (id) => mastersAPI.deletePaymentType(id),
+};
+
+export const planCategoryAPI = {
+  create: (data) => mastersAPI.createPlanCategory(data),
+  getAll: () => mastersAPI.getAllPlanCategories(),
+  update: (id, data) => mastersAPI.updatePlanCategory(id, data),
+  delete: (id) => mastersAPI.deletePlanCategory(id),
 };
 
 export const planAPI = {

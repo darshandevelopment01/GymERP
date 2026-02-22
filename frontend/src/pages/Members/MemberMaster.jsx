@@ -3,6 +3,9 @@ import GenericMaster from '../../components/Masters/GenericMaster';
 import memberApi from '../../services/memberApi';
 import branchApi from '../../services/branchApi';
 import planApi from '../../services/planApi';
+import followupApi from '../../services/followupApi';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import './MemberMaster.css';
 
 const MemberMaster = () => {
@@ -11,11 +14,19 @@ const MemberMaster = () => {
   const [stats, setStats] = useState({ total: 0, active: 0, expired: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
-  // Payment Modal States
+  const [isAdmin, setIsAdmin] = useState(false);
+
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
   const [additionalPayment, setAdditionalPayment] = useState(0);
+
+  const [showFollowUpModal, setShowFollowUpModal] = useState(false);
+  const [selectedMemberForFollowUp, setSelectedMemberForFollowUp] = useState(null);
+  const [followUpData, setFollowUpData] = useState({
+    note: '',
+    followUpDate: null,
+    followUpTime: ''
+  });
 
   useEffect(() => {
     fetchInitialData();
@@ -30,6 +41,15 @@ const MemberMaster = () => {
         fetchPlans(),
         fetchStats()
       ]);
+      // Check if user is admin
+      try {
+        const token = localStorage.getItem('token');
+        const meRes = await fetch('http://localhost:3001/api/auth/me', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const meData = await meRes.json();
+        if (meData.data?.userType === 'Admin') setIsAdmin(true);
+      } catch (e) { console.error('Admin check failed:', e); }
     } catch (err) {
       console.error('Error loading data:', err);
       setError('Failed to load data. Please try again.');
@@ -103,7 +123,7 @@ const MemberMaster = () => {
       };
 
       await memberApi.update(selectedMember._id, updateData);
-      
+
       alert('✅ Payment added successfully!');
       setShowPaymentModal(false);
       setSelectedMember(null);
@@ -115,14 +135,52 @@ const MemberMaster = () => {
     }
   };
 
-  // Format date helper
+  const handleAddFollowUp = (member) => {
+    console.log('📝 Adding follow-up for:', member);
+    setSelectedMemberForFollowUp(member);
+    setFollowUpData({
+      note: '',
+      followUpDate: null,
+      followUpTime: ''
+    });
+    setShowFollowUpModal(true);
+  };
+
+  const handleFollowUpSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!followUpData.note.trim()) {
+      alert('Please enter follow-up notes');
+      return;
+    }
+
+    try {
+      await followupApi.create({
+        member: selectedMemberForFollowUp._id,
+        note: followUpData.note,
+        followUpDate: followUpData.followUpDate
+          ? followUpData.followUpDate.toISOString().split('T')[0]
+          : null,
+        followUpTime: followUpData.followUpTime || null
+      });
+
+      alert('✅ Follow-up added successfully!');
+      setShowFollowUpModal(false);
+      setSelectedMemberForFollowUp(null);
+      setFollowUpData({ note: '', followUpDate: null, followUpTime: '' });
+    } catch (error) {
+      console.error('Error adding follow-up:', error);
+      alert('❌ Failed to add follow-up. Please try again.');
+    }
+  };
+
   const formatDate = (date) => {
     if (!date) return '-';
     const d = new Date(date);
-    return d.toLocaleDateString('en-IN', { 
-      day: '2-digit', 
-      month: 'short', 
-      year: 'numeric' 
+    return d.toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
     });
   };
 
@@ -180,10 +238,26 @@ const MemberMaster = () => {
           {item.status}
         </span>
       )
-    }
+    },
+    // Converted By column - admin only
+    ...(isAdmin ? [{
+      label: 'Converted By',
+      field: 'convertedBy',
+      render: (item) => (
+        <span style={{ fontSize: '0.85rem', color: '#6366f1', fontWeight: '600' }}>
+          {item.convertedBy?.name || '-'}
+        </span>
+      )
+    }] : [])
   ];
 
   const formFields = [
+    {
+      name: 'profilePhoto',
+      label: 'Profile Photo',
+      type: 'image-upload',
+      required: false,
+    },
     {
       name: 'branch',
       label: 'Branch',
@@ -403,10 +477,11 @@ const MemberMaster = () => {
         showCreateButton={false}
         showExportButton={true}
         exportFileName="members"
+        onAddFollowUp={handleAddFollowUp}
         customActions={(item) => (
           item.paymentRemaining > 0 && (
-            <button 
-              className="btn-add-payment" 
+            <button
+              className="btn-add-payment"
               onClick={(e) => {
                 e.stopPropagation();
                 handleAddPayment(item);
@@ -437,7 +512,7 @@ const MemberMaster = () => {
               <h2>💰 Add Payment</h2>
               <button className="btn-close" onClick={() => setShowPaymentModal(false)}>✕</button>
             </div>
-            
+
             <form onSubmit={handlePaymentSubmit}>
               <div className="form-content">
                 <div className="member-info" style={{
@@ -508,7 +583,7 @@ const MemberMaster = () => {
                   </div>
                 )}
               </div>
-              
+
               <div className="modal-footer">
                 <button type="button" className="btn-cancel" onClick={() => setShowPaymentModal(false)}>
                   Cancel
@@ -517,6 +592,182 @@ const MemberMaster = () => {
                   background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'
                 }}>
                   ✅ Add Payment
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Follow-up Modal */}
+      {showFollowUpModal && selectedMemberForFollowUp && (
+        <div className="modal-overlay" onClick={() => setShowFollowUpModal(false)}>
+          <div className="modal-content followup-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+            <div className="modal-header" style={{ background: '#1f2937' }}>
+              <h2 style={{ color: 'white' }}>📝 Add Follow-up</h2>
+              <button className="btn-close" onClick={() => setShowFollowUpModal(false)}>✕</button>
+            </div>
+
+            <form onSubmit={handleFollowUpSubmit}>
+              <div className="form-content" style={{ background: 'white' }}>
+                <div style={{
+                  background: '#f8fafc',
+                  padding: '1rem',
+                  borderRadius: '8px',
+                  marginBottom: '1.5rem'
+                }}>
+                  <p style={{ margin: '0.25rem 0', color: '#64748b', fontSize: '0.9rem' }}>
+                    <strong>Member:</strong> {selectedMemberForFollowUp.name}
+                  </p>
+                  <p style={{ margin: '0.25rem 0', color: '#64748b', fontSize: '0.9rem' }}>
+                    <strong>Member ID:</strong> {selectedMemberForFollowUp.memberId}
+                  </p>
+                </div>
+
+                <div className="form-group">
+                  <label>Note <span className="required">*</span></label>
+                  <textarea
+                    value={followUpData.note}
+                    onChange={(e) => setFollowUpData({ ...followUpData, note: e.target.value })}
+                    required
+                    rows="4"
+                    placeholder="Enter follow-up notes..."
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      border: '2px solid #e2e8f0',
+                      borderRadius: '8px',
+                      fontSize: '1rem',
+                      fontFamily: 'inherit',
+                      resize: 'vertical'
+                    }}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Next Follow-up Date (Optional)</label>
+                  <div className="date-input-wrapper" style={{ position: 'relative' }}>
+                    <DatePicker
+                      selected={followUpData.followUpDate}
+                      onChange={(date) => setFollowUpData({ ...followUpData, followUpDate: date })}
+                      dateFormat="dd-MM-yyyy"
+                      placeholderText="Select date"
+                      className="form-input date-input-with-icon"
+                      minDate={new Date()}
+                      showYearDropdown
+                      showMonthDropdown
+                      dropdownMode="select"
+                      isClearable
+                      showPopperArrow={false}
+                      wrapperClassName="followup-datepicker-wrapper"
+                      calendarClassName="followup-calendar"
+                    />
+                    <svg
+                      className="calendar-icon-svg"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      style={{
+                        position: 'absolute',
+                        right: '12px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        width: '20px',
+                        height: '20px',
+                        color: '#94a3b8',
+                        pointerEvents: 'none'
+                      }}
+                    >
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                      <line x1="16" y1="2" x2="16" y2="6"></line>
+                      <line x1="8" y1="2" x2="8" y2="6"></line>
+                      <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                  </div>
+                </div>
+
+                {/* Follow-up Time with Clock Icon */}
+                <div className="form-group">
+                  <label>Follow-up Time (Optional)</label>
+                  <div style={{ position: 'relative', width: '100%' }}>
+                    <input
+                      id="followup-time-input"
+                      type="time"
+                      value={followUpData.followUpTime}
+                      onChange={(e) => setFollowUpData({ ...followUpData, followUpTime: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem 3rem 0.75rem 0.75rem',
+                        border: '2px solid #e2e8f0',
+                        borderRadius: '8px',
+                        fontSize: '1rem',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      onClick={() => document.getElementById('followup-time-input').showPicker()}
+                      style={{
+                        position: 'absolute',
+                        right: '12px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        width: '20px',
+                        height: '20px',
+                        color: '#94a3b8',
+                        cursor: 'pointer',
+                        zIndex: 1
+                      }}
+                    >
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                  </div>
+                </div>
+
+              </div>
+
+              <div className="modal-footer" style={{ background: '#1f2937' }}>
+                <button
+                  type="button"
+                  className="btn-cancel"
+                  onClick={() => setShowFollowUpModal(false)}
+                  style={{
+                    background: 'transparent',
+                    color: 'white',
+                    border: '2px solid white',
+                    padding: '0.75rem 1.5rem',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontWeight: '600'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn-save"
+                  style={{
+                    background: '#f59e0b',
+                    color: 'white',
+                    border: 'none',
+                    padding: '0.75rem 1.5rem',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontWeight: '600'
+                  }}
+                >
+                  💾 Save Follow-up
                 </button>
               </div>
             </form>

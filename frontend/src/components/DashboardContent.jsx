@@ -103,14 +103,14 @@ export default function DashboardContent() {
   const handleMenuChange = (menu) => {
     setActiveMenu(menu);
     
+    // ✅ UPDATED: Added Follow Ups route
     const routes = {
       'Dashboard': '/dashboard',
-      'Masters': '/masters',
       'Enquiry': '/enquiry',
+      'Follow Ups': '/followups', // ✅ NEW
       'Members': '/members',
-      'Employees': '/employees',
       'Attendance': '/attendance',
-      'Reports': '/reports',
+      'Masters': '/masters',
     };
     
     if (routes[menu]) {
@@ -276,7 +276,7 @@ export default function DashboardContent() {
               </div>
             </div>
 
-            {/* Membership Growth Chart - FIXED */}
+            {/* Membership Growth Chart */}
             <div className="chart-card">
               <h3 className="chart-title">Membership Growth</h3>
               <div className="chart-placeholder">
@@ -304,7 +304,7 @@ export default function DashboardContent() {
                             .map((d, i) => {
                               const x = membershipData.length > 1 
                                 ? (i / (membershipData.length - 1)) * 560 + 20
-                                : 300; // Center single point
+                                : 300;
                               const y = 30 + (1 - (d.total || 0) / maxMembers) * 200;
                               return { x, y, value: d.total || 0 };
                             });
@@ -332,7 +332,6 @@ export default function DashboardContent() {
                                     stroke="white"
                                     strokeWidth="2"
                                   />
-                                  {/* Value label above circle */}
                                   <text
                                     x={point.x}
                                     y={point.y - 12}
