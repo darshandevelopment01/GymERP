@@ -536,6 +536,15 @@
   transform: rotate(90deg);
 }
 
+/* Ensure form wrapper passes flex properties down */
+.modal-content form {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0%;
+  min-height: 0;
+  width: 100%;
+}
+
 /* Modal Form Content - WHITE Background with 2 Column Grid */
 .form-content {
   padding: 2rem;
