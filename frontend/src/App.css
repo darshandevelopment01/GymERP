@@ -855,7 +855,7 @@ body {
 }
 
 /* ========== MOBILE RESPONSIVE ========== */
-@media (max-width: 1024px) {
+@media (max-width: 800px) {
 
   /* Show Mobile Header */
   .dashboard-mobile-header {
@@ -892,6 +892,8 @@ body {
   /* Adjust Dashboard Content */
   .dashboard-content {
     padding: 16px;
+    width: 100%;
+    overflow-x: hidden;
   }
 
   /* Stats grid responsive */
@@ -957,7 +959,7 @@ body {
   }
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 800px) {
   .dashboard-main {
     margin-left: 0 !important;
   }
@@ -965,4 +967,14 @@ body {
   .mobile-menu-btn {
     display: block !important;
   }
+}
+
+.dashboard-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background-color: #f3f4f6;
+  width: 100%;
 }

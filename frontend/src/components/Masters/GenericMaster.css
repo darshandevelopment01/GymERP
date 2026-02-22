@@ -334,6 +334,7 @@
 .master-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: auto;
 }
 
 .master-table thead {
@@ -363,6 +364,7 @@
   border-top: 1px solid #f1f5f9;
   color: #334155;
   font-size: 0.95rem;
+  white-space: nowrap;
 }
 
 .master-table td:first-child {
@@ -392,6 +394,9 @@
 .actions {
   display: flex;
   gap: 0.5rem;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  justify-content: flex-start;
 }
 
 .btn-edit,
@@ -1203,4 +1208,10 @@
     white-space: normal;
     word-break: break-word;
   }
+}
+
+.actions {
+  flex-wrap: nowrap !important;
+  white-space: nowrap !important;
+  min-width: max-content;
 }
