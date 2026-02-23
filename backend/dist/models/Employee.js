@@ -74,7 +74,7 @@ const EmployeeSchema = new mongoose_1.Schema({
     designation: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'Designation',
-        required: true,
+        // required: true,
     },
     position: {
         type: String, // Keep for backward compatibility
@@ -89,7 +89,7 @@ const EmployeeSchema = new mongoose_1.Schema({
     shift: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'Shift',
-        required: true,
+        // required: true,
     },
     // Branch assignment
     branches: [{

@@ -33,6 +33,13 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
       employeeData.password = await bcrypt.hash(employeeData.password, 10);
     }
 
+    // Sanitize Empty Strings to prevent Mongoose CastError on ObjectIds
+    ['designation', 'shift', 'branchId'].forEach(key => {
+      if (employeeData[key] === '') {
+        delete employeeData[key];
+      }
+    });
+
     const employee = new Employee(employeeData);
     await employee.save();
     res.status(201).json(employee);
@@ -50,6 +57,13 @@ router.put('/:id', authMiddleware, async (req: Request, res: Response) => {
       const bcrypt = require('bcryptjs');
       updateData.password = await bcrypt.hash(updateData.password, 10);
     }
+
+    // Sanitize Empty Strings to prevent Mongoose CastError on ObjectIds
+    ['designation', 'shift', 'branchId'].forEach(key => {
+      if (updateData[key] === '') {
+        delete updateData[key];
+      }
+    });
 
     const employee = await Employee.findByIdAndUpdate(req.params.id, updateData, { new: true });
     if (!employee) {

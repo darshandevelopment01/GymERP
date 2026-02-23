@@ -19,7 +19,28 @@ router.get('/', auth_middleware_1.authMiddleware, async (req, res) => {
 });
 router.post('/', auth_middleware_1.authMiddleware, async (req, res) => {
     try {
-        const employee = new Employee_1.default(req.body);
+        const employeeData = { ...req.body };
+        // Auto-generate employeeCode if missing
+        if (!employeeData.employeeCode) {
+            const count = await Employee_1.default.countDocuments();
+            employeeData.employeeCode = `EMP-${Date.now().toString().slice(-6)}-${count + 1}`;
+        }
+        // Hash a default password if missing to fulfill the required schema
+        if (!employeeData.password) {
+            const bcrypt = require('bcryptjs');
+            employeeData.password = await bcrypt.hash('123456', 10);
+        }
+        else {
+            const bcrypt = require('bcryptjs');
+            employeeData.password = await bcrypt.hash(employeeData.password, 10);
+        }
+        // Sanitize Empty Strings to prevent Mongoose CastError on ObjectIds
+        ['designation', 'shift', 'branchId'].forEach(key => {
+            if (employeeData[key] === '') {
+                delete employeeData[key];
+            }
+        });
+        const employee = new Employee_1.default(employeeData);
         await employee.save();
         res.status(201).json(employee);
     }
@@ -29,7 +50,19 @@ router.post('/', auth_middleware_1.authMiddleware, async (req, res) => {
 });
 router.put('/:id', auth_middleware_1.authMiddleware, async (req, res) => {
     try {
-        const employee = await Employee_1.default.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        const updateData = { ...req.body };
+        // Only hash password if it was explicitly updated in an admin screen
+        if (updateData.password) {
+            const bcrypt = require('bcryptjs');
+            updateData.password = await bcrypt.hash(updateData.password, 10);
+        }
+        // Sanitize Empty Strings to prevent Mongoose CastError on ObjectIds
+        ['designation', 'shift', 'branchId'].forEach(key => {
+            if (updateData[key] === '') {
+                delete updateData[key];
+            }
+        });
+        const employee = await Employee_1.default.findByIdAndUpdate(req.params.id, updateData, { new: true });
         if (!employee) {
             return res.status(404).json({ message: 'Employee not found' });
         }

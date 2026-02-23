@@ -301,14 +301,9 @@ exports.deleteBranch = deleteBranch;
 // Employee Controllers - UPDATED TO USE ADMIN'S EMPLOYEE CODE
 const createEmployee = async (req, res) => {
     try {
-        // DON'T auto-generate - use the code provided by admin
-        // req.body.employeeCode = await generateId(Employee, 'employeeCode');
-        // Validate that employee code is provided by admin
+        // Auto-generate employeeCode if missing
         if (!req.body.employeeCode || req.body.employeeCode.trim() === '') {
-            return res.status(400).json({
-                success: false,
-                message: 'Employee code is required'
-            });
+            req.body.employeeCode = await generateId(Employee_1.default, 'employeeCode');
         }
         // Check if employee code already exists
         const existingEmployee = await Employee_1.default.findOne({
@@ -321,19 +316,37 @@ const createEmployee = async (req, res) => {
                 message: 'Employee code already exists'
             });
         }
-        const defaultPassword = req.body.password || req.body.employeeCode;
-        req.body.password = await bcryptjs_1.default.hash(defaultPassword, 10);
+        // Auto-generate password if missing, otherwise hash the given one
+        const generatedPassword = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digit random number
+        const rawPassword = req.body.password || generatedPassword;
+        req.body.password = await bcryptjs_1.default.hash(rawPassword, 10);
+        // Sanitize Empty Strings to prevent Mongoose CastError on ObjectIds
+        ['designation', 'shift', 'branchId'].forEach(key => {
+            if (req.body[key] === '') {
+                delete req.body[key];
+            }
+        });
         if (req.body.branches && req.body.branches.length > 0) {
             req.body.branchId = req.body.branches[0];
         }
         const employee = new Employee_1.default(req.body);
         await employee.save();
+        console.log(`\n================================`);
+        console.log(`📧 MOCK SMS/EMAIL SENT TO USER`);
+        console.log(`To: ${req.body.email} / ${req.body.phone}`);
+        console.log(`Your MuscleTime ERP Account is Ready!`);
+        console.log(`Employee Code: ${req.body.employeeCode}`);
+        console.log(`Password: ${rawPassword}`);
+        console.log(`================================\n`);
         const populatedEmployee = await Employee_1.default.findById(employee._id)
             .populate('designation')
             .populate('branches')
             .populate('branchId')
             .populate('shift');
-        res.status(201).json({ message: 'Employee created successfully', data: populatedEmployee });
+        res.status(201).json({
+            message: `User created successfully!\n\nEmployee Code: ${req.body.employeeCode}\nTemporary Password: ${rawPassword}\n\n(A mock SMS/email was pushed to server logs)`,
+            data: populatedEmployee
+        });
     }
     catch (error) {
         console.error('Create employee error:', error);
