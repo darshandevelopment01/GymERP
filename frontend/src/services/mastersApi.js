@@ -208,7 +208,7 @@ class MastersAPI {
 
   // Employees (Users)
   async createEmployee(data) {
-    const response = await fetchWithAuth(`${import.meta.env.VITE_API_URL}/employees`, {
+    const response = await fetchWithAuth(`${BASE}/employees`, {
       method: 'POST', body: JSON.stringify(data),
     });
     if (!response.ok) {
