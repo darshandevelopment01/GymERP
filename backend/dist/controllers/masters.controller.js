@@ -13,6 +13,7 @@ const Designation_1 = __importDefault(require("../models/Designation"));
 const Branch_1 = __importDefault(require("../models/Branch"));
 const Employee_1 = __importDefault(require("../models/Employee"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
+const mailer_1 = require("../utils/mailer");
 // Generic CRUD helper functions
 const generateId = async (Model, idField) => {
     const lastItem = await Model.findOne().sort({ [idField]: -1 });
@@ -332,19 +333,34 @@ const createEmployee = async (req, res) => {
         const employee = new Employee_1.default(req.body);
         await employee.save();
         console.log(`\n================================`);
-        console.log(`📧 MOCK SMS/EMAIL SENT TO USER`);
-        console.log(`To: ${req.body.email} / ${req.body.phone}`);
-        console.log(`Your MuscleTime ERP Account is Ready!`);
-        console.log(`Employee Code: ${req.body.employeeCode}`);
-        console.log(`Password: ${rawPassword}`);
+        console.log(`📧 DISPATCHING EMAIL TO USER`);
+        console.log(`To: ${req.body.email}`);
         console.log(`================================\n`);
+        const htmlMessage = `
+      <div style="font-family: sans-serif; color: #333;">
+        <h2 style="color: #6366f1;">Welcome to MuscleTime ERP!</h2>
+        <p>Hello <strong>${req.body.name}</strong>,</p>
+        <p>An account has been successfully created for you. Here are your login credentials:</p>
+        <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e2e8f0;">
+          <p style="margin: 0 0 10px 0;"><strong>System URL:</strong> <a href="https://muscletime.net">https://muscletime.net</a></p>
+          <p style="margin: 0 0 10px 0;"><strong>Employee Code / ID:</strong> <span style="font-family: monospace; font-size: 1.1em; background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">${req.body.employeeCode}</span></p>
+          <p style="margin: 0;"><strong>Password:</strong> <span style="font-family: monospace; font-size: 1.1em; background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">${rawPassword}</span></p>
+        </div>
+        <p><em>Please log in and change your password immediately.</em></p>
+        <p>Best regards,<br/>MuscleTime Admin</p>
+      </div>
+    `;
+        const emailSent = await (0, mailer_1.sendEmail)(req.body.email, 'Your MuscleTime ERP Account Credentials', htmlMessage);
         const populatedEmployee = await Employee_1.default.findById(employee._id)
             .populate('designation')
             .populate('branches')
             .populate('branchId')
             .populate('shift');
+        const uiMessage = emailSent
+            ? `User created successfully!\n\nCredentials have been securely EMAILED to ${req.body.email}. Keep them safe.\n\nEmployee Code: ${req.body.employeeCode}\nTemporary Password: ${rawPassword}`
+            : `User created successfully!\n\nEmployee Code: ${req.body.employeeCode}\nTemporary Password: ${rawPassword}\n\n(⚠️ No SMTP configured in .env - Live email skipped)`;
         res.status(201).json({
-            message: `User created successfully!\n\nEmployee Code: ${req.body.employeeCode}\nTemporary Password: ${rawPassword}\n\n(A mock SMS/email was pushed to server logs)`,
+            message: uiMessage,
             data: populatedEmployee
         });
     }
