@@ -109,7 +109,7 @@ const EmployeeSchema = new Schema<IEmployee>(
     designation: {
       type: Schema.Types.ObjectId,
       ref: 'Designation',
-      required: true,
+      // required: true,
     },
     position: {
       type: String, // Keep for backward compatibility
@@ -124,7 +124,7 @@ const EmployeeSchema = new Schema<IEmployee>(
     shift: {
       type: Schema.Types.ObjectId,
       ref: 'Shift',
-      required: true,
+      // required: true,
     },
 
     // Branch assignment

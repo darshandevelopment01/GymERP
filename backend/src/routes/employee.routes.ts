@@ -16,7 +16,24 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
 
 router.post('/', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const employee = new Employee(req.body);
+    const employeeData = { ...req.body };
+
+    // Auto-generate employeeCode if missing
+    if (!employeeData.employeeCode) {
+      const count = await Employee.countDocuments();
+      employeeData.employeeCode = `EMP-${Date.now().toString().slice(-6)}-${count + 1}`;
+    }
+
+    // Hash a default password if missing to fulfill the required schema
+    if (!employeeData.password) {
+      const bcrypt = require('bcryptjs');
+      employeeData.password = await bcrypt.hash('123456', 10);
+    } else {
+      const bcrypt = require('bcryptjs');
+      employeeData.password = await bcrypt.hash(employeeData.password, 10);
+    }
+
+    const employee = new Employee(employeeData);
     await employee.save();
     res.status(201).json(employee);
   } catch (error: any) {
@@ -26,7 +43,15 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
 
 router.put('/:id', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const employee = await Employee.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const updateData = { ...req.body };
+
+    // Only hash password if it was explicitly updated in an admin screen
+    if (updateData.password) {
+      const bcrypt = require('bcryptjs');
+      updateData.password = await bcrypt.hash(updateData.password, 10);
+    }
+
+    const employee = await Employee.findByIdAndUpdate(req.params.id, updateData, { new: true });
     if (!employee) {
       return res.status(404).json({ message: 'Employee not found' });
     }
