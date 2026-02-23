@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import fetchWithAuth from '../services/fetchWithAuth';
+import { prefetchAllTabs } from '../services/prefetcher';
 import {
   Users,
   Building2,
@@ -34,6 +35,10 @@ export default function DashboardContent() {
   useEffect(() => {
     const controller = new AbortController();
     fetchDashboardData(controller.signal);
+
+    // Execute silent background prefetch of all other routes so tabs load in 0ms
+    prefetchAllTabs();
+
     return () => controller.abort();
   }, []);
 
