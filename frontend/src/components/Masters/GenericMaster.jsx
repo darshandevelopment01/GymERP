@@ -282,11 +282,11 @@ const GenericMaster = ({
       if (editingItem) {
         const response = await apiService.update(editingItem._id, cleanedData);
         console.log('✅ Update response:', response);
-        alert('Updated successfully');
+        alert(response.message || 'Updated successfully');
       } else {
         const response = await apiService.create(cleanedData);
         console.log('✅ Create response:', response);
-        alert('Created successfully');
+        alert(response.message || 'Created successfully');
       }
 
       setShowModal(false);
