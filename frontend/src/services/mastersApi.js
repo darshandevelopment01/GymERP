@@ -206,12 +206,15 @@ class MastersAPI {
     return response.json();
   }
 
-  // Employees
+  // Employees (Users)
   async createEmployee(data) {
-    const response = await fetchWithAuth(`${BASE}/employees`, {
+    const response = await fetchWithAuth(`${import.meta.env.VITE_API_URL}/employees`, {
       method: 'POST', body: JSON.stringify(data),
     });
-    if (!response.ok) throw new Error('Failed to create employee');
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || errorData.message || 'Failed to create employee');
+    }
     return response.json();
   }
 
