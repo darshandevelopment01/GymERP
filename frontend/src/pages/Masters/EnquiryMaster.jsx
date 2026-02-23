@@ -11,11 +11,11 @@ import { taxSlabAPI, planCategoryAPI } from '../../services/mastersApi';
 import './EnquiryMaster.css';
 
 const EnquiryMaster = () => {
-  const cacheKeyBranches = 'cache_enq_branches';
-  const cacheKeyPlans = 'cache_enq_plans';
+  const cacheKeyBranches = 'cache_global_branches';
+  const cacheKeyPlans = 'cache_global_plans';
   const cacheKeyStats = 'cache_enq_stats';
-  const cacheKeyTaxSlabs = 'cache_enq_taxSlabs';
-  const cacheKeyPlanCategories = 'cache_enq_planCategories';
+  const cacheKeyTaxSlabs = 'cache_global_taxSlabs';
+  const cacheKeyPlanCategories = 'cache_global_planCategories';
 
   const getInitialCache = (key, defaultVal) => {
     const cached = sessionStorage.getItem(key);

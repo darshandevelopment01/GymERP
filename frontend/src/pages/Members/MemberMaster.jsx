@@ -9,8 +9,8 @@ import 'react-datepicker/dist/react-datepicker.css';
 import './MemberMaster.css';
 
 const MemberMaster = () => {
-  const cacheKeyBranches = 'cache_member_branches';
-  const cacheKeyPlans = 'cache_member_plans';
+  const cacheKeyBranches = 'cache_global_branches';
+  const cacheKeyPlans = 'cache_global_plans';
   const cacheKeyStats = 'cache_member_stats';
 
   const getInitialCache = (key, defaultVal) => {
