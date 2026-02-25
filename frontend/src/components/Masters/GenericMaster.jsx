@@ -26,7 +26,16 @@ const GenericMaster = ({
   // Synchronous cache lookup for instant mount state
   const getInitialData = () => {
     const cached = sessionStorage.getItem(cacheKey);
-    return cached ? JSON.parse(cached) : [];
+    if (!cached) return [];
+    try {
+      let parsed = JSON.parse(cached);
+      if (parsed && typeof parsed === 'object' && parsed.data && Array.isArray(parsed.data)) {
+        return parsed.data;
+      }
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      return [];
+    }
   };
 
   const hasCache = !!sessionStorage.getItem(cacheKey);
@@ -66,9 +75,17 @@ const GenericMaster = ({
       // 1. Instantly load from cache if available (Stale-While-Revalidate)
       const cachedData = sessionStorage.getItem(cacheKey);
       if (cachedData) {
-        const parsed = JSON.parse(cachedData);
-        setData(parsed);
-        setFilteredData(parsed);
+        try {
+          let parsed = JSON.parse(cachedData);
+          if (parsed && typeof parsed === 'object' && parsed.data && Array.isArray(parsed.data)) {
+            parsed = parsed.data;
+          }
+          if (!Array.isArray(parsed)) parsed = [];
+          setData(parsed);
+          setFilteredData(parsed);
+        } catch (e) {
+          console.error("Cache parse error", e);
+        }
       } else {
         // Only show full-page loading spinner if we have no cache
         setLoading(true);

@@ -4,7 +4,7 @@ export interface IPlan extends Document {
   planId: string;
   planName: string;
   category: mongoose.Types.ObjectId;
-  duration: 'Monthly' | 'Quarterly' | 'Yearly';
+  duration: 'Monthly' | 'Two Monthly' | 'Quarterly' | 'Four Monthly' | 'Six Monthly' | 'Yearly';
   price: number;
   status: 'active' | 'inactive';
   createdAt: Date;
@@ -29,7 +29,7 @@ const PlanSchema = new Schema({
   },
   duration: {
     type: String,
-    enum: ['Monthly', 'Quarterly', 'Yearly'],
+    enum: ['Monthly', 'Two Monthly', 'Quarterly', 'Four Monthly', 'Six Monthly', 'Yearly'],
     required: true
   },
   price: {
