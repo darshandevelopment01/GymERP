@@ -4,7 +4,7 @@ import { planAPI, planCategoryAPI } from '../../services/mastersApi';
 
 
 const PlanMaster = () => {
-  const [activeSubTab, setActiveSubTab] = useState('plans');
+  const [activeSubTab, setActiveSubTab] = useState('categories');
   const [categoryOptions, setCategoryOptions] = useState([]);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -115,25 +115,6 @@ const PlanMaster = () => {
         marginBottom: '0.25rem',
       }}>
         <button
-          onClick={() => setActiveSubTab('plans')}
-          style={{
-            padding: '0.7rem 2rem',
-            borderRadius: '8px 8px 0 0',
-            border: 'none',
-            cursor: 'pointer',
-            fontWeight: '600',
-            fontSize: '0.95rem',
-            transition: 'all 0.2s ease',
-            background: activeSubTab === 'plans'
-              ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-              : '#f1f5f9',
-            color: activeSubTab === 'plans' ? 'white' : '#64748b',
-            boxShadow: activeSubTab === 'plans' ? '0 2px 8px rgba(16, 185, 129, 0.3)' : 'none',
-          }}
-        >
-          📋 Membership Plan
-        </button>
-        <button
           onClick={() => setActiveSubTab('categories')}
           style={{
             padding: '0.7rem 2rem',
@@ -152,12 +133,32 @@ const PlanMaster = () => {
         >
           🏷️ Plan Category
         </button>
+        <button
+          onClick={() => setActiveSubTab('plans')}
+          style={{
+            padding: '0.7rem 2rem',
+            borderRadius: '8px 8px 0 0',
+            border: 'none',
+            cursor: 'pointer',
+            fontWeight: '600',
+            fontSize: '0.95rem',
+            transition: 'all 0.2s ease',
+            background: activeSubTab === 'plans'
+              ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+              : '#f1f5f9',
+            color: activeSubTab === 'plans' ? 'white' : '#64748b',
+            boxShadow: activeSubTab === 'plans' ? '0 2px 8px rgba(16, 185, 129, 0.3)' : 'none',
+          }}
+        >
+          📋 Membership Plan
+        </button>
       </div>
 
       {/* Render the active sub-tab */}
       {activeSubTab === 'plans' ? (
         <GenericMaster
-          title="Plan Master"
+          key="membership-plan-master"
+          title="Membership Plan"
           apiService={planAPI}
           columns={planColumns}
           formFields={planFormFields}
@@ -167,6 +168,7 @@ const PlanMaster = () => {
         />
       ) : (
         <GenericMaster
+          key="plan-category-master"
           title="Plan Category Master"
           apiService={planCategoryAPI}
           columns={categoryColumns}

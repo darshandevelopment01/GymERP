@@ -17,7 +17,7 @@ const MastersLayout = () => {
     { id: 'designation', label: 'Designation Master', component: DesignationMaster, icon: '👔' },
     { id: 'shift', label: 'Shift Master', component: ShiftMaster, icon: '⏰' },
     { id: 'taxslab', label: 'Tax Slab Master', component: TaxSlabMaster, icon: '💰' },
-    { id: 'plan', label: 'Plan Master', component: PlanMaster, icon: '📋' },
+    { id: 'plan', label: 'Membership Plan', component: PlanMaster, icon: '📋' },
     { id: 'payment', label: 'Payment Type Master', component: PaymentTypeMaster, icon: '💳' }
   ];
 
@@ -37,7 +37,7 @@ const MastersLayout = () => {
           </button>
         ))}
       </div>
-      
+
       <div className="masters-content">
         {ActiveComponent && <ActiveComponent />}
       </div>
