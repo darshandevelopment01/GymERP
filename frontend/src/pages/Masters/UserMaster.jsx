@@ -43,7 +43,7 @@ const UserMaster = () => {
     setLogsLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/activity-logs?page=${page}&limit=20`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/activity-logs?page=${page}&limit=10`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const result = await response.json();
@@ -569,7 +569,7 @@ const UserMaster = () => {
                   background: '#f8fafc'
                 }}>
                   <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
-                    Showing {((logsPagination.page - 1) * 20) + 1}–{Math.min(logsPagination.page * 20, logsPagination.total)} of {logsPagination.total} logs
+                    Showing {((logsPagination.page - 1) * 10) + 1}–{Math.min(logsPagination.page * 10, logsPagination.total)} of {logsPagination.total} logs
                   </span>
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
                     <button
