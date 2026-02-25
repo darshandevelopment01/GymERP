@@ -13,6 +13,12 @@
   border-bottom: 2px solid #e1e8ed;
   overflow-x: auto;
   margin: 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.masters-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .tab-btn {
