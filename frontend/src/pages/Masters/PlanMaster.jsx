@@ -11,7 +11,14 @@ const PlanMaster = () => {
   const fetchCategories = async () => {
     try {
       const response = await planCategoryAPI.getAll();
-      const cats = response.data || [];
+      let cats = response.data || [];
+
+      // Unwrap if the backend returned { data: [...], count: ... }
+      if (cats && typeof cats === 'object' && cats.data && Array.isArray(cats.data)) {
+        cats = cats.data;
+      }
+      if (!Array.isArray(cats)) cats = [];
+
       setCategoryOptions([
         { value: '', label: 'Select Category' },
         ...cats.map(cat => ({
