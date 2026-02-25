@@ -78,7 +78,10 @@ const GenericMaster = ({
 
       // 2. Fetch fresh data in the background
       const response = await apiService.getAll({ signal });
-      const fetchedData = response.data || response || [];
+      let fetchedData = response.data || response || [];
+      if (fetchedData.data && Array.isArray(fetchedData.data)) {
+        fetchedData = fetchedData.data;
+      }
 
       // 3. Update UI and Cache with fresh data
       setData(fetchedData);

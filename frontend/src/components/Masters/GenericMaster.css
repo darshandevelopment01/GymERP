@@ -329,6 +329,12 @@
   border-radius: 16px;
   overflow-x: auto;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.master-table-container::-webkit-scrollbar {
+  display: none;
 }
 
 .master-table {
