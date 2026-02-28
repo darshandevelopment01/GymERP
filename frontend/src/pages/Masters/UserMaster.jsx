@@ -210,6 +210,7 @@ const UserMaster = () => {
       label: 'Designation',
       type: 'select',
       required: false,
+      visibleWhen: (formData) => formData.userType !== 'Admin',
       options: [
         { value: '', label: 'Select Designation' },
         ...designations.map(d => ({
@@ -229,6 +230,7 @@ const UserMaster = () => {
       label: 'Shift Timing',
       type: 'select',
       required: false,
+      visibleWhen: (formData) => formData.userType !== 'Admin',
       options: [
         { value: '', label: 'Select Shift Timing' },
         ...shifts.map(s => ({
