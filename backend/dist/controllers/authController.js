@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getMe = exports.resetPassword = exports.forgotPassword = exports.login = exports.registerGymOwner = void 0;
 const User_1 = __importDefault(require("../models/User"));
+const Employee_1 = __importDefault(require("../models/Employee"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const crypto_1 = __importDefault(require("crypto"));
 // Generate JWT Token
@@ -68,18 +69,38 @@ const login = async (req, res) => {
         if (!identifier || !password) {
             return res.status(400).json({ error: 'Email/Phone and password are required' });
         }
-        // Find user by email or phone
-        const user = await User_1.default.findOne({
+        // Find user by email or phone in Admin (User) collection
+        let user = await User_1.default.findOne({
             $or: [
                 { email: identifier.toLowerCase() },
                 { phone: identifier }
             ]
         });
+        let isEmployeeCollection = false;
+        // Fallback to Employee collection if not found in User collection
+        if (!user) {
+            user = await Employee_1.default.findOne({
+                $or: [
+                    { email: identifier.toLowerCase() },
+                    { phone: identifier }
+                ]
+            });
+            if (user)
+                isEmployeeCollection = true;
+        }
         if (!user) {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
-        if (!user.isActive) {
-            return res.status(401).json({ error: 'Account is inactive. Contact administrator.' });
+        // Check active status
+        if (isEmployeeCollection) {
+            if (user.status !== 'active') {
+                return res.status(401).json({ error: 'Account is inactive. Contact administrator.' });
+            }
+        }
+        else {
+            if (!user.isActive) {
+                return res.status(401).json({ error: 'Account is inactive. Contact administrator.' });
+            }
         }
         // Check password
         const isPasswordMatch = await user.comparePassword(password);
@@ -95,7 +116,7 @@ const login = async (req, res) => {
                 name: user.name,
                 email: user.email,
                 phone: user.phone,
-                userType: user.userType,
+                userType: isEmployeeCollection ? 'user' : user.userType,
                 assignedRoles: user.assignedRoles,
                 designation: user.designation,
                 profilePhoto: user.profilePhoto,
@@ -117,12 +138,20 @@ const forgotPassword = async (req, res) => {
         if (!identifier) {
             return res.status(400).json({ error: 'Email or phone is required' });
         }
-        const user = await User_1.default.findOne({
+        let user = await User_1.default.findOne({
             $or: [
                 { email: identifier.toLowerCase() },
                 { phone: identifier }
             ]
         });
+        if (!user) {
+            user = await Employee_1.default.findOne({
+                $or: [
+                    { email: identifier.toLowerCase() },
+                    { phone: identifier }
+                ]
+            });
+        }
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
@@ -156,10 +185,16 @@ const resetPassword = async (req, res) => {
             return res.status(400).json({ error: 'Password must be at least 6 characters' });
         }
         const hashedToken = crypto_1.default.createHash('sha256').update(token).digest('hex');
-        const user = await User_1.default.findOne({
+        let user = await User_1.default.findOne({
             resetPasswordOtp: hashedToken,
             resetOtpExpires: { $gt: Date.now() }
         });
+        if (!user) {
+            user = await Employee_1.default.findOne({
+                resetPasswordOtp: hashedToken,
+                resetOtpExpires: { $gt: Date.now() }
+            });
+        }
         if (!user) {
             return res.status(400).json({ error: 'Invalid or expired reset token' });
         }

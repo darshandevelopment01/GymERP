@@ -14,6 +14,7 @@ const Branch_1 = __importDefault(require("../models/Branch"));
 const Employee_1 = __importDefault(require("../models/Employee"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const mailer_1 = require("../utils/mailer");
+const User_1 = __importDefault(require("../models/User"));
 // Generic CRUD helper functions
 const generateId = async (Model, idField) => {
     const lastItem = await Model.findOne().sort({ [idField]: -1 });
@@ -332,6 +333,29 @@ const createEmployee = async (req, res) => {
         }
         const employee = new Employee_1.default(req.body);
         await employee.save();
+        // ✅ Create a corresponding User document for login
+        let userRecord = await User_1.default.findOne({ email: req.body.email });
+        if (!userRecord) {
+            userRecord = new User_1.default({
+                employeeCode: req.body.employeeCode,
+                name: req.body.name,
+                email: req.body.email,
+                phone: req.body.phone,
+                password: rawPassword, // User schema pre-save hook will hash this
+                userType: req.body.userType === 'Admin' ? 'gym_owner' : 'user', // Map semantic roles
+                isActive: true,
+                designation: req.body.designation ? String(req.body.designation) : undefined,
+                gymBranchId: req.body.branches && req.body.branches.length > 0 ? req.body.branches[0] : undefined,
+                shiftId: req.body.shift ? String(req.body.shift) : undefined,
+            });
+            await userRecord.save();
+        }
+        else {
+            // If user exists but is assigned as employee, update their access level
+            userRecord.userType = req.body.userType === 'Admin' ? 'gym_owner' : 'user';
+            userRecord.password = rawPassword;
+            await userRecord.save();
+        }
         console.log(`\n================================`);
         console.log(`📧 DISPATCHING EMAIL TO USER`);
         console.log(`To: ${req.body.email}`);

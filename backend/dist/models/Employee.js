@@ -154,4 +154,9 @@ const EmployeeSchema = new mongoose_1.Schema({
 }, {
     timestamps: true,
 });
+// Compare password method
+EmployeeSchema.methods.comparePassword = async function (candidatePassword) {
+    const bcrypt = require('bcryptjs');
+    return bcrypt.compare(candidatePassword, this.password);
+};
 exports.default = mongoose_1.default.model('Employee', EmployeeSchema);
