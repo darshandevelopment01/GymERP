@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import User, { IUser } from '../models/User';
+import Employee from '../models/Employee';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
@@ -74,20 +75,40 @@ export const login = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Email/Phone and password are required' });
     }
 
-    // Find user by email or phone
-    const user = await User.findOne({
+    // Find user by email or phone in Admin (User) collection
+    let user: any = await User.findOne({
       $or: [
         { email: identifier.toLowerCase() },
         { phone: identifier }
       ]
     });
 
+    let isEmployeeCollection = false;
+
+    // Fallback to Employee collection if not found in User collection
+    if (!user) {
+      user = await Employee.findOne({
+        $or: [
+          { email: identifier.toLowerCase() },
+          { phone: identifier }
+        ]
+      });
+      if (user) isEmployeeCollection = true;
+    }
+
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    if (!user.isActive) {
-      return res.status(401).json({ error: 'Account is inactive. Contact administrator.' });
+    // Check active status
+    if (isEmployeeCollection) {
+      if (user.status !== 'active') {
+        return res.status(401).json({ error: 'Account is inactive. Contact administrator.' });
+      }
+    } else {
+      if (!user.isActive) {
+        return res.status(401).json({ error: 'Account is inactive. Contact administrator.' });
+      }
     }
 
     // Check password
@@ -106,7 +127,7 @@ export const login = async (req: Request, res: Response) => {
         name: user.name,
         email: user.email,
         phone: user.phone,
-        userType: user.userType,
+        userType: isEmployeeCollection ? 'user' : user.userType,
         assignedRoles: user.assignedRoles,
         designation: user.designation,
         profilePhoto: user.profilePhoto,
@@ -129,12 +150,21 @@ export const forgotPassword = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Email or phone is required' });
     }
 
-    const user = await User.findOne({
+    let user: any = await User.findOne({
       $or: [
         { email: identifier.toLowerCase() },
         { phone: identifier }
       ]
     });
+
+    if (!user) {
+      user = await Employee.findOne({
+        $or: [
+          { email: identifier.toLowerCase() },
+          { phone: identifier }
+        ]
+      });
+    }
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -175,10 +205,17 @@ export const resetPassword = async (req: Request, res: Response) => {
 
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
-    const user = await User.findOne({
+    let user: any = await User.findOne({
       resetPasswordOtp: hashedToken,
       resetOtpExpires: { $gt: Date.now() }
     });
+
+    if (!user) {
+      user = await Employee.findOne({
+        resetPasswordOtp: hashedToken,
+        resetOtpExpires: { $gt: Date.now() }
+      });
+    }
 
     if (!user) {
       return res.status(400).json({ error: 'Invalid or expired reset token' });

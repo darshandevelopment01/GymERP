@@ -66,6 +66,7 @@ export interface IEmployee extends Document {
   resetOtpExpires?: Date;
   createdAt: Date;
   updatedAt: Date;
+  comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
 const EmployeeSchema = new Schema<IEmployee>(
@@ -196,5 +197,11 @@ const EmployeeSchema = new Schema<IEmployee>(
     timestamps: true,
   }
 );
+
+// Compare password method
+EmployeeSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
+  const bcrypt = require('bcryptjs');
+  return bcrypt.compare(candidatePassword, this.password);
+};
 
 export default mongoose.model<IEmployee>('Employee', EmployeeSchema);
