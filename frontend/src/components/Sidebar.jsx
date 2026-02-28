@@ -77,7 +77,11 @@ export default function Sidebar({ activeMenu, onChange, onLogout, isOpen, onClos
           <div className="user-card">
             <p className="user-name">{user.name || 'Admin User'}</p>
             <p className="user-email">{user.email || user.phone || 'admin@muscletime.com'}</p>
-            <p className="user-role">{user.userType || 'admin'}</p>
+            <p className="user-role">
+              {user.userType === 'user'
+                ? (user.designation ? `Employee (${user.designation})` : 'Employee')
+                : (user.userType || 'Admin')}
+            </p>
           </div>
           <button className="logout-btn" onClick={onLogout}>
             <LogOut size={18} />

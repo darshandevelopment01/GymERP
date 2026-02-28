@@ -255,7 +255,7 @@ const UserMaster = () => {
       options: [
         { value: '', label: 'Select User Type' },
         { value: 'Admin', label: 'Admin' },
-        { value: 'User', label: 'User' },
+        { value: 'User', label: 'Employee' },
       ],
     },
     {
