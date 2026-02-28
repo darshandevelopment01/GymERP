@@ -92,7 +92,7 @@ export const login = async (req: Request, res: Response) => {
           { email: identifier.toLowerCase() },
           { phone: identifier }
         ]
-      });
+      }).populate('designation');
       if (user) isEmployeeCollection = true;
     }
 
@@ -129,7 +129,7 @@ export const login = async (req: Request, res: Response) => {
         phone: user.phone,
         userType: isEmployeeCollection ? 'user' : user.userType,
         assignedRoles: user.assignedRoles,
-        designation: user.designation,
+        designation: user.designation ? user.designation.designationName || user.designation : undefined,
         profilePhoto: user.profilePhoto,
         gender: user.gender
       },
