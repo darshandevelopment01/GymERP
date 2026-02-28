@@ -290,12 +290,6 @@ const UserMaster = () => {
           icon: '🖥️',
           sections: [
             {
-              label: 'Masters Tab',
-              items: [
-                { key: 'viewMastersTab', label: 'View Masters Tab (All Masters)' },
-              ]
-            },
-            {
               label: 'Enquiry Tab',
               items: [
                 { key: 'viewEnquiryTab', label: 'View Enquiry Tab' },
