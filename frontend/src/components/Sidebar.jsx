@@ -23,6 +23,8 @@ const MENU = [
 ];
 
 export default function Sidebar({ activeMenu, onChange, onLogout, isOpen, onClose }) {
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+
   return (
     <>
       {/* Mobile Overlay */}
@@ -73,9 +75,9 @@ export default function Sidebar({ activeMenu, onChange, onLogout, isOpen, onClos
         {/* Footer */}
         <div className="sidebar-footer">
           <div className="user-card">
-            <p className="user-name">Admin User</p>
-            <p className="user-email">admin@muscletime.com</p>
-            <p className="user-role">admin</p>
+            <p className="user-name">{user.name || 'Admin User'}</p>
+            <p className="user-email">{user.email || user.phone || 'admin@muscletime.com'}</p>
+            <p className="user-role">{user.userType || 'admin'}</p>
           </div>
           <button className="logout-btn" onClick={onLogout}>
             <LogOut size={18} />

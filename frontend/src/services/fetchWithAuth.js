@@ -7,6 +7,7 @@
 
 function handleUnauthorized() {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     window.location.replace('/login');
 }
 

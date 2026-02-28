@@ -37,6 +37,7 @@ export default function LoginCard() {
 
       if (response.ok) {
         localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
         navigate('/dashboard');
       } else {
         setError(data.message || data.error || 'Login failed');
