@@ -21,20 +21,47 @@ router.post('/login', async (req: Request, res: Response) => {
 
     console.log('Login attempt:', searchIdentifier); // Debug log
 
-    const user = await User.findOne({
+    let user: any = await User.findOne({
       $or: [
         { email: searchIdentifier.toLowerCase() },
         { phone: searchIdentifier }
       ]
     });
 
+    let isEmployeeCollection = false;
+
+    // Fallback to Employee collection if not found in User collection
+    if (!user) {
+      user = await Employee.findOne({
+        $or: [
+          { email: searchIdentifier.toLowerCase() },
+          { phone: searchIdentifier }
+        ]
+      });
+      if (user) isEmployeeCollection = true;
+    }
+
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+    // Determine active status and password comparing
+    if (isEmployeeCollection) {
+      if (user.status !== 'active') {
+        return res.status(401).json({ message: 'Account is inactive. Contact administrator.' });
+      }
+      const isMatch = await user.comparePassword(password);
+      if (!isMatch) {
+        return res.status(401).json({ message: 'Invalid credentials' });
+      }
+    } else {
+      if (user.isActive === false) {
+        return res.status(401).json({ message: 'Account is inactive. Contact administrator.' });
+      }
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
+        return res.status(401).json({ message: 'Invalid credentials' });
+      }
     }
 
     const token = jwt.sign(
@@ -48,7 +75,8 @@ router.post('/login', async (req: Request, res: Response) => {
       user: {
         id: user._id,
         name: user.name,
-        email: user.email
+        email: user.email,
+        userType: isEmployeeCollection ? 'user' : user.userType
       }
     });
   } catch (error: any) {
