@@ -54,6 +54,21 @@ export function usePermissions() {
 
     const can = (key) => {
         if (key === 'masters') return isAdmin; // Masters is ALWAYS admin-only
+
+        // If checking for a main tab view, automatically grant it if ANY sub-permission under that tab is checked.
+        // This prevents the tab from being hidden or throwing Access Denied if an admin grants "Create" but forgot to grant "View".
+        if (!isAdmin) {
+            if (key === 'viewEnquiryTab') {
+                return !!panelAccess.viewEnquiryTab || !!panelAccess.createEnquiry || !!panelAccess.convertToMember || !!panelAccess.viewOnlySelfCreatedEnquiry || !!panelAccess.noDiscountLimit;
+            }
+            if (key === 'viewMembersTab') {
+                return !!panelAccess.viewMembersTab || !!panelAccess.renewMember || !!panelAccess.activeMember || !!panelAccess.viewOnlySelfCreatedMembers;
+            }
+            if (key === 'viewAttendanceTab') {
+                return !!panelAccess.viewAttendanceTab || !!panelAccess.viewEmployeeAttendance || !!panelAccess.viewMemberAttendance;
+            }
+        }
+
         return isAdmin || !!panelAccess[key];
     };
 
