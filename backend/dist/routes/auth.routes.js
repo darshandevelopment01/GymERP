@@ -61,6 +61,26 @@ router.post('/login', async (req, res) => {
                 return res.status(401).json({ message: 'Invalid credentials' });
             }
         }
+        let finalUserType = user.userType;
+        let finalPermissions = null;
+        if (isEmployeeCollection) {
+            finalUserType = user.userType || 'User';
+            finalPermissions = user.permissions || null;
+        }
+        else {
+            // If found in User collection, they might STILL be an employee. Look them up to get their permissions!
+            const linkedEmployee = await Employee_1.default.findOne({
+                $or: [
+                    { email: searchIdentifier.toLowerCase() },
+                    { phone: searchIdentifier }
+                ]
+            });
+            if (linkedEmployee) {
+                finalPermissions = linkedEmployee.permissions || null;
+                // The Employee collection's userType ('Admin'/'User') is more accurate for the app's permission logic
+                finalUserType = linkedEmployee.userType || 'User';
+            }
+        }
         const token = jsonwebtoken_1.default.sign({ id: user._id }, process.env.JWT_SECRET || 'your-secret-key', { expiresIn: '24h' });
         res.json({
             token,
@@ -68,7 +88,8 @@ router.post('/login', async (req, res) => {
                 id: user._id,
                 name: user.name,
                 email: user.email,
-                userType: isEmployeeCollection ? 'user' : user.userType
+                userType: finalUserType,
+                permissions: finalPermissions,
             }
         });
     }
@@ -78,29 +99,66 @@ router.post('/login', async (req, res) => {
     }
 });
 // Get current user profile with designation discount
+// Searches Employee first (employees log in via Employee collection),
+// then falls back to User model (for the original admin account).
 router.get('/me', auth_middleware_1.authMiddleware, async (req, res) => {
     try {
         const userId = req.user?.id;
-        // Get user from User model
-        const user = await User_1.default.findById(userId).select('-password');
+        // 1. Try Employee collection first
+        let employee = await Employee_1.default.findById(userId).populate('designation');
+        let user = null;
+        if (employee) {
+            // Found in Employee collection — use employee record directly
+            const isAdmin = employee.userType === 'Admin';
+            const hasNoDiscountPerm = !!employee?.permissions?.panelAccess?.noDiscountLimit;
+            const noDiscountLimit = isAdmin || hasNoDiscountPerm;
+            let discountOptions = [];
+            let maxDiscountPercentage = 0;
+            if (noDiscountLimit) {
+                const allDesignations = await Designation_1.default.find({ status: 'active' });
+                const allValues = allDesignations
+                    .map((d) => d.maxDiscountPercentage || 0)
+                    .filter((v) => v > 0);
+                discountOptions = [...new Set(allValues)].sort((a, b) => a - b);
+                maxDiscountPercentage = discountOptions.length > 0 ? Math.max(...discountOptions) : 0;
+            }
+            else {
+                maxDiscountPercentage = employee.designation &&
+                    typeof employee.designation === 'object' &&
+                    'maxDiscountPercentage' in employee.designation
+                    ? employee.designation.maxDiscountPercentage
+                    : 0;
+                if (maxDiscountPercentage > 0)
+                    discountOptions = [maxDiscountPercentage];
+            }
+            return res.json({
+                success: true,
+                data: {
+                    id: employee._id,
+                    name: employee.name,
+                    email: employee.email,
+                    userType: employee.userType || 'User',
+                    designation: employee.designation || null,
+                    maxDiscountPercentage,
+                    noDiscountLimit,
+                    discountOptions,
+                    permissions: employee.permissions || null,
+                }
+            });
+        }
+        // 2. Fall back to User model (original admin account)
+        user = await User_1.default.findById(userId).select('-password');
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
-        // Try to find matching employee record with populated designation
-        const employee = await Employee_1.default.findOne({ email: user.email })
-            .populate('designation');
-        // Determine user type and discount rules:
-        // - No employee record → Admin from User model → sees all designation discounts
-        // - Employee with userType 'Admin' → sees all designation discounts
-        // - Employee with noDiscountLimit permission → sees all designation discounts
-        // - Otherwise → employee, capped at their designation's maxDiscountPercentage
-        const isAdmin = !employee || employee.userType === 'Admin';
-        const hasNoDiscountPerm = !!employee?.permissions?.panelAccess?.noDiscountLimit;
+        // Also try to find a matching employee record by email (for hybrid setups)
+        const empByEmail = await Employee_1.default.findOne({ email: user.email }).populate('designation');
+        const isAdmin = !empByEmail || empByEmail.userType === 'Admin';
+        const hasNoDiscountPerm = !!empByEmail?.permissions?.panelAccess?.noDiscountLimit;
         const noDiscountLimit = isAdmin || hasNoDiscountPerm;
         let discountOptions = [];
         let maxDiscountPercentage = 0;
         if (noDiscountLimit) {
-            // Admin: get all unique discount percentages from all active designations
             const allDesignations = await Designation_1.default.find({ status: 'active' });
             const allValues = allDesignations
                 .map((d) => d.maxDiscountPercentage || 0)
@@ -109,29 +167,26 @@ router.get('/me', auth_middleware_1.authMiddleware, async (req, res) => {
             maxDiscountPercentage = discountOptions.length > 0 ? Math.max(...discountOptions) : 0;
         }
         else {
-            // Employee: use their designation's maxDiscountPercentage
-            maxDiscountPercentage = employee?.designation &&
-                typeof employee.designation === 'object' &&
-                'maxDiscountPercentage' in employee.designation
-                ? employee.designation.maxDiscountPercentage
+            maxDiscountPercentage = empByEmail?.designation &&
+                typeof empByEmail.designation === 'object' &&
+                'maxDiscountPercentage' in empByEmail.designation
+                ? empByEmail.designation.maxDiscountPercentage
                 : 0;
-            if (maxDiscountPercentage > 0) {
+            if (maxDiscountPercentage > 0)
                 discountOptions = [maxDiscountPercentage];
-            }
         }
-        const userType = isAdmin ? 'Admin' : 'User';
         res.json({
             success: true,
             data: {
                 id: user._id,
                 name: user.name,
                 email: user.email,
-                userType,
-                designation: employee?.designation || null,
+                userType: isAdmin ? 'Admin' : 'User',
+                designation: empByEmail?.designation || null,
                 maxDiscountPercentage,
                 noDiscountLimit,
-                discountOptions, // Array of available discount percentages
-                permissions: employee?.permissions || null,
+                discountOptions,
+                permissions: empByEmail?.permissions || null,
             }
         });
     }
