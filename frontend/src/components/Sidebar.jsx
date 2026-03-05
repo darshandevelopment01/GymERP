@@ -7,23 +7,32 @@ import {
   ClipboardCheck,
   Settings,
   LogOut,
-  X, // Close icon
-  CalendarClock // Follow ups icon
+  X,
+  CalendarClock
 } from 'lucide-react';
 import logo from '../assets/logo.png';
+import { usePermissions } from '../hooks/usePermissions';
 
-// ✅ ADDED: Follow Ups menu item
-const MENU = [
-  { label: 'Dashboard', icon: LayoutDashboard },
-  { label: 'Enquiry', icon: UserPlus },
-  { label: 'Follow Ups', icon: CalendarClock }, // ✅ NEW
-  { label: 'Members', icon: Users },
-  { label: 'Attendance', icon: ClipboardCheck },
-  { label: 'Masters', icon: Settings },
+// Full menu definition with required permission keys
+// permKey: null = always visible | 'masters' = admin only | anything else = checked against panelAccess
+const ALL_MENU = [
+  { label: 'Dashboard', icon: LayoutDashboard, permKey: null },
+  { label: 'Enquiry', icon: UserPlus, permKey: 'viewEnquiryTab' },
+  { label: 'Follow Ups', icon: CalendarClock, permKey: 'viewEnquiryTab' }, // Follow Ups shares Enquiry access
+  { label: 'Members', icon: Users, permKey: 'viewMembersTab' },
+  { label: 'Attendance', icon: ClipboardCheck, permKey: 'viewAttendanceTab' },
+  { label: 'Masters', icon: Settings, permKey: 'masters' }, // Admin only
 ];
 
 export default function Sidebar({ activeMenu, onChange, onLogout, isOpen, onClose }) {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const { can } = usePermissions();
+
+  // Filter menu items the current user is allowed to see
+  const visibleMenu = ALL_MENU.filter(({ permKey }) => {
+    if (permKey === null) return true;       // Dashboard – always visible
+    return can(permKey);                     // Check permission
+  });
 
   return (
     <>
@@ -50,9 +59,9 @@ export default function Sidebar({ activeMenu, onChange, onLogout, isOpen, onClos
 
         <div className="sidebar-divider" />
 
-        {/* Menu */}
+        {/* Filtered Menu */}
         <div className="sidebar-menu">
-          {MENU.map(({ label, icon: Icon }) => {
+          {visibleMenu.map(({ label, icon: Icon }) => {
             const isActive = activeMenu === label;
             return (
               <div
@@ -78,9 +87,9 @@ export default function Sidebar({ activeMenu, onChange, onLogout, isOpen, onClos
             <p className="user-name">{user.name || 'Admin User'}</p>
             <p className="user-email">{user.email || user.phone || 'admin@muscletime.com'}</p>
             <p className="user-role">
-              {user.userType === 'user'
-                ? (user.designation ? `Employee (${user.designation})` : 'Employee')
-                : (user.userType || 'Admin')}
+              {user.userType === 'Admin'
+                ? 'Admin'
+                : (user.userType === 'User' ? 'Employee' : (user.userType || 'Admin'))}
             </p>
           </div>
           <button className="logout-btn" onClick={onLogout}>

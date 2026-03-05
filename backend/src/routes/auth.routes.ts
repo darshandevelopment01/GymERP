@@ -76,7 +76,8 @@ router.post('/login', async (req: Request, res: Response) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        userType: isEmployeeCollection ? 'user' : user.userType
+        userType: isEmployeeCollection ? (user.userType || 'User') : user.userType,
+        permissions: isEmployeeCollection ? (user.permissions || null) : null,
       }
     });
   } catch (error: any) {
@@ -86,53 +87,87 @@ router.post('/login', async (req: Request, res: Response) => {
 });
 
 // Get current user profile with designation discount
+// Searches Employee first (employees log in via Employee collection),
+// then falls back to User model (for the original admin account).
 router.get('/me', authMiddleware, async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id;
 
-    // Get user from User model
-    const user = await User.findById(userId).select('-password');
+    // 1. Try Employee collection first
+    let employee = await Employee.findById(userId).populate('designation');
+    let user: any = null;
+
+    if (employee) {
+      // Found in Employee collection — use employee record directly
+      const isAdmin = employee.userType === 'Admin';
+      const hasNoDiscountPerm = !!(employee as any)?.permissions?.panelAccess?.noDiscountLimit;
+      const noDiscountLimit = isAdmin || hasNoDiscountPerm;
+
+      let discountOptions: number[] = [];
+      let maxDiscountPercentage = 0;
+
+      if (noDiscountLimit) {
+        const allDesignations = await Designation.find({ status: 'active' });
+        const allValues = allDesignations
+          .map((d: any) => d.maxDiscountPercentage || 0)
+          .filter((v: number) => v > 0);
+        discountOptions = [...new Set(allValues)].sort((a: number, b: number) => a - b);
+        maxDiscountPercentage = discountOptions.length > 0 ? Math.max(...discountOptions) : 0;
+      } else {
+        maxDiscountPercentage = employee.designation &&
+          typeof employee.designation === 'object' &&
+          'maxDiscountPercentage' in employee.designation
+          ? (employee.designation as any).maxDiscountPercentage
+          : 0;
+        if (maxDiscountPercentage > 0) discountOptions = [maxDiscountPercentage];
+      }
+
+      return res.json({
+        success: true,
+        data: {
+          id: employee._id,
+          name: employee.name,
+          email: employee.email,
+          userType: employee.userType || 'User',
+          designation: employee.designation || null,
+          maxDiscountPercentage,
+          noDiscountLimit,
+          discountOptions,
+          permissions: (employee as any).permissions || null,
+        }
+      });
+    }
+
+    // 2. Fall back to User model (original admin account)
+    user = await User.findById(userId).select('-password');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Try to find matching employee record with populated designation
-    const employee = await Employee.findOne({ email: user.email })
-      .populate('designation');
-
-    // Determine user type and discount rules:
-    // - No employee record → Admin from User model → sees all designation discounts
-    // - Employee with userType 'Admin' → sees all designation discounts
-    // - Employee with noDiscountLimit permission → sees all designation discounts
-    // - Otherwise → employee, capped at their designation's maxDiscountPercentage
-    const isAdmin = !employee || employee.userType === 'Admin';
-    const hasNoDiscountPerm = !!(employee as any)?.permissions?.panelAccess?.noDiscountLimit;
+    // Also try to find a matching employee record by email (for hybrid setups)
+    const empByEmail = await Employee.findOne({ email: user.email }).populate('designation');
+    const isAdmin = !empByEmail || empByEmail.userType === 'Admin';
+    const hasNoDiscountPerm = !!(empByEmail as any)?.permissions?.panelAccess?.noDiscountLimit;
     const noDiscountLimit = isAdmin || hasNoDiscountPerm;
 
     let discountOptions: number[] = [];
     let maxDiscountPercentage = 0;
 
     if (noDiscountLimit) {
-      // Admin: get all unique discount percentages from all active designations
       const allDesignations = await Designation.find({ status: 'active' });
       const allValues = allDesignations
         .map((d: any) => d.maxDiscountPercentage || 0)
         .filter((v: number) => v > 0);
-      discountOptions = [...new Set(allValues)].sort((a, b) => a - b);
+      discountOptions = [...new Set(allValues)].sort((a: number, b: number) => a - b);
       maxDiscountPercentage = discountOptions.length > 0 ? Math.max(...discountOptions) : 0;
     } else {
-      // Employee: use their designation's maxDiscountPercentage
-      maxDiscountPercentage = employee?.designation &&
-        typeof employee.designation === 'object' &&
-        'maxDiscountPercentage' in employee.designation
-        ? (employee.designation as any).maxDiscountPercentage
+      maxDiscountPercentage = empByEmail?.designation &&
+        typeof empByEmail.designation === 'object' &&
+        'maxDiscountPercentage' in empByEmail.designation
+        ? (empByEmail.designation as any).maxDiscountPercentage
         : 0;
-      if (maxDiscountPercentage > 0) {
-        discountOptions = [maxDiscountPercentage];
-      }
+      if (maxDiscountPercentage > 0) discountOptions = [maxDiscountPercentage];
     }
-
-    const userType = isAdmin ? 'Admin' : 'User';
 
     res.json({
       success: true,
@@ -140,12 +175,12 @@ router.get('/me', authMiddleware, async (req: Request, res: Response) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        userType,
-        designation: employee?.designation || null,
+        userType: isAdmin ? 'Admin' : 'User',
+        designation: empByEmail?.designation || null,
         maxDiscountPercentage,
         noDiscountLimit,
-        discountOptions, // Array of available discount percentages
-        permissions: (employee as any)?.permissions || null,
+        discountOptions,
+        permissions: (empByEmail as any)?.permissions || null,
       }
     });
   } catch (error: any) {
