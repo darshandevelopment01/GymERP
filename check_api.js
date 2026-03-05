@@ -10,12 +10,14 @@ https.get('https://muscletime.net/index.html', (res) => {
                 let jsData = '';
                 res2.on('data', chunk => jsData += chunk);
                 res2.on('end', () => {
-                    const apiMatch = jsData.match(/https?:\/\/[a-zA-Z0-9.-]+\.app\/api|https?:\/\/api\.muscletime\.net|https?:\/\/muscletime-backend([a-zA-Z0-9.-]+)?\.vercel\.app/g);
-                    console.log('Found API URLs:', [...new Set(apiMatch)]);
+                    const hasSync = jsData.includes('permissions-synced');
+                    const hasNewSidebar = jsData.includes('permKey:null');
+                    console.log('Has permissions-synced text?', hasSync);
+                    console.log('Has permKey:null text?', hasNewSidebar);
                 });
             });
         } else {
-            console.log('No script tag found!', data.slice(0, 500));
+            console.log('No script tag found!', data.slice(0, 200));
         }
     });
 }).on('error', console.error);
