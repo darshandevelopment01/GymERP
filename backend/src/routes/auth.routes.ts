@@ -64,6 +64,27 @@ router.post('/login', async (req: Request, res: Response) => {
       }
     }
 
+    let finalUserType = user.userType;
+    let finalPermissions = null;
+
+    if (isEmployeeCollection) {
+      finalUserType = user.userType || 'User';
+      finalPermissions = user.permissions || null;
+    } else {
+      // If found in User collection, they might STILL be an employee. Look them up to get their permissions!
+      const linkedEmployee: any = await Employee.findOne({
+        $or: [
+          { email: searchIdentifier.toLowerCase() },
+          { phone: searchIdentifier }
+        ]
+      });
+      if (linkedEmployee) {
+        finalPermissions = linkedEmployee.permissions || null;
+        // The Employee collection's userType ('Admin'/'User') is more accurate for the app's permission logic
+        finalUserType = linkedEmployee.userType || 'User';
+      }
+    }
+
     const token = jwt.sign(
       { id: user._id },
       process.env.JWT_SECRET || 'your-secret-key',
@@ -76,8 +97,8 @@ router.post('/login', async (req: Request, res: Response) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        userType: isEmployeeCollection ? (user.userType || 'User') : user.userType,
-        permissions: isEmployeeCollection ? (user.permissions || null) : null,
+        userType: finalUserType,
+        permissions: finalPermissions,
       }
     });
   } catch (error: any) {
