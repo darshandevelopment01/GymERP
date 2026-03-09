@@ -12,9 +12,12 @@ export const getAllEnquiries = async (req: Request, res: Response): Promise<void
   try {
     // Support selfOnly filter for viewOnlySelfCreated permission
     const filter: any = {};
+    console.log('🔍 [getAllEnquiries] query.selfOnly:', req.query.selfOnly);
+    console.log('🔍 [getAllEnquiries] req.user:', JSON.stringify(req.user));
     if (req.query.selfOnly === 'true' && req.user?.id) {
       filter.createdBy = req.user.id;
     }
+    console.log('🔍 [getAllEnquiries] filter:', JSON.stringify(filter));
 
     const enquiries = await Enquiry.find(filter)
       .populate('branch', 'name city state')
@@ -22,7 +25,7 @@ export const getAllEnquiries = async (req: Request, res: Response): Promise<void
       .populate('createdBy', 'name')
       .sort({ createdAt: -1 });
 
-    console.log(`📊 Fetched ${enquiries.length} enquiries`);
+    console.log(`📊 Fetched ${enquiries.length} enquiries (filter: ${JSON.stringify(filter)})`);
 
     res.json({ success: true, data: enquiries });
   } catch (error) {

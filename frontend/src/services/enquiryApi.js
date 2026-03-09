@@ -6,7 +6,9 @@ const enquiryApi = {
   async getAll(options = {}) {
     try {
       let url = `${API_URL}/enquiries`;
+      console.log('🔍 [enquiryApi.getAll] options:', JSON.stringify(options));
       if (options.selfOnly) url += '?selfOnly=true';
+      console.log('🔍 [enquiryApi.getAll] final URL:', url);
       const response = await fetchWithAuth(url, { signal: options.signal });
       if (!response.ok) throw new Error('Failed to fetch enquiries');
       return await response.json();

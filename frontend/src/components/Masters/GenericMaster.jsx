@@ -98,6 +98,7 @@ const GenericMaster = ({
       setFetchError(null);
 
       // 2. Fetch fresh data in the background
+      console.log('🔍 [GenericMaster] fetchData apiOptions:', JSON.stringify(apiOptions));
       const response = await apiService.getAll({ signal, ...apiOptions });
       let fetchedData = response.data || response || [];
       if (fetchedData.data && Array.isArray(fetchedData.data)) {
