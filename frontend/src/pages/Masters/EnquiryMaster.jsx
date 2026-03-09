@@ -561,7 +561,7 @@ const EnquiryMaster = () => {
         showCreateButton={can('createEnquiry')}
         showEditButton={can('editEnquiry')}
         showDeleteButton={can('deleteEnquiry')}
-        apiOptions={can('viewOnlySelfCreatedEnquiry') ? { selfOnly: true } : {}}
+        apiOptions={!isAdmin && can('viewOnlySelfCreatedEnquiry') ? { selfOnly: true } : {}}
         showExportButton={true}
         exportFileName="enquiries"
         onAddFollowUp={handleAddFollowUp}

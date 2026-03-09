@@ -477,7 +477,7 @@ const MemberMaster = () => {
         showCreateButton={false}
         showEditButton={can('editMember')}
         showDeleteButton={can('deleteMember')}
-        apiOptions={can('viewOnlySelfCreatedMembers') ? { selfOnly: true } : {}}
+        apiOptions={!isAdmin && can('viewOnlySelfCreatedMembers') ? { selfOnly: true } : {}}
         showExportButton={true}
         exportFileName="members"
         onAddFollowUp={handleAddFollowUp}

@@ -419,9 +419,10 @@ const GenericMaster = ({
   const handleRowClick = (item) => {
     if (onRowClick) {
       onRowClick(item);
-    } else {
-      handleView(item);
+    } else if (showEditButton) {
+      handleEdit(item);
     }
+    // If showEditButton is false and no custom onRowClick, do nothing
   };
 
   return (
