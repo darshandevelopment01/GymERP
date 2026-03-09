@@ -66,7 +66,7 @@ const GenericMaster = ({
     const controller = new AbortController();
     fetchData(controller.signal);
     return () => controller.abort();
-  }, [refreshKey]);
+  }, [refreshKey, JSON.stringify(apiOptions)]);
 
   useEffect(() => {
     applyFiltersAndSearch();
@@ -415,14 +415,13 @@ const GenericMaster = ({
     );
   };
 
-  // ✅ Handle row click - use custom handler if provided, otherwise default view
+  // ✅ Handle row click - always opens view modal (read-only)
   const handleRowClick = (item) => {
     if (onRowClick) {
       onRowClick(item);
-    } else if (showEditButton) {
-      handleEdit(item);
+    } else {
+      handleView(item);
     }
-    // If showEditButton is false and no custom onRowClick, do nothing
   };
 
   return (
@@ -1049,12 +1048,14 @@ const GenericMaster = ({
               <button type="button" className="btn-cancel" onClick={() => setShowViewModal(false)}>
                 Close
               </button>
-              <button type="button" className="btn-save" onClick={() => {
-                setShowViewModal(false);
-                handleEdit(viewingItem);
-              }}>
-                ✏️ Edit
-              </button>
+              {showEditButton && (
+                <button type="button" className="btn-save" onClick={() => {
+                  setShowViewModal(false);
+                  handleEdit(viewingItem);
+                }}>
+                  ✏️ Edit
+                </button>
+              )}
             </div>
           </div>
         </div>
