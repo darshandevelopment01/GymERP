@@ -19,7 +19,9 @@ const GenericMaster = ({
   onAddFollowUp, // ✅ For follow-up button
   onRowClick, // ✅ Custom row click handler
   showEditDeleteButtons = true, // ✅ Hide edit/delete buttons
+  showEditButton = true, // ✅ Independently control edit button
   showDeleteButton = true, // ✅ Independently control delete button
+  apiOptions = {}, // ✅ Extra options to pass to apiService.getAll()
   refreshKey // ✅ Change this to trigger data re-fetch from parent
 }) => {
   const cacheKey = `cache_${title.replace(/\s+/g, '_')}`;
@@ -95,7 +97,7 @@ const GenericMaster = ({
       setFetchError(null);
 
       // 2. Fetch fresh data in the background
-      const response = await apiService.getAll({ signal });
+      const response = await apiService.getAll({ signal, ...apiOptions });
       let fetchedData = response.data || response || [];
       if (fetchedData.data && Array.isArray(fetchedData.data)) {
         fetchedData = fetchedData.data;
@@ -613,9 +615,11 @@ const GenericMaster = ({
                       {/* ✅ CONDITIONALLY SHOW EDIT/DELETE BUTTONS */}
                       {showEditDeleteButtons && (
                         <>
-                          <button className="btn-edit" onClick={() => handleEdit(item)}>
-                            ✏️
-                          </button>
+                          {showEditButton && (
+                            <button className="btn-edit" onClick={() => handleEdit(item)}>
+                              ✏️
+                            </button>
+                          )}
                           {showDeleteButton && (
                             <button className="btn-delete" onClick={() => handleDelete(item._id)}>
                               🗑️

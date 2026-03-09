@@ -5,7 +5,9 @@ const API_URL = import.meta.env.VITE_API_URL;
 const enquiryApi = {
   async getAll(options = {}) {
     try {
-      const response = await fetchWithAuth(`${API_URL}/enquiries`, { signal: options.signal });
+      let url = `${API_URL}/enquiries`;
+      if (options.selfOnly) url += '?selfOnly=true';
+      const response = await fetchWithAuth(url, { signal: options.signal });
       if (!response.ok) throw new Error('Failed to fetch enquiries');
       return await response.json();
     } catch (error) {

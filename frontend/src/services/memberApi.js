@@ -5,7 +5,9 @@ const API_URL = import.meta.env.VITE_API_URL;
 const memberApi = {
   async getAll(options = {}) {
     try {
-      const response = await fetchWithAuth(`${API_URL}/members`, { signal: options.signal });
+      let url = `${API_URL}/members`;
+      if (options.selfOnly) url += '?selfOnly=true';
+      const response = await fetchWithAuth(url, { signal: options.signal });
       if (!response.ok) throw new Error('Failed to fetch members');
       return await response.json();
     } catch (error) {

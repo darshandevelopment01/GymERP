@@ -559,7 +559,9 @@ const EnquiryMaster = () => {
         searchPlaceholder="Search by name, mobile, email, or enquiry ID..."
         icon="👥"
         showCreateButton={can('createEnquiry')}
+        showEditButton={can('editEnquiry')}
         showDeleteButton={can('deleteEnquiry')}
+        apiOptions={can('viewOnlySelfCreatedEnquiry') ? { selfOnly: true } : {}}
         showExportButton={true}
         exportFileName="enquiries"
         onAddFollowUp={handleAddFollowUp}
@@ -689,30 +691,26 @@ const EnquiryMaster = () => {
                   </select>
                 </div>
 
-                {/* Discount */}
-                <div className="form-group">
-                  <label>
-                    Discount %{' '}
-                    {noDiscountLimit ? (
+                {/* Discount - only shown if user has noDiscountLimit permission */}
+                {can('noDiscountLimit') && (
+                  <div className="form-group">
+                    <label>
+                      Discount %{' '}
                       <span style={{ color: '#10b981', fontWeight: '400', fontSize: '0.8rem' }}>
                         (No Limit)
                       </span>
-                    ) : (
-                      <span style={{ color: '#64748b', fontWeight: '400', fontSize: '0.8rem' }}>
-                        (Max: {maxDiscountPercentage}%)
-                      </span>
-                    )}
-                  </label>
-                  <select
-                    value={paymentData.discountPercentage}
-                    onChange={handleDiscountChange}
-                  >
-                    <option value={0}>0% (No Discount)</option>
-                    {discountOptions.map(val => (
-                      <option key={val} value={val}>{val}%</option>
-                    ))}
-                  </select>
-                </div>
+                    </label>
+                    <select
+                      value={paymentData.discountPercentage}
+                      onChange={handleDiscountChange}
+                    >
+                      <option value={0}>0% (No Discount)</option>
+                      {discountOptions.map(val => (
+                        <option key={val} value={val}>{val}%</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 <div className="form-group">
                   <label>Payment Received <span className="required">*</span></label>

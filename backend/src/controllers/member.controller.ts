@@ -172,7 +172,13 @@ export const createMember = async (req: Request, res: Response): Promise<void> =
 // Get all members
 export const getAllMembers = async (req: Request, res: Response): Promise<void> => {
   try {
-    const members = await Member.find()
+    // Support selfOnly filter for viewOnlySelfCreated permission
+    const filter: any = {};
+    if (req.query.selfOnly === 'true' && req.user?.id) {
+      filter.convertedBy = req.user.id;
+    }
+
+    const members = await Member.find(filter)
       .populate('branch', 'name city')
       .populate('plan', 'planName duration price')
       .populate('convertedBy', 'name')

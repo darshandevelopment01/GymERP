@@ -13,7 +13,7 @@ const router: Router = express.Router();
 
 // Stats route should come BEFORE /:id route
 router.get('/stats/summary', getEnquiryStats);
-router.get('/', getAllEnquiries);
+router.get('/', authMiddleware, getAllEnquiries);
 router.get('/:id', getEnquiryById);
 router.post('/', authMiddleware, createEnquiry);
 router.put('/:id', authMiddleware, updateEnquiry);

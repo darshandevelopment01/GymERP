@@ -23,7 +23,9 @@ class FollowUpApiService {
 
   async getAll(options = {}) {
     try {
-      const response = await fetchWithAuth(`${API_URL}/followups`, { signal: options.signal });
+      let url = `${API_URL}/followups`;
+      if (options.selfOnly) url += '?selfOnly=true';
+      const response = await fetchWithAuth(url, { signal: options.signal });
       if (!response.ok) throw new Error('Failed to fetch follow-ups');
       return await response.json();
     } catch (error) {

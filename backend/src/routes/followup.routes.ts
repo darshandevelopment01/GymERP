@@ -101,9 +101,16 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
 router.get('/', authMiddleware, async (req: Request, res: Response) => {
   try {
     await autoExpireFollowUps();
-    const followUps = await FollowUp.find()
+
+    // Support selfOnly filter for viewOnlySelfCreated permission
+    const filter: any = {};
+    if (req.query.selfOnly === 'true' && req.user?.id) {
+      filter.createdBy = req.user.id;
+    }
+
+    const followUps = await FollowUp.find(filter)
       .populate('member', 'name memberId mobileNumber')
-      .populate('enquiry', 'name mobileNumber email') // ✅ Added enquiry population
+      .populate('enquiry', 'name mobileNumber email')
       .populate('createdBy', 'name')
       .sort({ followUpDate: 1, createdAt: -1 });
 

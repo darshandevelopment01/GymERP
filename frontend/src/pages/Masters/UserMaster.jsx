@@ -294,6 +294,7 @@ const UserMaster = () => {
               items: [
                 { key: 'viewEnquiryTab', label: 'View Enquiry Tab' },
                 { key: 'createEnquiry', label: 'Create Enquiry' },
+                { key: 'editEnquiry', label: 'Edit Enquiry' },
                 { key: 'convertToMember', label: 'Convert to Member' },
                 { key: 'noDiscountLimit', label: 'No Discount Limit' },
                 { key: 'viewOnlySelfCreatedEnquiry', label: 'View Only Self-Created Enquiry' },
@@ -304,12 +305,14 @@ const UserMaster = () => {
               label: 'Follow-Up Tab',
               items: [
                 { key: 'viewFollowUpTab', label: 'View Follow-Up Tab' },
+                { key: 'editFollowUp', label: 'Edit Follow-Up' },
               ]
             },
             {
               label: 'Members Tab',
               items: [
                 { key: 'viewMembersTab', label: 'View Members Tab' },
+                { key: 'editMember', label: 'Edit Member' },
                 { key: 'renewMember', label: 'Renew Member' },
                 { key: 'activeMember', label: 'Active Member' },
                 { key: 'viewOnlySelfCreatedMembers', label: 'View Only Self-Created Members' },

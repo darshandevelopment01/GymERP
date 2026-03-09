@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import GenericMaster from '../../components/Masters/GenericMaster';
 import followupApi from '../../services/followupApi';
+import { usePermissions } from '../../hooks/usePermissions';
 import './FollowUpMaster.css';
 
 const FollowUpMaster = () => {
+  const { can, isAdmin } = usePermissions();
   const cacheKeyStats = 'cache_followup_stats';
 
   const getInitialCache = (key, defaultVal) => {
@@ -22,7 +24,6 @@ const FollowUpMaster = () => {
   }));
   const [loading, setLoading] = useState(!hasCache);
   const [error, setError] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false);
 
   // View Details Modal State
   const [showDetailsModal, setShowDetailsModal] = useState(false);
@@ -44,17 +45,6 @@ const FollowUpMaster = () => {
     setError(null);
     try {
       await fetchFollowUps();
-      // Check if user is admin
-      try {
-        const token = localStorage.getItem('token');
-        const meRes = await fetch(`${import.meta.env.VITE_API_URL}/auth/me`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const meData = await meRes.json();
-        if (meData.data?.userType === 'Admin') setIsAdmin(true);
-      } catch (e) {
-        console.error('Admin check failed:', e);
-      }
     } catch (err) {
       console.error('Error loading data:', err);
       setError('Failed to load data. Please try again.');
@@ -419,28 +409,30 @@ const FollowUpMaster = () => {
           refreshKey={refreshKey}
           customActions={(item) => (
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-              {/* ✅ Edit Button */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleEditFollowUp(item);
-                }}
-                style={{
-                  background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                  color: 'white',
-                  border: 'none',
-                  padding: '0.5rem 1rem',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '0.85rem',
-                  fontWeight: '600',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.25rem'
-                }}
-              >
-                ✏️ Edit
-              </button>
+              {/* ✅ Edit Button - Permission gated */}
+              {can('editFollowUp') && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEditFollowUp(item);
+                  }}
+                  style={{
+                    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                    color: 'white',
+                    border: 'none',
+                    padding: '0.5rem 1rem',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '0.85rem',
+                    fontWeight: '600',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.25rem'
+                  }}
+                >
+                  ✏️ Edit
+                </button>
+              )}
 
               {item.status === 'pending' && (
                 <button

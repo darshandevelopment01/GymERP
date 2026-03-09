@@ -10,7 +10,13 @@ import mongoose from 'mongoose';
 // ✅ GET ALL ENQUIRIES
 export const getAllEnquiries = async (req: Request, res: Response): Promise<void> => {
   try {
-    const enquiries = await Enquiry.find()
+    // Support selfOnly filter for viewOnlySelfCreated permission
+    const filter: any = {};
+    if (req.query.selfOnly === 'true' && req.user?.id) {
+      filter.createdBy = req.user.id;
+    }
+
+    const enquiries = await Enquiry.find(filter)
       .populate('branch', 'name city state')
       .populate('plan', 'planName duration price')
       .populate('createdBy', 'name')
