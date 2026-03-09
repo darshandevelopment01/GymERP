@@ -306,6 +306,7 @@ const UserMaster = () => {
               items: [
                 { key: 'viewFollowUpTab', label: 'View Follow-Up Tab' },
                 { key: 'editFollowUp', label: 'Edit Follow-Up' },
+                { key: 'viewOnlySelfCreatedFollowUps', label: 'View Only Self-Created Follow-Ups' },
               ]
             },
             {

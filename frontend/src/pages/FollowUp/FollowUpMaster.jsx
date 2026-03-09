@@ -406,6 +406,7 @@ const FollowUpMaster = () => {
           exportFileName="followups"
           onRowClick={handleRowClick}
           showEditDeleteButtons={false}
+          apiOptions={!isAdmin && can('viewOnlySelfCreatedFollowUps') ? { selfOnly: true } : {}}
           refreshKey={refreshKey}
           customActions={(item) => (
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>

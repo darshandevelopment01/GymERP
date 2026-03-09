@@ -24,7 +24,9 @@ const GenericMaster = ({
   apiOptions = {}, // ✅ Extra options to pass to apiService.getAll()
   refreshKey // ✅ Change this to trigger data re-fetch from parent
 }) => {
-  const cacheKey = `cache_${title.replace(/\s+/g, '_')}`;
+  // Include apiOptions in cache key so selfOnly-filtered data is cached separately
+  const apiOptKey = Object.keys(apiOptions).length > 0 ? `_${JSON.stringify(apiOptions)}` : '';
+  const cacheKey = `cache_${title.replace(/\s+/g, '_')}${apiOptKey}`;
 
   // Synchronous cache lookup for instant mount state
   const getInitialData = () => {
@@ -73,7 +75,6 @@ const GenericMaster = ({
   }, [searchQuery, data, filters]);
 
   const fetchData = async (signal) => {
-    const cacheKey = `cache_${title.replace(/\s+/g, '_')}`;
     try {
       // 1. Instantly load from cache if available (Stale-While-Revalidate)
       const cachedData = sessionStorage.getItem(cacheKey);

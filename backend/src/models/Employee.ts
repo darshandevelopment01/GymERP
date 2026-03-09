@@ -35,6 +35,7 @@ export interface IEmployee extends Document {
       deleteEnquiry?: boolean;
       editEnquiry?: boolean;
       viewFollowUpTab?: boolean;
+      viewOnlySelfCreatedFollowUps?: boolean;
       viewMembersTab?: boolean;
       renewMember?: boolean;
       activeMember?: boolean;
@@ -171,6 +172,7 @@ const EmployeeSchema = new Schema<IEmployee>(
         deleteEnquiry: { type: Boolean, default: false },
         editEnquiry: { type: Boolean, default: false },
         viewFollowUpTab: { type: Boolean, default: false },
+        viewOnlySelfCreatedFollowUps: { type: Boolean, default: false },
         viewMembersTab: { type: Boolean, default: false },
         renewMember: { type: Boolean, default: false },
         activeMember: { type: Boolean, default: false },
