@@ -24,7 +24,13 @@ class FollowUpApiService {
   async getAll(options = {}) {
     try {
       let url = `${API_URL}/followups`;
-      if (options.selfOnly) url += '?selfOnly=true';
+      // Auto-detect selfOnly from user permissions in localStorage
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const isAdmin = user.userType === 'Admin' || user.userType === 'admin' || user.userType === 'gym_owner';
+      const viewOnlySelf = user?.permissions?.panelAccess?.viewOnlySelfCreatedFollowUps;
+      if (!isAdmin && viewOnlySelf) {
+        url += '?selfOnly=true';
+      }
       const response = await fetchWithAuth(url, { signal: options.signal });
       if (!response.ok) throw new Error('Failed to fetch follow-ups');
       return await response.json();

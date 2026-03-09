@@ -8,6 +8,7 @@
 function handleUnauthorized() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    sessionStorage.clear();
     window.location.replace('/login');
 }
 
@@ -15,9 +16,9 @@ const pendingRequests = new Map();
 
 /**
  * Makes an authenticated fetch request.
- * @param {string} url - Full URL to fetch
- * @param {RequestInit & { signal?: AbortSignal }} options - Fetch options
- * @returns {Promise<Response>}
+ * @param { string } url - Full URL to fetch
+ * @param { RequestInit & { signal?: AbortSignal } } options - Fetch options
+ * @returns { Promise < Response >}
  */
 async function fetchWithAuth(url, options = {}) {
     const method = (options.method || 'GET').toUpperCase();

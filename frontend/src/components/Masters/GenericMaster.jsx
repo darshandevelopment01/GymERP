@@ -62,6 +62,10 @@ const GenericMaster = ({
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({});
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
   const [fetchError, setFetchError] = useState(null);
 
   useEffect(() => {
@@ -98,7 +102,6 @@ const GenericMaster = ({
       setFetchError(null);
 
       // 2. Fetch fresh data in the background
-      console.log('🔍 [GenericMaster] fetchData apiOptions:', JSON.stringify(apiOptions));
       const response = await apiService.getAll({ signal, ...apiOptions });
       let fetchedData = response.data || response || [];
       if (fetchedData.data && Array.isArray(fetchedData.data)) {
@@ -175,6 +178,7 @@ const GenericMaster = ({
     });
 
     setFilteredData(filtered);
+    setCurrentPage(1); // Reset to first page on search/filter
   };
 
   const handleFilterChange = (filterName, value) => {
@@ -582,61 +586,124 @@ const GenericMaster = ({
       {loading ? (
         <div className="loading">Loading...</div>
       ) : (
-        <div className="master-table-container">
-          <table className="master-table generic-master-table">
-            <thead>
-              <tr>
-                {columns.map((col, idx) => (
-                  <th key={idx} className={col.mobileHide ? 'col-mobile-hide' : ''}>{col.label}</th>
-                ))}
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredData.length === 0 ? (
+        <>
+          <div className="master-table-container">
+            <table className="master-table generic-master-table">
+              <thead>
                 <tr>
-                  <td colSpan={columns.length + 1} style={{ textAlign: 'center' }}>
-                    No data available
-                  </td>
+                  {columns.map((col, idx) => (
+                    <th key={idx} className={col.mobileHide ? 'col-mobile-hide' : ''}>{col.label}</th>
+                  ))}
+                  <th>Actions</th>
                 </tr>
-              ) : (
-                filteredData.map((item) => (
-                  <tr
-                    key={item._id}
-                    onClick={() => handleRowClick(item)}
-                    style={{ cursor: 'pointer' }}
-                    className="table-row-hover"
-                  >
-                    {columns.map((col, idx) => (
-                      <td key={idx} className={col.mobileHide ? 'col-mobile-hide' : ''}>
-                        {col.icon && <span className="icon">{col.icon}</span>}
-                        {col.render ? col.render(item) : item[col.field]}
-                      </td>
-                    ))}
-                    <td className="actions" onClick={(e) => e.stopPropagation()}>
-                      {/* ✅ CONDITIONALLY SHOW EDIT/DELETE BUTTONS */}
-                      {showEditDeleteButtons && (
-                        <>
-                          {showEditButton && (
-                            <button className="btn-edit" onClick={() => handleEdit(item)}>
-                              ✏️
-                            </button>
-                          )}
-                          {showDeleteButton && (
-                            <button className="btn-delete" onClick={() => handleDelete(item._id)}>
-                              🗑️
-                            </button>
-                          )}
-                        </>
-                      )}
-                      {customActions && customActions(item)}
+              </thead>
+              <tbody>
+                {filteredData.length === 0 ? (
+                  <tr>
+                    <td colSpan={columns.length + 1} style={{ textAlign: 'center' }}>
+                      No data available
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ) : (
+                  filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((item, index) => (
+                    <tr
+                      key={item._id || index}
+                      onClick={() => handleRowClick(item)}
+                      style={{ cursor: 'pointer' }}
+                      className="table-row-hover"
+                    >
+                      {columns.map((col, idx) => (
+                        <td key={idx} className={col.mobileHide ? 'col-mobile-hide' : ''}>
+                          {col.icon && <span className="icon">{col.icon}</span>}
+                          {col.render ? col.render(item) : item[col.field]}
+                        </td>
+                      ))}
+                      <td className="actions" onClick={(e) => e.stopPropagation()}>
+                        {/* ✅ CONDITIONALLY SHOW EDIT/DELETE BUTTONS */}
+                        {showEditDeleteButtons && (
+                          <>
+                            {showEditButton && (
+                              <button className="btn-edit" onClick={() => handleEdit(item)}>
+                                ✏️
+                              </button>
+                            )}
+                            {showDeleteButton && (
+                              <button className="btn-delete" onClick={() => handleDelete(item._id)}>
+                                🗑️
+                              </button>
+                            )}
+                          </>
+                        )}
+                        {customActions && customActions(item)}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination Controls */}
+          {filteredData.length > itemsPerPage && (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '1rem',
+              backgroundColor: '#f8fafc',
+              borderTop: '1px solid #e2e8f0',
+              borderBottomLeftRadius: '12px',
+              borderBottomRightRadius: '12px'
+            }}>
+              <div style={{ color: '#64748b', fontSize: '0.875rem' }}>
+                Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredData.length)} of {filteredData.length} entries
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    border: '1px solid #e2e8f0',
+                    backgroundColor: currentPage === 1 ? '#f1f5f9' : 'white',
+                    color: currentPage === 1 ? '#94a3b8' : '#334155',
+                    borderRadius: '6px',
+                    cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                    fontWeight: '500',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  Previous
+                </button>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '0 0.5rem',
+                  fontWeight: '600',
+                  color: '#0f172a'
+                }}>
+                  Page {currentPage} of {Math.ceil(filteredData.length / itemsPerPage)}
+                </div>
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredData.length / itemsPerPage), p + 1))}
+                  disabled={currentPage === Math.ceil(filteredData.length / itemsPerPage)}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    border: '1px solid #e2e8f0',
+                    backgroundColor: currentPage === Math.ceil(filteredData.length / itemsPerPage) ? '#f1f5f9' : 'white',
+                    color: currentPage === Math.ceil(filteredData.length / itemsPerPage) ? '#94a3b8' : '#334155',
+                    borderRadius: '6px',
+                    cursor: currentPage === Math.ceil(filteredData.length / itemsPerPage) ? 'not-allowed' : 'pointer',
+                    fontWeight: '500',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {showModal && (

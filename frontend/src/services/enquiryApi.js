@@ -6,9 +6,13 @@ const enquiryApi = {
   async getAll(options = {}) {
     try {
       let url = `${API_URL}/enquiries`;
-      console.log('🔍 [enquiryApi.getAll] options:', JSON.stringify(options));
-      if (options.selfOnly) url += '?selfOnly=true';
-      console.log('🔍 [enquiryApi.getAll] final URL:', url);
+      // Auto-detect selfOnly from user permissions in localStorage
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const isAdmin = user.userType === 'Admin' || user.userType === 'admin' || user.userType === 'gym_owner';
+      const viewOnlySelf = user?.permissions?.panelAccess?.viewOnlySelfCreatedEnquiry;
+      if (!isAdmin && viewOnlySelf) {
+        url += '?selfOnly=true';
+      }
       const response = await fetchWithAuth(url, { signal: options.signal });
       if (!response.ok) throw new Error('Failed to fetch enquiries');
       return await response.json();

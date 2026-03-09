@@ -1,6 +1,6 @@
 // src/services/api.js
 const API_URL = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL}`;
- 
+
 class ApiService {
   async login(email, password) {
     try {
@@ -9,12 +9,12 @@ class ApiService {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || 'Login failed');
       }
-      
+
       const data = await response.json();
       localStorage.setItem('token', data.token);
       return data;
@@ -27,6 +27,7 @@ class ApiService {
   logout() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    sessionStorage.clear();
   }
 
   getToken() {
@@ -41,11 +42,11 @@ class ApiService {
           'Content-Type': 'application/json'
         },
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch stats');
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('Dashboard stats error:', error);
@@ -62,11 +63,11 @@ class ApiService {
           'Content-Type': 'application/json'
         },
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch attendance');
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('Attendance error:', error);
@@ -83,11 +84,11 @@ class ApiService {
           'Content-Type': 'application/json'
         },
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch growth data');
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('Growth data error:', error);
@@ -101,7 +102,7 @@ class ApiService {
         'Authorization': `Bearer ${this.getToken()}`,
       },
     });
-    
+
     if (!response.ok) throw new Error('Failed to fetch members');
     return response.json();
   }
@@ -115,7 +116,7 @@ class ApiService {
       },
       body: JSON.stringify(memberData),
     });
-    
+
     if (!response.ok) throw new Error('Failed to create member');
     return response.json();
   }

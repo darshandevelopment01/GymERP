@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
+import DataPrefetcher from './components/DataPrefetcher';
 import LoginScreen from './screens/LoginScreen';
 import DashboardScreen from './screens/DashboardScreen';
 import MastersScreen from './screens/MastersScreen';
@@ -75,6 +76,7 @@ function App() {
 
   return (
     <Router>
+      <DataPrefetcher />
       <Routes>
         {/* Public Route */}
         <Route

@@ -12,13 +12,7 @@ import { usePermissions } from '../../hooks/usePermissions';
 import './EnquiryMaster.css';
 
 const EnquiryMaster = () => {
-  const { can, isAdmin, panelAccess } = usePermissions();
-
-  // DEBUG: trace selfOnly flow
-  console.log('🔍 [EnquiryMaster] isAdmin:', isAdmin);
-  console.log('🔍 [EnquiryMaster] panelAccess.viewOnlySelfCreatedEnquiry:', panelAccess?.viewOnlySelfCreatedEnquiry);
-  console.log('🔍 [EnquiryMaster] can(viewOnlySelfCreatedEnquiry):', can('viewOnlySelfCreatedEnquiry'));
-  console.log('🔍 [EnquiryMaster] selfOnly result:', !isAdmin && can('viewOnlySelfCreatedEnquiry'));
+  const { can, isAdmin } = usePermissions();
   const cacheKeyBranches = 'cache_global_branches';
   const cacheKeyPlans = 'cache_global_plans';
   const cacheKeyStats = 'cache_enq_stats';
@@ -567,7 +561,6 @@ const EnquiryMaster = () => {
         showCreateButton={can('createEnquiry')}
         showEditButton={can('editEnquiry')}
         showDeleteButton={can('deleteEnquiry')}
-        apiOptions={!isAdmin && can('viewOnlySelfCreatedEnquiry') ? { selfOnly: true } : {}}
         showExportButton={true}
         exportFileName="enquiries"
         onAddFollowUp={handleAddFollowUp}
