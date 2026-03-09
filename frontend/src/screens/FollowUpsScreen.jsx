@@ -26,6 +26,7 @@ export default function FollowUpsScreen() {
       'Follow Ups': '/followups',
       'Members': '/members',
       'Attendance': '/attendance',
+      'Plan Master': '/plan-master',
       'Masters': '/masters',
     };
     if (routes[menu]) navigate(routes[menu]);
@@ -52,8 +53,7 @@ export default function FollowUpsScreen() {
           <h1 className="dashboard-mobile-title">Follow Ups</h1>
         </div>
         <div className="dashboard-content">
-          {/* Follow Ups shares Enquiry tab access */}
-          {can('viewEnquiryTab') ? <FollowUpMaster /> : <AccessDenied pageName="Follow Ups" />}
+          {can('viewFollowUpTab') ? <FollowUpMaster /> : <AccessDenied pageName="Follow Ups" />}
         </div>
       </div>
     </div>

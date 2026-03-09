@@ -6,6 +6,9 @@ import MastersScreen from './screens/MastersScreen';
 import EnquiryScreen from './screens/EnquiryScreen';
 import MemberScreen from './screens/MemberScreen';
 import FollowUpsScreen from './screens/FollowUpsScreen';
+import PlanMasterScreen from './screens/PlanMasterScreen';
+import AccessDenied from './components/AccessDenied';
+import { usePermissions } from './hooks/usePermissions';
 import './App.css';
 
 function PrivateRoute({ children }) {
@@ -16,6 +19,21 @@ function PrivateRoute({ children }) {
 function PublicRoute({ children }) {
   const token = localStorage.getItem('token');
   return token ? <Navigate to="/dashboard" /> : children;
+}
+
+/**
+ * Route guard that checks a specific permission key.
+ * Wraps PrivateRoute (must be logged in) + checks can(permKey).
+ * If permKey is 'masters', only admins can access.
+ */
+function PermissionRoute({ children, permKey }) {
+  const { can } = usePermissions();
+
+  if (!can(permKey)) {
+    return <AccessDenied pageName={permKey === 'masters' ? 'Masters' : 'this page'} />;
+  }
+
+  return children;
 }
 
 /**
@@ -82,7 +100,9 @@ function App() {
           path="/masters"
           element={
             <PrivateRoute>
-              <MastersScreen />
+              <PermissionRoute permKey="masters">
+                <MastersScreen />
+              </PermissionRoute>
             </PrivateRoute>
           }
         />
@@ -91,7 +111,9 @@ function App() {
           path="/enquiry"
           element={
             <PrivateRoute>
-              <EnquiryScreen />
+              <PermissionRoute permKey="viewEnquiryTab">
+                <EnquiryScreen />
+              </PermissionRoute>
             </PrivateRoute>
           }
         />
@@ -100,7 +122,9 @@ function App() {
           path="/members"
           element={
             <PrivateRoute>
-              <MemberScreen />
+              <PermissionRoute permKey="viewMembersTab">
+                <MemberScreen />
+              </PermissionRoute>
             </PrivateRoute>
           }
         />
@@ -109,7 +133,20 @@ function App() {
           path="/followups"
           element={
             <PrivateRoute>
-              <FollowUpsScreen />
+              <PermissionRoute permKey="viewFollowUpTab">
+                <FollowUpsScreen />
+              </PermissionRoute>
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/plan-master"
+          element={
+            <PrivateRoute>
+              <PermissionRoute permKey="viewPlanMaster">
+                <PlanMasterScreen />
+              </PermissionRoute>
             </PrivateRoute>
           }
         />
@@ -131,3 +168,4 @@ function App() {
 }
 
 export default App;
+

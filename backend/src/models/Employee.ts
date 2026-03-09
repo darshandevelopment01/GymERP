@@ -32,13 +32,19 @@ export interface IEmployee extends Document {
       convertToMember?: boolean;
       noDiscountLimit?: boolean;
       viewOnlySelfCreatedEnquiry?: boolean;
+      deleteEnquiry?: boolean;
+      viewFollowUpTab?: boolean;
       viewMembersTab?: boolean;
       renewMember?: boolean;
       activeMember?: boolean;
       viewOnlySelfCreatedMembers?: boolean;
+      deleteMember?: boolean;
+      collectPayment?: boolean;
       viewAttendanceTab?: boolean;
       viewEmployeeAttendance?: boolean;
       viewMemberAttendance?: boolean;
+      viewPlanMaster?: boolean;
+      createRemoveOffers?: boolean;
     };
     appAccess?: {
       viewEnquiryTab?: boolean;
@@ -159,13 +165,19 @@ const EmployeeSchema = new Schema<IEmployee>(
         convertToMember: { type: Boolean, default: false },
         noDiscountLimit: { type: Boolean, default: false },
         viewOnlySelfCreatedEnquiry: { type: Boolean, default: false },
+        deleteEnquiry: { type: Boolean, default: false },
+        viewFollowUpTab: { type: Boolean, default: false },
         viewMembersTab: { type: Boolean, default: false },
         renewMember: { type: Boolean, default: false },
         activeMember: { type: Boolean, default: false },
         viewOnlySelfCreatedMembers: { type: Boolean, default: false },
+        deleteMember: { type: Boolean, default: false },
+        collectPayment: { type: Boolean, default: false },
         viewAttendanceTab: { type: Boolean, default: false },
         viewEmployeeAttendance: { type: Boolean, default: false },
         viewMemberAttendance: { type: Boolean, default: false },
+        viewPlanMaster: { type: Boolean, default: false },
+        createRemoveOffers: { type: Boolean, default: false },
       },
       appAccess: {
         viewEnquiryTab: { type: Boolean, default: false },

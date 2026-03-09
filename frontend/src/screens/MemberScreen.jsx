@@ -28,6 +28,7 @@ export default function MemberScreen() {
       'Members': '/members',
       'Attendance': '/attendance',
       'Follow Ups': '/followups',
+      'Plan Master': '/plan-master',
     };
     if (routes[menu]) navigate(routes[menu]);
     closeSidebar();

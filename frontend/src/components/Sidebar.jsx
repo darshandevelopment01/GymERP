@@ -5,6 +5,7 @@ import {
   UserPlus,
   Users,
   ClipboardCheck,
+  ClipboardList,
   Settings,
   LogOut,
   X,
@@ -18,9 +19,10 @@ import { usePermissions } from '../hooks/usePermissions';
 const ALL_MENU = [
   { label: 'Dashboard', icon: LayoutDashboard, permKey: null },
   { label: 'Enquiry', icon: UserPlus, permKey: 'viewEnquiryTab' },
-  { label: 'Follow Ups', icon: CalendarClock, permKey: 'viewEnquiryTab' }, // Follow Ups shares Enquiry access
+  { label: 'Follow Ups', icon: CalendarClock, permKey: 'viewFollowUpTab' },
   { label: 'Members', icon: Users, permKey: 'viewMembersTab' },
   { label: 'Attendance', icon: ClipboardCheck, permKey: 'viewAttendanceTab' },
+  { label: 'Plan Master', icon: ClipboardList, permKey: 'viewPlanMaster' },
   { label: 'Masters', icon: Settings, permKey: 'masters' }, // Admin only
 ];
 

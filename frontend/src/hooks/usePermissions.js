@@ -61,6 +61,9 @@ export function usePermissions() {
             if (key === 'viewEnquiryTab') {
                 return !!panelAccess.viewEnquiryTab || !!panelAccess.createEnquiry || !!panelAccess.convertToMember || !!panelAccess.viewOnlySelfCreatedEnquiry || !!panelAccess.noDiscountLimit;
             }
+            if (key === 'viewFollowUpTab') {
+                return !!panelAccess.viewFollowUpTab;
+            }
             if (key === 'viewMembersTab') {
                 return !!panelAccess.viewMembersTab || !!panelAccess.renewMember || !!panelAccess.activeMember || !!panelAccess.viewOnlySelfCreatedMembers;
             }

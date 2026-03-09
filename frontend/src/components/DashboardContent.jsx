@@ -146,13 +146,13 @@ export default function DashboardContent() {
   const handleMenuChange = (menu) => {
     setActiveMenu(menu);
 
-    // ✅ UPDATED: Added Follow Ups route
     const routes = {
       'Dashboard': '/dashboard',
       'Enquiry': '/enquiry',
-      'Follow Ups': '/followups', // ✅ NEW
+      'Follow Ups': '/followups',
       'Members': '/members',
       'Attendance': '/attendance',
+      'Plan Master': '/plan-master',
       'Masters': '/masters',
     };
 

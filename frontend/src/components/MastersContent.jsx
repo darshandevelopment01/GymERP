@@ -16,23 +16,23 @@ export default function MastersContent() {
     navigate('/login');
   };
 
-  // ✅ UPDATED: Added Follow Ups route
   const handleMenuChange = (menu) => {
     setActiveMenu(menu);
-    
+
     const routes = {
       'Dashboard': '/dashboard',
       'Enquiry': '/enquiry',
-      'Follow Ups': '/followups', // ✅ ADD THIS
+      'Follow Ups': '/followups',
       'Members': '/members',
       'Attendance': '/attendance',
+      'Plan Master': '/plan-master',
       'Masters': '/masters',
     };
-    
+
     if (routes[menu]) {
       navigate(routes[menu]);
     }
-    
+
     closeSidebar();
   };
 
@@ -46,8 +46,8 @@ export default function MastersContent() {
 
   return (
     <div className="dashboard-container">
-      <Sidebar 
-        activeMenu={activeMenu} 
+      <Sidebar
+        activeMenu={activeMenu}
         onChange={handleMenuChange}
         onLogout={handleLogout}
         isOpen={isSidebarOpen}

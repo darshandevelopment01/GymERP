@@ -297,6 +297,13 @@ const UserMaster = () => {
                 { key: 'convertToMember', label: 'Convert to Member' },
                 { key: 'noDiscountLimit', label: 'No Discount Limit' },
                 { key: 'viewOnlySelfCreatedEnquiry', label: 'View Only Self-Created Enquiry' },
+                { key: 'deleteEnquiry', label: 'Delete Enquiry' },
+              ]
+            },
+            {
+              label: 'Follow-Up Tab',
+              items: [
+                { key: 'viewFollowUpTab', label: 'View Follow-Up Tab' },
               ]
             },
             {
@@ -306,6 +313,8 @@ const UserMaster = () => {
                 { key: 'renewMember', label: 'Renew Member' },
                 { key: 'activeMember', label: 'Active Member' },
                 { key: 'viewOnlySelfCreatedMembers', label: 'View Only Self-Created Members' },
+                { key: 'deleteMember', label: 'Delete Member' },
+                { key: 'collectPayment', label: 'Collect Payment' },
               ]
             },
             {
@@ -314,6 +323,18 @@ const UserMaster = () => {
                 { key: 'viewAttendanceTab', label: 'View Attendance Tab' },
                 { key: 'viewEmployeeAttendance', label: 'View Employee Attendance' },
                 { key: 'viewMemberAttendance', label: 'View Member Attendance' },
+              ]
+            },
+            {
+              label: 'Plan Master',
+              items: [
+                { key: 'viewPlanMaster', label: 'View Plan Master' },
+              ]
+            },
+            {
+              label: 'Offers',
+              items: [
+                { key: 'createRemoveOffers', label: 'Create & Remove Offers' },
               ]
             },
           ]
