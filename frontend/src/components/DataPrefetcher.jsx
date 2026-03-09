@@ -3,8 +3,7 @@ import enquiryApi from '../services/enquiryApi';
 import memberApi from '../services/memberApi';
 import followupApi from '../services/followupApi';
 import planApi from '../services/planApi';
-import { planCategoryAPI } from '../services/mastersApi';
-import { userApi } from '../services/authApi';
+import { planCategoryAPI, employeeAPI } from '../services/mastersApi';
 
 // Pre-fetches heavily used master data in the background and caches it
 // in sessionStorage exactly as GenericMaster expects.
@@ -35,8 +34,8 @@ const DataPrefetcher = () => {
                     sessionStorage.setItem('cache_Follow-up_Management', JSON.stringify(data));
                 }).catch(() => { });
 
-                // Users
-                userApi.getAllUsers().then(res => {
+                // Users (Employees)
+                employeeAPI.getAll().then(res => {
                     const data = res.data || res;
                     sessionStorage.setItem('cache_User_Master', JSON.stringify(data));
                 }).catch(() => { });
