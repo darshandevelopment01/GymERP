@@ -18,7 +18,8 @@ const GenericMaster = ({
   exportFileName = 'data',
   onAddFollowUp, // ✅ For follow-up button
   onRowClick, // ✅ Custom row click handler
-  showEditDeleteButtons = true, // ✅ NEW PROP - Hide edit/delete buttons
+  showEditDeleteButtons = true, // ✅ Hide edit/delete buttons
+  showDeleteButton = true, // ✅ Independently control delete button
   refreshKey // ✅ Change this to trigger data re-fetch from parent
 }) => {
   const cacheKey = `cache_${title.replace(/\s+/g, '_')}`;
@@ -615,9 +616,11 @@ const GenericMaster = ({
                           <button className="btn-edit" onClick={() => handleEdit(item)}>
                             ✏️
                           </button>
-                          <button className="btn-delete" onClick={() => handleDelete(item._id)}>
-                            🗑️
-                          </button>
+                          {showDeleteButton && (
+                            <button className="btn-delete" onClick={() => handleDelete(item._id)}>
+                              🗑️
+                            </button>
+                          )}
                         </>
                       )}
                       {customActions && customActions(item)}

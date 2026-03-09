@@ -8,9 +8,11 @@ import planApi from '../../services/planApi';
 import memberApi from '../../services/memberApi';
 import followupApi from '../../services/followupApi';
 import { taxSlabAPI, planCategoryAPI } from '../../services/mastersApi';
+import { usePermissions } from '../../hooks/usePermissions';
 import './EnquiryMaster.css';
 
 const EnquiryMaster = () => {
+  const { can, isAdmin } = usePermissions();
   const cacheKeyBranches = 'cache_global_branches';
   const cacheKeyPlans = 'cache_global_plans';
   const cacheKeyStats = 'cache_enq_stats';
@@ -34,7 +36,6 @@ const EnquiryMaster = () => {
   const [discountOptions, setDiscountOptions] = useState([]);
   const [taxSlabs, setTaxSlabs] = useState(getInitialCache(cacheKeyTaxSlabs, []));
   const [planCategories, setPlanCategories] = useState(getInitialCache(cacheKeyPlanCategories, []));
-  const [isAdmin, setIsAdmin] = useState(false);
 
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedEnquiry, setSelectedEnquiry] = useState(null);
@@ -72,17 +73,6 @@ const EnquiryMaster = () => {
         fetchTaxSlabs(),
         fetchPlanCategories()
       ]);
-      // Check if user is admin
-      try {
-        const token = localStorage.getItem('token');
-        const meRes = await fetch(`${import.meta.env.VITE_API_URL}/auth/me`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const meData = await meRes.json();
-        if (meData.data?.userType === 'Admin') setIsAdmin(true);
-      } catch (e) {
-        console.error('Admin check failed:', e);
-      }
     } catch (err) {
       console.error('Error loading data:', err);
       setError('Failed to load data. Please try again.');
@@ -568,12 +558,13 @@ const EnquiryMaster = () => {
         filterConfig={filterConfig}
         searchPlaceholder="Search by name, mobile, email, or enquiry ID..."
         icon="👥"
-        showCreateButton={true}
+        showCreateButton={can('createEnquiry')}
+        showDeleteButton={can('deleteEnquiry')}
         showExportButton={true}
         exportFileName="enquiries"
         onAddFollowUp={handleAddFollowUp}
         customActions={(item) => (
-          item.status !== 'converted' && (
+          item.status !== 'converted' && can('convertToMember') && (
             <button
               className="btn-convert"
               onClick={(e) => {

@@ -6,9 +6,11 @@ import planApi from '../../services/planApi';
 import followupApi from '../../services/followupApi';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import { usePermissions } from '../../hooks/usePermissions';
 import './MemberMaster.css';
 
 const MemberMaster = () => {
+  const { can, isAdmin } = usePermissions();
   const cacheKeyBranches = 'cache_global_branches';
   const cacheKeyPlans = 'cache_global_plans';
   const cacheKeyStats = 'cache_member_stats';
@@ -25,7 +27,6 @@ const MemberMaster = () => {
   const [stats, setStats] = useState(getInitialCache(cacheKeyStats, { total: 0, active: 0, expired: 0 }));
   const [loading, setLoading] = useState(!hasCache);
   const [error, setError] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false);
 
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
@@ -52,15 +53,6 @@ const MemberMaster = () => {
         fetchPlans(),
         fetchStats()
       ]);
-      // Check if user is admin
-      try {
-        const token = localStorage.getItem('token');
-        const meRes = await fetch(`${import.meta.env.VITE_API_URL}/auth/me`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const meData = await meRes.json();
-        if (meData.data?.userType === 'Admin') setIsAdmin(true);
-      } catch (e) { console.error('Admin check failed:', e); }
     } catch (err) {
       console.error('Error loading data:', err);
       setError('Failed to load data. Please try again.');
@@ -483,11 +475,12 @@ const MemberMaster = () => {
         filterConfig={filterConfig}
         searchPlaceholder="Search by name, mobile, email, or member ID..."
         showCreateButton={false}
+        showDeleteButton={can('deleteMember')}
         showExportButton={true}
         exportFileName="members"
         onAddFollowUp={handleAddFollowUp}
         customActions={(item) => (
-          item.paymentRemaining > 0 && (
+          item.paymentRemaining > 0 && can('collectPayment') && (
             <button
               className="btn-add-payment"
               onClick={(e) => {
