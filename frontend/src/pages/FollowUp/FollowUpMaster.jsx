@@ -336,14 +336,15 @@ const FollowUpMaster = () => {
     }
   ];
 
-  if (loading) {
-    return (
-      <div className="loading-container">
-        <div className="loading-spinner"></div>
-        <p>Loading Follow-ups...</p>
-      </div>
-    );
-  }
+  // Remove blocking loader to allow instant GenericMaster rendering from cache
+  // if (loading) {
+  //  return (
+  //    <div className="loading-container">
+  //      <div className="loading-spinner"></div>
+  //      <p>Loading Follow-ups...</p>
+  //    </div>
+  //  );
+  // }
 
   if (error) {
     return (

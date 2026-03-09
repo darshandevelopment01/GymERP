@@ -501,15 +501,6 @@ const EnquiryMaster = () => {
     }
   ];
 
-  if (loading) {
-    return (
-      <div className="loading-container">
-        <div className="loading-spinner"></div>
-        <p>Loading Enquiry Master...</p>
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="error-container">

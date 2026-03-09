@@ -398,13 +398,18 @@ const UserMaster = () => {
     }
   }, [activeTab]);
 
-  if (loading) {
-    return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>;
-  }
-
+  // Remove blocking loader to allow instant GenericMaster rendering from cache
+  // if (loading) {
+  //  return (
+  //    <div className="loading-spinner">
+  //      <div className="spinner"></div>
+  //      <p>Loading users...</p>
+  //    </div>
+  //  );
+  // }
 
   return (
-    <div className="user-master-page">
+    <div className="master-container user-master-layout">
       {/* Tab Bar - only show if admin */}
       {isAdmin && (
         <div style={{

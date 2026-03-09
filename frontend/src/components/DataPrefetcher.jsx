@@ -19,37 +19,37 @@ const DataPrefetcher = () => {
                 // Enquiries
                 enquiryApi.getAll().then(res => {
                     const data = res.data || res;
-                    sessionStorage.setItem('cache_Enquiry_Master', JSON.stringify(data));
+                    localStorage.setItem('cache_Enquiry_Master', JSON.stringify(data));
                 }).catch(() => { });
 
-                // Members
+                // Members (title="Member Management")
                 memberApi.getAll().then(res => {
                     const data = res.data || res;
-                    sessionStorage.setItem('cache_Member_Master', JSON.stringify(data));
+                    localStorage.setItem('cache_Member_Management', JSON.stringify(data));
                 }).catch(() => { });
 
-                // Follow-ups
+                // Follow-ups (title="Follow-ups Management")
                 followupApi.getAll().then(res => {
                     const data = res.data || res;
-                    sessionStorage.setItem('cache_Follow-up_Management', JSON.stringify(data));
+                    localStorage.setItem('cache_Follow-ups_Management', JSON.stringify(data));
                 }).catch(() => { });
 
-                // Users (Employees)
+                // Users (Employees) (title="User Master")
                 employeeAPI.getAll().then(res => {
                     const data = res.data || res;
-                    sessionStorage.setItem('cache_User_Master', JSON.stringify(data));
+                    localStorage.setItem('cache_User_Master', JSON.stringify(data));
                 }).catch(() => { });
 
-                // Plan Categories
+                // Plan Categories (title="Plan Category Master")
                 planCategoryAPI.getAll().then(res => {
                     const data = res.data || res;
-                    sessionStorage.setItem('cache_Plan_Category_Management', JSON.stringify(data));
+                    localStorage.setItem('cache_Plan_Category_Master', JSON.stringify(data));
                 }).catch(() => { });
 
-                // Plans
+                // Plans (title="Membership Plan")
                 planApi.getAllPlans().then(res => {
                     const data = res.data || res;
-                    sessionStorage.setItem('cache_Membership_Plan', JSON.stringify(data));
+                    localStorage.setItem('cache_Membership_Plan', JSON.stringify(data));
                 }).catch(() => { });
 
             } catch (error) {
@@ -57,9 +57,8 @@ const DataPrefetcher = () => {
             }
         };
 
-        // Small delay so we don't block initial dashboard rendering
-        const timer = setTimeout(prefetch, 2000);
-        return () => clearTimeout(timer);
+        // Run immediately without blocking paint
+        prefetch();
     }, []);
 
     return null;

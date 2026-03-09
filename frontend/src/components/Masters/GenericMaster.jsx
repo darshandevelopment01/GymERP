@@ -30,7 +30,7 @@ const GenericMaster = ({
 
   // Synchronous cache lookup for instant mount state
   const getInitialData = () => {
-    const cached = sessionStorage.getItem(cacheKey);
+    const cached = localStorage.getItem(cacheKey);
     if (!cached) return [];
     try {
       let parsed = JSON.parse(cached);
@@ -43,7 +43,7 @@ const GenericMaster = ({
     }
   };
 
-  const hasCache = !!sessionStorage.getItem(cacheKey);
+  const hasCache = !!localStorage.getItem(cacheKey);
 
   const [data, setData] = useState(getInitialData);
   const [filteredData, setFilteredData] = useState(getInitialData);
@@ -111,7 +111,7 @@ const GenericMaster = ({
       // 3. Update UI and Cache with fresh data
       setData(fetchedData);
       setFilteredData(fetchedData);
-      sessionStorage.setItem(cacheKey, JSON.stringify(fetchedData));
+      localStorage.setItem(cacheKey, JSON.stringify(fetchedData));
 
     } catch (error) {
       if (error.name === 'CanceledError' || error.name === 'AbortError') {

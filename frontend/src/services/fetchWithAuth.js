@@ -8,7 +8,12 @@
 function handleUnauthorized() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    sessionStorage.clear();
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('cache_')) {
+            localStorage.removeItem(key);
+        }
+    }
     window.location.replace('/login');
 }
 
