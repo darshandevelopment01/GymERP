@@ -3,7 +3,7 @@ import Enquiry from '../models/Enquiry';
 import Plan from '../models/Plan';
 import Branch from '../models/Branch';
 import ActivityLog from '../models/ActivityLog';
-import User from '../models/User';
+import Employee from '../models/Employee';
 import mongoose from 'mongoose';
 
 
@@ -205,7 +205,7 @@ export const createEnquiry = async (req: Request, res: Response): Promise<void> 
 
     // ✅ Create activity log
     try {
-      const user = await User.findById(req.user?.id);
+      const user = await Employee.findById(req.user?.id);
       await ActivityLog.create({
         action: 'enquiry_created',
         performedBy: req.user?.id,
@@ -361,7 +361,7 @@ export const updateEnquiry = async (req: Request, res: Response): Promise<void> 
 
     // ✅ Log enquiry update with field-level changes
     try {
-      const user = await User.findById(req.user?.id);
+      const user = await Employee.findById(req.user?.id);
       const skipFields = ['_id', '__v', 'createdAt', 'updatedAt', 'createdBy', 'enquiryId'];
       const changes: string[] = [];
 

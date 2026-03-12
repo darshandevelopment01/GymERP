@@ -3,7 +3,7 @@ import Member from '../models/Member';
 import Plan from '../models/Plan';
 import Branch from '../models/Branch';
 import ActivityLog from '../models/ActivityLog';
-import User from '../models/User';
+import Employee from '../models/Employee';
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import { sendEmail } from '../utils/mailer';
@@ -83,26 +83,8 @@ export const createMember = async (req: Request, res: Response): Promise<void> =
     const member = new Member(memberData);
     await member.save();
 
-    // ✅ Generate credentials and create User account for Member
+    // Generate credentials for email notification
     const generatedPassword = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digit random number
-
-    // Check if user already exists
-    let userRecord = await User.findOne({ email: trimmedData.email });
-    if (!userRecord) {
-      userRecord = new User({
-        name: trimmedData.name,
-        email: trimmedData.email,
-        phone: trimmedData.mobileNumber,
-        password: generatedPassword, // User schema pre-save hook will hash this
-        userType: 'user', // Basic user role for members
-        isActive: true,
-        // Using memberId as employeeCode for members since they share the User collection
-        employeeCode: member.memberId
-      });
-      await userRecord.save();
-    } else {
-      // user already exists, maybe update password? We'll just leave them be for now.
-    }
 
     // ✅ Send Email to Member
     console.log(`\n================================`);
@@ -133,7 +115,7 @@ export const createMember = async (req: Request, res: Response): Promise<void> =
 
     // ✅ Create activity log
     try {
-      const user = await User.findById(req.user?.id);
+      const user = await Employee.findById(req.user?.id);
       await ActivityLog.create({
         action: 'member_converted',
         performedBy: req.user?.id,
@@ -231,7 +213,7 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
 
     // ✅ Log member update with field-level changes
     try {
-      const user = await User.findById(req.user?.id);
+      const user = await Employee.findById(req.user?.id);
       const skipFields = ['_id', '__v', 'createdAt', 'updatedAt', 'memberId', 'convertedBy', 'enquiryId'];
       const changes: string[] = [];
 

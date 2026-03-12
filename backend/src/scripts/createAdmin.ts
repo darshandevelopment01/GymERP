@@ -2,7 +2,7 @@
 // backend/src/scripts/createAdmin.ts
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
-import User from '../models/User';
+import Employee from '../models/Employee';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -13,11 +13,18 @@ const createAdmin = async () => {
 
     const hashedPassword = await bcrypt.hash('admin123', 10);
 
-    const admin = new User({
+    const count = await Employee.countDocuments();
+    const employeeCode = `EMP${String(count + 1).padStart(3, '0')}`;
+
+    const admin = new Employee({
+      employeeCode,
       name: 'Admin User',
       email: 'admin@muscletime.com',
+      phone: '0000000000',
       password: hashedPassword,
-      role: 'admin',
+      gender: 'Male',
+      userType: 'Admin',
+      status: 'active',
     });
 
     await admin.save();

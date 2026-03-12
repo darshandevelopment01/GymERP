@@ -1,7 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { authMiddleware } from '../middleware/auth.middleware';
 import ActivityLog from '../models/ActivityLog';
-import User from '../models/User';
 import Employee from '../models/Employee';
 
 const router = Router();
@@ -10,16 +9,12 @@ const router = Router();
 const adminOnly = async (req: Request, res: Response, next: any) => {
     try {
         const userId = req.user?.id;
-        const user = await User.findById(userId);
-        if (!user) {
+        const employee: any = await Employee.findById(userId);
+        if (!employee) {
             return res.status(401).json({ success: false, message: 'Unauthorized' });
         }
 
-        // Check if user has an employee record
-        const employee = await Employee.findOne({ email: user.email });
-
-        // Admin = no employee record (User model admin) OR employee with Admin userType
-        const isAdmin = !employee || employee.userType === 'Admin';
+        const isAdmin = employee.userType === 'Admin';
         if (!isAdmin) {
             return res.status(403).json({ success: false, message: 'Admin access only' });
         }

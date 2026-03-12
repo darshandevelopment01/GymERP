@@ -2,7 +2,6 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import User from '../models/User';
 import Employee from '../models/Employee';
 import Designation from '../models/Designation';
 import { authMiddleware } from '../middleware/auth.middleware';
@@ -19,70 +18,28 @@ router.post('/login', async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Email or phone number is required' });
     }
 
-    console.log('Login attempt:', searchIdentifier); // Debug log
+    console.log('Login attempt:', searchIdentifier);
 
-    let user: any = await User.findOne({
+    const user: any = await Employee.findOne({
       $or: [
         { email: searchIdentifier.toLowerCase() },
         { phone: searchIdentifier }
       ]
     });
 
-    let isEmployeeCollection = false;
-
-    // Fallback to Employee collection if not found in User collection
-    if (!user) {
-      user = await Employee.findOne({
-        $or: [
-          { email: searchIdentifier.toLowerCase() },
-          { phone: searchIdentifier }
-        ]
-      });
-      if (user) isEmployeeCollection = true;
-    }
-
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Determine active status and password comparing
-    if (isEmployeeCollection) {
-      if (user.status !== 'active') {
-        return res.status(401).json({ message: 'Account is inactive. Contact administrator.' });
-      }
-      const isMatch = await user.comparePassword(password);
-      if (!isMatch) {
-        return res.status(401).json({ message: 'Invalid credentials' });
-      }
-    } else {
-      if (user.isActive === false) {
-        return res.status(401).json({ message: 'Account is inactive. Contact administrator.' });
-      }
-      const isMatch = await bcrypt.compare(password, user.password);
-      if (!isMatch) {
-        return res.status(401).json({ message: 'Invalid credentials' });
-      }
+    // Check active status
+    if (user.status !== 'active') {
+      return res.status(401).json({ message: 'Account is inactive. Contact administrator.' });
     }
 
-    let finalUserType = user.userType;
-    let finalPermissions = null;
-
-    if (isEmployeeCollection) {
-      finalUserType = user.userType || 'User';
-      finalPermissions = user.permissions || null;
-    } else {
-      // If found in User collection, they might STILL be an employee. Look them up to get their permissions!
-      const linkedEmployee: any = await Employee.findOne({
-        $or: [
-          { email: searchIdentifier.toLowerCase() },
-          { phone: searchIdentifier }
-        ]
-      });
-      if (linkedEmployee) {
-        finalPermissions = linkedEmployee.permissions || null;
-        // The Employee collection's userType ('Admin'/'User') is more accurate for the app's permission logic
-        finalUserType = linkedEmployee.userType || 'User';
-      }
+    // Check password
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     const token = jwt.sign(
@@ -97,78 +54,29 @@ router.post('/login', async (req: Request, res: Response) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        userType: finalUserType,
-        permissions: finalPermissions,
+        userType: user.userType || 'User',
+        permissions: user.permissions || null,
       }
     });
   } catch (error: any) {
-    console.error('Login error:', error); // Debug log
+    console.error('Login error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
 // Get current user profile with designation discount
-// Searches Employee first (employees log in via Employee collection),
-// then falls back to User model (for the original admin account).
 router.get('/me', authMiddleware, async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id;
 
-    // 1. Try Employee collection first
-    let employee = await Employee.findById(userId).populate('designation');
-    let user: any = null;
+    const employee: any = await Employee.findById(userId).populate('designation');
 
-    if (employee) {
-      // Found in Employee collection — use employee record directly
-      const isAdmin = employee.userType === 'Admin';
-      const hasNoDiscountPerm = !!(employee as any)?.permissions?.panelAccess?.noDiscountLimit;
-      const noDiscountLimit = isAdmin || hasNoDiscountPerm;
-
-      let discountOptions: number[] = [];
-      let maxDiscountPercentage = 0;
-
-      if (noDiscountLimit) {
-        const allDesignations = await Designation.find({ status: 'active' });
-        const allValues = allDesignations
-          .map((d: any) => d.maxDiscountPercentage || 0)
-          .filter((v: number) => v > 0);
-        discountOptions = [...new Set(allValues)].sort((a: number, b: number) => a - b);
-        maxDiscountPercentage = discountOptions.length > 0 ? Math.max(...discountOptions) : 0;
-      } else {
-        maxDiscountPercentage = employee.designation &&
-          typeof employee.designation === 'object' &&
-          'maxDiscountPercentage' in employee.designation
-          ? (employee.designation as any).maxDiscountPercentage
-          : 0;
-        if (maxDiscountPercentage > 0) discountOptions = [maxDiscountPercentage];
-      }
-
-      return res.json({
-        success: true,
-        data: {
-          id: employee._id,
-          name: employee.name,
-          email: employee.email,
-          userType: employee.userType || 'User',
-          designation: employee.designation || null,
-          maxDiscountPercentage,
-          noDiscountLimit,
-          discountOptions,
-          permissions: (employee as any).permissions || null,
-        }
-      });
-    }
-
-    // 2. Fall back to User model (original admin account)
-    user = await User.findById(userId).select('-password');
-    if (!user) {
+    if (!employee) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Also try to find a matching employee record by email (for hybrid setups)
-    const empByEmail = await Employee.findOne({ email: user.email }).populate('designation');
-    const isAdmin = !empByEmail || empByEmail.userType === 'Admin';
-    const hasNoDiscountPerm = !!(empByEmail as any)?.permissions?.panelAccess?.noDiscountLimit;
+    const isAdmin = employee.userType === 'Admin';
+    const hasNoDiscountPerm = !!employee?.permissions?.panelAccess?.noDiscountLimit;
     const noDiscountLimit = isAdmin || hasNoDiscountPerm;
 
     let discountOptions: number[] = [];
@@ -182,10 +90,10 @@ router.get('/me', authMiddleware, async (req: Request, res: Response) => {
       discountOptions = [...new Set(allValues)].sort((a: number, b: number) => a - b);
       maxDiscountPercentage = discountOptions.length > 0 ? Math.max(...discountOptions) : 0;
     } else {
-      maxDiscountPercentage = empByEmail?.designation &&
-        typeof empByEmail.designation === 'object' &&
-        'maxDiscountPercentage' in empByEmail.designation
-        ? (empByEmail.designation as any).maxDiscountPercentage
+      maxDiscountPercentage = employee.designation &&
+        typeof employee.designation === 'object' &&
+        'maxDiscountPercentage' in employee.designation
+        ? (employee.designation as any).maxDiscountPercentage
         : 0;
       if (maxDiscountPercentage > 0) discountOptions = [maxDiscountPercentage];
     }
@@ -193,15 +101,15 @@ router.get('/me', authMiddleware, async (req: Request, res: Response) => {
     res.json({
       success: true,
       data: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        userType: isAdmin ? 'Admin' : 'User',
-        designation: empByEmail?.designation || null,
+        id: employee._id,
+        name: employee.name,
+        email: employee.email,
+        userType: employee.userType || 'User',
+        designation: employee.designation || null,
         maxDiscountPercentage,
         noDiscountLimit,
         discountOptions,
-        permissions: (empByEmail as any)?.permissions || null,
+        permissions: employee.permissions || null,
       }
     });
   } catch (error: any) {
@@ -218,21 +126,12 @@ router.post('/forgot-password', async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Email or phone number is required' });
     }
 
-    // Find the user in either User or Employee collection
-    const searchCondition = {
+    const userModel: any = await Employee.findOne({
       $or: [
         { email: identifier.toLowerCase() },
         { phone: identifier }
       ]
-    };
-
-    let userModel: any = await User.findOne(searchCondition);
-    let isEmployee = false;
-
-    if (!userModel) {
-      userModel = await Employee.findOne(searchCondition);
-      isEmployee = true;
-    }
+    });
 
     if (!userModel) {
       return res.status(404).json({ message: 'Account not found with this email or phone' });
@@ -244,12 +143,7 @@ router.post('/forgot-password', async (req: Request, res: Response) => {
     // Set expiry (15 minutes from now)
     const expires = new Date(Date.now() + 15 * 60 * 1000);
 
-    const updateFields = { resetPasswordOtp: otp, resetOtpExpires: expires };
-    if (isEmployee) {
-      await Employee.updateOne({ _id: userModel._id }, { $set: updateFields });
-    } else {
-      await User.updateOne({ _id: userModel._id }, { $set: updateFields });
-    }
+    await Employee.updateOne({ _id: userModel._id }, { $set: { resetPasswordOtp: otp, resetOtpExpires: expires } });
 
     console.log(`\n================================`);
     console.log(`🔑 MOCK SMS/EMAIL SENT`);
@@ -281,22 +175,14 @@ router.post('/reset-password', async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Password must be at least 6 characters long' });
     }
 
-    const searchCondition = {
+    const userModel: any = await Employee.findOne({
       $or: [
         { email: identifier.toLowerCase() },
         { phone: identifier }
       ],
       resetPasswordOtp: otp,
       resetOtpExpires: { $gt: Date.now() }
-    };
-
-    let userModel: any = await User.findOne(searchCondition);
-    let isEmployee = false;
-
-    if (!userModel) {
-      userModel = await Employee.findOne(searchCondition);
-      isEmployee = true;
-    }
+    });
 
     if (!userModel) {
       return res.status(400).json({ message: 'Invalid or expired OTP' });
@@ -304,17 +190,13 @@ router.post('/reset-password', async (req: Request, res: Response) => {
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    const updateFields = {
-      password: hashedPassword,
-      resetPasswordOtp: null,
-      resetOtpExpires: null
-    };
-
-    if (isEmployee) {
-      await Employee.updateOne({ _id: userModel._id }, { $set: updateFields });
-    } else {
-      await User.updateOne({ _id: userModel._id }, { $set: updateFields });
-    }
+    await Employee.updateOne({ _id: userModel._id }, {
+      $set: {
+        password: hashedPassword,
+        resetPasswordOtp: null,
+        resetOtpExpires: null
+      }
+    });
 
     res.json({ success: true, message: 'Password reset completely successfully. You can now log in.' });
 
@@ -325,4 +207,3 @@ router.post('/reset-password', async (req: Request, res: Response) => {
 });
 
 export default router;
-

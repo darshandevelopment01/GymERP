@@ -2,7 +2,7 @@
 import { Router, Request, Response } from 'express';
 import FollowUp from '../models/FollowUp';
 import ActivityLog from '../models/ActivityLog';
-import User from '../models/User';
+import Employee from '../models/Employee';
 import { authMiddleware } from '../middleware/auth.middleware';
 
 const router = Router();
@@ -67,7 +67,7 @@ router.post('/', authMiddleware, async (req: Request, res: Response) => {
 
     // ✅ Create activity log
     try {
-      const user = await User.findById(req.user.id);
+      const user = await Employee.findById(req.user.id);
       const targetName = enquiry ? 'enquiry follow-up' : 'member follow-up';
       await ActivityLog.create({
         action: 'followup_created',
@@ -182,7 +182,7 @@ router.put('/:id', authMiddleware, async (req: Request, res: Response) => {
 
     // ✅ Log followup update with field-level changes
     try {
-      const user = await User.findById(req.user.id);
+      const user = await Employee.findById(req.user.id);
       const updateFields = { note, followUpDate, followUpTime, status };
       const changes: string[] = [];
 
@@ -244,7 +244,7 @@ router.patch('/:id', authMiddleware, async (req: Request, res: Response) => {
 
     // ✅ Log followup status update with change details
     try {
-      const user = await User.findById(req.user.id);
+      const user = await Employee.findById(req.user.id);
       const oldStatus = oldFollowUp?.status || '-';
 
       await ActivityLog.create({

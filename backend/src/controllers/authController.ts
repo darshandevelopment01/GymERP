@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-import User, { IUser } from '../models/User';
 import Employee from '../models/Employee';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -15,10 +14,10 @@ const generateToken = (userId: string): string => {
 // Register first gym owner (no auth required)
 export const registerGymOwner = async (req: Request, res: Response) => {
   try {
-    // Check if gym owner already exists
-    const existingOwner = await User.findOne({ userType: 'gym_owner' });
+    // Check if admin already exists
+    const existingOwner = await Employee.findOne({ userType: 'Admin', status: 'active' });
     if (existingOwner) {
-      return res.status(400).json({ error: 'Gym owner already exists. Please login.' });
+      return res.status(400).json({ error: 'Admin already exists. Please login.' });
     }
 
     const { name, email, phone, password } = req.body;
@@ -33,18 +32,28 @@ export const registerGymOwner = async (req: Request, res: Response) => {
     }
 
     // Check if email or phone exists
-    const existingUser = await User.findOne({ $or: [{ email }, { phone }] });
-    if (existingUser) {
+    const existingEmployee = await Employee.findOne({ $or: [{ email }, { phone }] });
+    if (existingEmployee) {
       return res.status(400).json({ error: 'Email or phone already registered' });
     }
 
-    // Create gym owner
-    const gymOwner = await User.create({
+    // Auto-generate employeeCode
+    const count = await Employee.countDocuments();
+    const employeeCode = `EMP${String(count + 1).padStart(3, '0')}`;
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create admin employee
+    const gymOwner = await Employee.create({
+      employeeCode,
       name,
       email,
       phone,
-      password,
-      userType: 'gym_owner'
+      password: hashedPassword,
+      gender: 'Male', // Default, can be updated later
+      userType: 'Admin',
+      status: 'active',
     });
 
     const token = generateToken(gymOwner._id.toString());
@@ -75,40 +84,20 @@ export const login = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Email/Phone and password are required' });
     }
 
-    // Find user by email or phone in Admin (User) collection
-    let user: any = await User.findOne({
+    const user: any = await Employee.findOne({
       $or: [
         { email: identifier.toLowerCase() },
         { phone: identifier }
       ]
-    });
-
-    let isEmployeeCollection = false;
-
-    // Fallback to Employee collection if not found in User collection
-    if (!user) {
-      user = await Employee.findOne({
-        $or: [
-          { email: identifier.toLowerCase() },
-          { phone: identifier }
-        ]
-      }).populate('designation');
-      if (user) isEmployeeCollection = true;
-    }
+    }).populate('designation');
 
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     // Check active status
-    if (isEmployeeCollection) {
-      if (user.status !== 'active') {
-        return res.status(401).json({ error: 'Account is inactive. Contact administrator.' });
-      }
-    } else {
-      if (!user.isActive) {
-        return res.status(401).json({ error: 'Account is inactive. Contact administrator.' });
-      }
+    if (user.status !== 'active') {
+      return res.status(401).json({ error: 'Account is inactive. Contact administrator.' });
     }
 
     // Check password
@@ -127,8 +116,7 @@ export const login = async (req: Request, res: Response) => {
         name: user.name,
         email: user.email,
         phone: user.phone,
-        userType: isEmployeeCollection ? 'user' : user.userType,
-        assignedRoles: user.assignedRoles,
+        userType: user.userType || 'User',
         designation: user.designation ? user.designation.designationName || user.designation : undefined,
         profilePhoto: user.profilePhoto,
         gender: user.gender
@@ -150,21 +138,12 @@ export const forgotPassword = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Email or phone is required' });
     }
 
-    let user: any = await User.findOne({
+    const user: any = await Employee.findOne({
       $or: [
         { email: identifier.toLowerCase() },
         { phone: identifier }
       ]
     });
-
-    if (!user) {
-      user = await Employee.findOne({
-        $or: [
-          { email: identifier.toLowerCase() },
-          { phone: identifier }
-        ]
-      });
-    }
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -205,23 +184,16 @@ export const resetPassword = async (req: Request, res: Response) => {
 
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
-    let user: any = await User.findOne({
+    const user: any = await Employee.findOne({
       resetPasswordOtp: hashedToken,
       resetOtpExpires: { $gt: Date.now() }
     });
 
     if (!user) {
-      user = await Employee.findOne({
-        resetPasswordOtp: hashedToken,
-        resetOtpExpires: { $gt: Date.now() }
-      });
-    }
-
-    if (!user) {
       return res.status(400).json({ error: 'Invalid or expired reset token' });
     }
 
-    user.password = newPassword;
+    user.password = await bcrypt.hash(newPassword, 10);
     user.resetPasswordOtp = undefined;
     user.resetOtpExpires = undefined;
     await user.save();
@@ -236,8 +208,9 @@ export const resetPassword = async (req: Request, res: Response) => {
 // Get current user profile
 export const getMe = async (req: Request, res: Response) => {
   try {
-    const user = await User.findById(req.user?.id)
-      .select('-password -resetPasswordToken -resetPasswordExpires');
+    const user = await Employee.findById(req.user?.id)
+      .select('-password -resetPasswordOtp -resetOtpExpires')
+      .populate('designation');
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
