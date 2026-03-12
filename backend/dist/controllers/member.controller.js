@@ -8,7 +8,7 @@ const Member_1 = __importDefault(require("../models/Member"));
 const Plan_1 = __importDefault(require("../models/Plan"));
 const Branch_1 = __importDefault(require("../models/Branch"));
 const ActivityLog_1 = __importDefault(require("../models/ActivityLog"));
-const User_1 = __importDefault(require("../models/User"));
+const Employee_1 = __importDefault(require("../models/Employee"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const mailer_1 = require("../utils/mailer");
 // Create new member
@@ -76,26 +76,8 @@ const createMember = async (req, res) => {
         console.log('📝 Final member data:', JSON.stringify(memberData, null, 2));
         const member = new Member_1.default(memberData);
         await member.save();
-        // ✅ Generate credentials and create User account for Member
+        // Generate credentials for email notification
         const generatedPassword = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digit random number
-        // Check if user already exists
-        let userRecord = await User_1.default.findOne({ email: trimmedData.email });
-        if (!userRecord) {
-            userRecord = new User_1.default({
-                name: trimmedData.name,
-                email: trimmedData.email,
-                phone: trimmedData.mobileNumber,
-                password: generatedPassword, // User schema pre-save hook will hash this
-                userType: 'user', // Basic user role for members
-                isActive: true,
-                // Using memberId as employeeCode for members since they share the User collection
-                employeeCode: member.memberId
-            });
-            await userRecord.save();
-        }
-        else {
-            // user already exists, maybe update password? We'll just leave them be for now.
-        }
         // ✅ Send Email to Member
         console.log(`\n================================`);
         console.log(`📧 DISPATCHING EMAIL TO NEW MEMBER`);
@@ -118,7 +100,7 @@ const createMember = async (req, res) => {
         const emailSent = await (0, mailer_1.sendEmail)(trimmedData.email, 'Your MuscleTime Gym Member Login Credentials', htmlMessage);
         // ✅ Create activity log
         try {
-            const user = await User_1.default.findById(req.user?.id);
+            const user = await Employee_1.default.findById(req.user?.id);
             await ActivityLog_1.default.create({
                 action: 'member_converted',
                 performedBy: req.user?.id,
@@ -156,7 +138,12 @@ exports.createMember = createMember;
 // Get all members
 const getAllMembers = async (req, res) => {
     try {
-        const members = await Member_1.default.find()
+        // Support selfOnly filter for viewOnlySelfCreated permission
+        const filter = {};
+        if (req.query.selfOnly === 'true' && req.user?.id) {
+            filter.convertedBy = req.user.id;
+        }
+        const members = await Member_1.default.find(filter)
             .populate('branch', 'name city')
             .populate('plan', 'planName duration price')
             .populate('convertedBy', 'name')
@@ -201,7 +188,7 @@ const updateMember = async (req, res) => {
         }
         // ✅ Log member update with field-level changes
         try {
-            const user = await User_1.default.findById(req.user?.id);
+            const user = await Employee_1.default.findById(req.user?.id);
             const skipFields = ['_id', '__v', 'createdAt', 'updatedAt', 'memberId', 'convertedBy', 'enquiryId'];
             const changes = [];
             if (oldMember) {

@@ -4,8 +4,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getMe = exports.resetPassword = exports.forgotPassword = exports.login = exports.registerGymOwner = void 0;
-const User_1 = __importDefault(require("../models/User"));
 const Employee_1 = __importDefault(require("../models/Employee"));
+const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const crypto_1 = __importDefault(require("crypto"));
 // Generate JWT Token
@@ -17,10 +17,10 @@ const generateToken = (userId) => {
 // Register first gym owner (no auth required)
 const registerGymOwner = async (req, res) => {
     try {
-        // Check if gym owner already exists
-        const existingOwner = await User_1.default.findOne({ userType: 'gym_owner' });
+        // Check if admin already exists
+        const existingOwner = await Employee_1.default.findOne({ userType: 'Admin', status: 'active' });
         if (existingOwner) {
-            return res.status(400).json({ error: 'Gym owner already exists. Please login.' });
+            return res.status(400).json({ error: 'Admin already exists. Please login.' });
         }
         const { name, email, phone, password } = req.body;
         // Validation
@@ -31,17 +31,25 @@ const registerGymOwner = async (req, res) => {
             return res.status(400).json({ error: 'Password must be at least 6 characters' });
         }
         // Check if email or phone exists
-        const existingUser = await User_1.default.findOne({ $or: [{ email }, { phone }] });
-        if (existingUser) {
+        const existingEmployee = await Employee_1.default.findOne({ $or: [{ email }, { phone }] });
+        if (existingEmployee) {
             return res.status(400).json({ error: 'Email or phone already registered' });
         }
-        // Create gym owner
-        const gymOwner = await User_1.default.create({
+        // Auto-generate employeeCode
+        const count = await Employee_1.default.countDocuments();
+        const employeeCode = `EMP${String(count + 1).padStart(3, '0')}`;
+        // Hash password
+        const hashedPassword = await bcryptjs_1.default.hash(password, 10);
+        // Create admin employee
+        const gymOwner = await Employee_1.default.create({
+            employeeCode,
             name,
             email,
             phone,
-            password,
-            userType: 'gym_owner'
+            password: hashedPassword,
+            gender: 'Male', // Default, can be updated later
+            userType: 'Admin',
+            status: 'active',
         });
         const token = generateToken(gymOwner._id.toString());
         res.status(201).json({
@@ -69,38 +77,18 @@ const login = async (req, res) => {
         if (!identifier || !password) {
             return res.status(400).json({ error: 'Email/Phone and password are required' });
         }
-        // Find user by email or phone in Admin (User) collection
-        let user = await User_1.default.findOne({
+        const user = await Employee_1.default.findOne({
             $or: [
                 { email: identifier.toLowerCase() },
                 { phone: identifier }
             ]
-        });
-        let isEmployeeCollection = false;
-        // Fallback to Employee collection if not found in User collection
-        if (!user) {
-            user = await Employee_1.default.findOne({
-                $or: [
-                    { email: identifier.toLowerCase() },
-                    { phone: identifier }
-                ]
-            }).populate('designation');
-            if (user)
-                isEmployeeCollection = true;
-        }
+        }).populate('designation');
         if (!user) {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
         // Check active status
-        if (isEmployeeCollection) {
-            if (user.status !== 'active') {
-                return res.status(401).json({ error: 'Account is inactive. Contact administrator.' });
-            }
-        }
-        else {
-            if (!user.isActive) {
-                return res.status(401).json({ error: 'Account is inactive. Contact administrator.' });
-            }
+        if (user.status !== 'active') {
+            return res.status(401).json({ error: 'Account is inactive. Contact administrator.' });
         }
         // Check password
         const isPasswordMatch = await user.comparePassword(password);
@@ -116,8 +104,7 @@ const login = async (req, res) => {
                 name: user.name,
                 email: user.email,
                 phone: user.phone,
-                userType: isEmployeeCollection ? 'user' : user.userType,
-                assignedRoles: user.assignedRoles,
+                userType: user.userType || 'User',
                 designation: user.designation ? user.designation.designationName || user.designation : undefined,
                 profilePhoto: user.profilePhoto,
                 gender: user.gender
@@ -138,20 +125,12 @@ const forgotPassword = async (req, res) => {
         if (!identifier) {
             return res.status(400).json({ error: 'Email or phone is required' });
         }
-        let user = await User_1.default.findOne({
+        const user = await Employee_1.default.findOne({
             $or: [
                 { email: identifier.toLowerCase() },
                 { phone: identifier }
             ]
         });
-        if (!user) {
-            user = await Employee_1.default.findOne({
-                $or: [
-                    { email: identifier.toLowerCase() },
-                    { phone: identifier }
-                ]
-            });
-        }
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
@@ -185,20 +164,14 @@ const resetPassword = async (req, res) => {
             return res.status(400).json({ error: 'Password must be at least 6 characters' });
         }
         const hashedToken = crypto_1.default.createHash('sha256').update(token).digest('hex');
-        let user = await User_1.default.findOne({
+        const user = await Employee_1.default.findOne({
             resetPasswordOtp: hashedToken,
             resetOtpExpires: { $gt: Date.now() }
         });
         if (!user) {
-            user = await Employee_1.default.findOne({
-                resetPasswordOtp: hashedToken,
-                resetOtpExpires: { $gt: Date.now() }
-            });
-        }
-        if (!user) {
             return res.status(400).json({ error: 'Invalid or expired reset token' });
         }
-        user.password = newPassword;
+        user.password = await bcryptjs_1.default.hash(newPassword, 10);
         user.resetPasswordOtp = undefined;
         user.resetOtpExpires = undefined;
         await user.save();
@@ -213,8 +186,9 @@ exports.resetPassword = resetPassword;
 // Get current user profile
 const getMe = async (req, res) => {
     try {
-        const user = await User_1.default.findById(req.user?.id)
-            .select('-password -resetPasswordToken -resetPasswordExpires');
+        const user = await Employee_1.default.findById(req.user?.id)
+            .select('-password -resetPasswordOtp -resetOtpExpires')
+            .populate('designation');
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }

@@ -8,12 +8,17 @@ const Enquiry_1 = __importDefault(require("../models/Enquiry"));
 const Plan_1 = __importDefault(require("../models/Plan"));
 const Branch_1 = __importDefault(require("../models/Branch"));
 const ActivityLog_1 = __importDefault(require("../models/ActivityLog"));
-const User_1 = __importDefault(require("../models/User"));
+const Employee_1 = __importDefault(require("../models/Employee"));
 const mongoose_1 = __importDefault(require("mongoose"));
 // ✅ GET ALL ENQUIRIES
 const getAllEnquiries = async (req, res) => {
     try {
-        const enquiries = await Enquiry_1.default.find()
+        // Support selfOnly filter for viewOnlySelfCreated permission
+        const filter = {};
+        if (req.query.selfOnly === 'true' && req.user?.id) {
+            filter.createdBy = req.user.id;
+        }
+        const enquiries = await Enquiry_1.default.find(filter)
             .populate('branch', 'name city state')
             .populate('plan', 'planName duration price')
             .populate('createdBy', 'name')
@@ -179,7 +184,7 @@ const createEnquiry = async (req, res) => {
         console.log('✅ Generated enquiryId:', enquiry.enquiryId);
         // ✅ Create activity log
         try {
-            const user = await User_1.default.findById(req.user?.id);
+            const user = await Employee_1.default.findById(req.user?.id);
             await ActivityLog_1.default.create({
                 action: 'enquiry_created',
                 performedBy: req.user?.id,
@@ -310,7 +315,7 @@ const updateEnquiry = async (req, res) => {
         console.log('✅ Enquiry updated successfully');
         // ✅ Log enquiry update with field-level changes
         try {
-            const user = await User_1.default.findById(req.user?.id);
+            const user = await Employee_1.default.findById(req.user?.id);
             const skipFields = ['_id', '__v', 'createdAt', 'updatedAt', 'createdBy', 'enquiryId'];
             const changes = [];
             if (oldEnquiry) {

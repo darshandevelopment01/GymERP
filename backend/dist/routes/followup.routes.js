@@ -7,7 +7,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const FollowUp_1 = __importDefault(require("../models/FollowUp"));
 const ActivityLog_1 = __importDefault(require("../models/ActivityLog"));
-const User_1 = __importDefault(require("../models/User"));
+const Employee_1 = __importDefault(require("../models/Employee"));
 const auth_middleware_1 = require("../middleware/auth.middleware");
 const router = (0, express_1.Router)();
 // ✅ Auto-expire overdue follow-ups
@@ -60,7 +60,7 @@ router.post('/', auth_middleware_1.authMiddleware, async (req, res) => {
         await followUp.save();
         // ✅ Create activity log
         try {
-            const user = await User_1.default.findById(req.user.id);
+            const user = await Employee_1.default.findById(req.user.id);
             const targetName = enquiry ? 'enquiry follow-up' : 'member follow-up';
             await ActivityLog_1.default.create({
                 action: 'followup_created',
@@ -93,9 +93,14 @@ router.post('/', auth_middleware_1.authMiddleware, async (req, res) => {
 router.get('/', auth_middleware_1.authMiddleware, async (req, res) => {
     try {
         await autoExpireFollowUps();
-        const followUps = await FollowUp_1.default.find()
+        // Support selfOnly filter for viewOnlySelfCreated permission
+        const filter = {};
+        if (req.query.selfOnly === 'true' && req.user?.id) {
+            filter.createdBy = req.user.id;
+        }
+        const followUps = await FollowUp_1.default.find(filter)
             .populate('member', 'name memberId mobileNumber')
-            .populate('enquiry', 'name mobileNumber email') // ✅ Added enquiry population
+            .populate('enquiry', 'name mobileNumber email')
             .populate('createdBy', 'name')
             .sort({ followUpDate: 1, createdAt: -1 });
         res.json({
@@ -156,7 +161,7 @@ router.put('/:id', auth_middleware_1.authMiddleware, async (req, res) => {
         }
         // ✅ Log followup update with field-level changes
         try {
-            const user = await User_1.default.findById(req.user.id);
+            const user = await Employee_1.default.findById(req.user.id);
             const updateFields = { note, followUpDate, followUpTime, status };
             const changes = [];
             if (oldFollowUp) {
@@ -208,7 +213,7 @@ router.patch('/:id', auth_middleware_1.authMiddleware, async (req, res) => {
         }
         // ✅ Log followup status update with change details
         try {
-            const user = await User_1.default.findById(req.user.id);
+            const user = await Employee_1.default.findById(req.user.id);
             const oldStatus = oldFollowUp?.status || '-';
             await ActivityLog_1.default.create({
                 action: 'followup_updated',

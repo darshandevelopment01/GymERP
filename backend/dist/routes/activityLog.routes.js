@@ -6,21 +6,17 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const auth_middleware_1 = require("../middleware/auth.middleware");
 const ActivityLog_1 = __importDefault(require("../models/ActivityLog"));
-const User_1 = __importDefault(require("../models/User"));
 const Employee_1 = __importDefault(require("../models/Employee"));
 const router = (0, express_1.Router)();
 // Admin-only middleware
 const adminOnly = async (req, res, next) => {
     try {
         const userId = req.user?.id;
-        const user = await User_1.default.findById(userId);
-        if (!user) {
+        const employee = await Employee_1.default.findById(userId);
+        if (!employee) {
             return res.status(401).json({ success: false, message: 'Unauthorized' });
         }
-        // Check if user has an employee record
-        const employee = await Employee_1.default.findOne({ email: user.email });
-        // Admin = no employee record (User model admin) OR employee with Admin userType
-        const isAdmin = !employee || employee.userType === 'Admin';
+        const isAdmin = employee.userType === 'Admin';
         if (!isAdmin) {
             return res.status(403).json({ success: false, message: 'Admin access only' });
         }
