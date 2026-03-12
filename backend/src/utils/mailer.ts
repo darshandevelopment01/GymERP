@@ -1,7 +1,4 @@
 import nodemailer from 'nodemailer';
-import dotenv from 'dotenv';
-
-dotenv.config();
 
 // Default to the provided info@muscletime.co.in email if not explicitly set
 const SMTP_USER_EMAIL = process.env.SMTP_USER || 'info@muscletime.co.in';
@@ -13,16 +10,18 @@ const transporter = nodemailer.createTransport({
     secure: true, // true for 465, false for other ports. Hostinger uses 465 for SSL.
     auth: {
         user: SMTP_USER_EMAIL,
-        pass: process.env.SMTP_PASS, // Your email password
+        pass: process.env.SMTP_PASS,
     },
 });
 
-export const sendEmail = async (to: string, subject: string, htmlContent: string) => {
+export const sendEmail = async (to: string, subject: string, htmlContent: string): Promise<boolean> => {
     try {
         if (!process.env.SMTP_PASS) {
-            console.warn('⚠️ SMTP password (SMTP_PASS) not found! Mocking email to:', to);
+            console.warn('⚠️ SMTP password (SMTP_PASS) not found in environment! Available env keys:', Object.keys(process.env).filter(k => k.startsWith('SMTP')).join(', ') || 'NONE');
             return false;
         }
+
+        console.log(`📧 Attempting to send email to ${to} via ${process.env.SMTP_HOST || 'smtp.hostinger.com'}:${process.env.SMTP_PORT || '465'} as ${SMTP_USER_EMAIL}`);
 
         const info = await transporter.sendMail({
             from: `"MuscleTime ERP" <${SMTP_USER_EMAIL}>`,
@@ -38,3 +37,4 @@ export const sendEmail = async (to: string, subject: string, htmlContent: string
         return false;
     }
 };
+
