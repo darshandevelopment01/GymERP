@@ -112,7 +112,7 @@ const enquirySchema = new Schema<IEnquiry>({
   },
   createdBy: {
     type: Schema.Types.ObjectId,
-    ref: 'User',
+    ref: 'Employee',
     default: null
   }
 }, {

@@ -106,6 +106,7 @@ const login = async (req, res) => {
                 phone: user.phone,
                 userType: user.userType || 'User',
                 designation: user.designation ? user.designation.designationName || user.designation : undefined,
+                permissions: user.permissions,
                 profilePhoto: user.profilePhoto,
                 gender: user.gender
             },
@@ -192,7 +193,7 @@ const getMe = async (req, res) => {
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
-        res.json({ user });
+        res.json({ success: true, data: user });
     }
     catch (error) {
         console.error('Get profile error:', error);

@@ -153,7 +153,7 @@ const MemberSchema = new mongoose_1.Schema({
     },
     convertedBy: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'User',
+        ref: 'Employee',
         default: null
     }
 }, {

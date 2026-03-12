@@ -118,6 +118,7 @@ export const login = async (req: Request, res: Response) => {
         phone: user.phone,
         userType: user.userType || 'User',
         designation: user.designation ? user.designation.designationName || user.designation : undefined,
+        permissions: user.permissions,
         profilePhoto: user.profilePhoto,
         gender: user.gender
       },
@@ -216,7 +217,7 @@ export const getMe = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    res.json({ user });
+    res.json({ success: true, data: user });
   } catch (error) {
     console.error('Get profile error:', error);
     res.status(500).json({ error: 'Failed to fetch profile' });

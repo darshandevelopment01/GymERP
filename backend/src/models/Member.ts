@@ -150,7 +150,7 @@ const MemberSchema = new Schema<IMember>(
     },
     convertedBy: {
       type: Schema.Types.ObjectId,
-      ref: 'User',
+      ref: 'Employee',
       default: null
     }
   },
