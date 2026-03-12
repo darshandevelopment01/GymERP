@@ -13,9 +13,9 @@ router.get('/stats', authMiddleware, async (req: Request, res: Response) => {
     const totalMembers = await Member.countDocuments({ status: 'active' });
     const totalEmployees = await Employee.countDocuments({ status: 'active' });
     const activeBranches = await Branch.countDocuments({ status: 'active' });
-    
+
     console.log('📊 Fetching dashboard stats:', { totalMembers, totalEmployees, activeBranches });
-    
+
     const revenue = 840000;
 
     res.json({
@@ -47,24 +47,24 @@ router.get('/attendance-weekly', authMiddleware, async (req: Request, res: Respo
 
     const totalMembers = await Member.countDocuments({ status: 'active' });
     console.log('📊 Generating attendance data for', totalMembers, 'members');
-    
+
     const weeklyData = [];
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    
+
     for (let i = 0; i < 7; i++) {
       const date = new Date(monday);
       date.setDate(monday.getDate() + i);
-      
+
       let attendanceRate;
       if (i < 5) {
         attendanceRate = 0.75 + Math.random() * 0.15;
       } else {
         attendanceRate = 0.40 + Math.random() * 0.20;
       }
-      
+
       const present = Math.floor(totalMembers * attendanceRate);
       const absent = Math.floor(totalMembers * (0.15 + Math.random() * 0.10));
-      
+
       weeklyData.push({
         day: days[i],
         present,
@@ -87,29 +87,29 @@ router.get('/membership-growth', authMiddleware, async (req: Request, res: Respo
     const growthData = [];
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const today = new Date();
-    
+
     console.log('📊 Starting membership growth calculation...');
     console.log('📊 Current date:', today.toISOString());
-    
+
     // Check total members first
     const totalMembers = await Member.countDocuments();
     console.log('📊 Total members in database:', totalMembers);
-    
+
     for (let i = 5; i >= 0; i--) {
       const monthEnd = new Date(today.getFullYear(), today.getMonth() - i + 1, 0);
       monthEnd.setHours(23, 59, 59, 999);
-      
+
       const monthName = months[new Date(today.getFullYear(), today.getMonth() - i, 1).getMonth()];
-      
+
       console.log(`📊 Checking ${monthName}: counting members with membershipStartDate <= ${monthEnd.toISOString()}`);
-      
+
       // Count cumulative members up to end of this month using membershipStartDate
       const count = await Member.countDocuments({
         membershipStartDate: { $lte: monthEnd }
       });
-      
+
       console.log(`📊 Total members up to ${monthName}: ${count}`);
-      
+
       growthData.push({
         month: monthName,
         total: count,
@@ -119,7 +119,7 @@ router.get('/membership-growth', authMiddleware, async (req: Request, res: Respo
 
     console.log('📊 Final membership growth data:', JSON.stringify(growthData, null, 2));
     res.json(growthData);
-    
+
   } catch (error: any) {
     console.error('❌ Growth data error:', error);
     res.status(500).json({ message: 'Error fetching growth data', error: error.message });

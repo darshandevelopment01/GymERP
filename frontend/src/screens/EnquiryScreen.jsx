@@ -16,6 +16,7 @@ export default function EnquiryScreen() {
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    sessionStorage.clear();
     navigate('/login');
   };
 

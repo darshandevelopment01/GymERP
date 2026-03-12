@@ -140,6 +140,7 @@ export default function DashboardContent() {
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    sessionStorage.clear();
     navigate('/login');
   };
 
