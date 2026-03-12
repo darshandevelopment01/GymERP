@@ -403,6 +403,30 @@ export const createEmployee = async (req: Request, res: Response) => {
       });
     }
 
+    // Check for duplicate email
+    const existingByEmail = await Employee.findOne({
+      email: req.body.email.toLowerCase(),
+      status: 'active'
+    });
+    if (existingByEmail) {
+      return res.status(400).json({
+        success: false,
+        message: `A user with email "${req.body.email}" already exists!`
+      });
+    }
+
+    // Check for duplicate phone
+    const existingByPhone = await Employee.findOne({
+      phone: req.body.phone,
+      status: 'active'
+    });
+    if (existingByPhone) {
+      return res.status(400).json({
+        success: false,
+        message: `A user with phone number "${req.body.phone}" already exists!`
+      });
+    }
+
     // Auto-generate password if missing, otherwise hash the given one
     const generatedPassword = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digit random number
     const rawPassword = req.body.password || generatedPassword;

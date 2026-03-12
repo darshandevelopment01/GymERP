@@ -99,6 +99,7 @@ const EmployeeSchema = new Schema<IEmployee>(
     phone: {
       type: String,
       required: true,
+      unique: true,
     },
     password: {
       type: String,
