@@ -365,7 +365,7 @@ const createEmployee = async (req, res) => {
         <p>An account has been successfully created for you. Here are your login credentials:</p>
         <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e2e8f0;">
           <p style="margin: 0 0 10px 0;"><strong>System URL:</strong> <a href="https://muscletime.net">https://muscletime.net</a></p>
-          <p style="margin: 0 0 10px 0;"><strong>Employee Code / ID:</strong> <span style="font-family: monospace; font-size: 1.1em; background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">${req.body.employeeCode}</span></p>
+          <p style="margin: 0 0 10px 0;"><strong>Email ID:</strong> <span style="font-family: monospace; font-size: 1.1em; background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">${req.body.email}</span></p>
           <p style="margin: 0;"><strong>Password:</strong> <span style="font-family: monospace; font-size: 1.1em; background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">${rawPassword}</span></p>
         </div>
         <p><em>Please log in and change your password immediately.</em></p>
@@ -378,11 +378,11 @@ const createEmployee = async (req, res) => {
             .populate('branches')
             .populate('branchId')
             .populate('shift');
-        const uiMessage = emailSent
-            ? `User created successfully!\n\nCredentials have been securely EMAILED to ${req.body.email}. Keep them safe.\n\nEmployee Code: ${req.body.employeeCode}\nTemporary Password: ${rawPassword}`
-            : `User created successfully!\n\nEmployee Code: ${req.body.employeeCode}\nTemporary Password: ${rawPassword}\n\n(⚠️ No SMTP configured in .env - Live email skipped)`;
+        const messageContent = emailSent
+            ? `User created successfully!\n\nCredentials have been securely EMAILED to ${req.body.email}. Keep them safe.\n\nEmail ID: ${req.body.email}\nTemporary Password: ${rawPassword}`
+            : `User created successfully!\n\nEmail ID: ${req.body.email}\nTemporary Password: ${rawPassword}\n\n(⚠️ No SMTP configured in .env - Live email skipped)`;
         res.status(201).json({
-            message: uiMessage,
+            message: messageContent,
             data: populatedEmployee
         });
     }

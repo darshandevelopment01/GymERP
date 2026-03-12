@@ -90,7 +90,7 @@ const createMember = async (req, res) => {
         <p>Your gym membership has been successfully created. Here are your login credentials for the member portal:</p>
         <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e2e8f0;">
           <p style="margin: 0 0 10px 0;"><strong>System URL:</strong> <a href="https://muscletime.net">https://muscletime.net</a></p>
-          <p style="margin: 0 0 10px 0;"><strong>Member ID:</strong> <span style="font-family: monospace; font-size: 1.1em; background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">${member.memberId}</span></p>
+          <p style="margin: 0 0 10px 0;"><strong>Email ID:</strong> <span style="font-family: monospace; font-size: 1.1em; background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">${trimmedData.email}</span></p>
           <p style="margin: 0;"><strong>Password:</strong> <span style="font-family: monospace; font-size: 1.1em; background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">${generatedPassword}</span></p>
         </div>
         <p><em>Please log in and change your password immediately.</em></p>
