@@ -305,8 +305,13 @@ const UserMaster = () => {
               label: 'Follow-Up Tab',
               items: [
                 { key: 'viewFollowUpTab', label: 'View Follow-Up Tab' },
-                { key: 'editFollowUp', label: 'Edit Follow-Up' },
                 { key: 'viewOnlySelfCreatedFollowUps', label: 'View Only Self-Created Follow-Ups' },
+                { key: 'createEnquiryFollowUp', label: 'Create Enquiry Follow-Up' },
+                { key: 'editEnquiryFollowUp', label: 'Edit Enquiry Follow-Up' },
+                { key: 'viewEnquiryFollowUp', label: 'View Enquiry Follow-Up' },
+                { key: 'createMemberFollowUp', label: 'Create Member Follow-Up' },
+                { key: 'editMemberFollowUp', label: 'Edit Member Follow-Up' },
+                { key: 'viewMemberFollowUp', label: 'View Member Follow-Up' },
               ]
             },
             {
@@ -363,8 +368,9 @@ const UserMaster = () => {
               label: 'Follow-Up Tab',
               items: [
                 { key: 'viewFollowUpTab', label: 'View Follow-Up Tab' },
-                { key: 'addFollowUps', label: 'Add Follow-Ups' },
                 { key: 'viewOnlySelfCreatedFollowUps', label: 'View Only Self-Created Follow-Ups' },
+                { key: 'addEnquiryFollowUps', label: 'Add Enquiry Follow-Ups' },
+                { key: 'addMemberFollowUps', label: 'Add Member Follow-Ups' },
               ]
             },
             {

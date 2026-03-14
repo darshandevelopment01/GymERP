@@ -480,7 +480,7 @@ const MemberMaster = () => {
         showDeleteButton={can('deleteMember')}
         showExportButton={true}
         exportFileName="members"
-        onAddFollowUp={handleAddFollowUp}
+        onAddFollowUp={can('createMemberFollowUp') ? handleAddFollowUp : null}
         customActions={(item) => (
           item.paymentRemaining > 0 && can('collectPayment') && (
             <button

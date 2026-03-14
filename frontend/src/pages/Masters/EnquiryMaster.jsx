@@ -554,7 +554,7 @@ const EnquiryMaster = () => {
         showDeleteButton={can('deleteEnquiry')}
         showExportButton={true}
         exportFileName="enquiries"
-        onAddFollowUp={handleAddFollowUp}
+        onAddFollowUp={can('createEnquiryFollowUp') ? handleAddFollowUp : null}
         customActions={(item) => (
           item.status !== 'converted' && can('convertToMember') && (
             <button

@@ -49,6 +49,12 @@ export interface IEmployee extends Document {
       viewPlanMaster?: boolean;
       createRemoveOffers?: boolean;
       editFollowUp?: boolean;
+      createEnquiryFollowUp?: boolean;
+      editEnquiryFollowUp?: boolean;
+      viewEnquiryFollowUp?: boolean;
+      createMemberFollowUp?: boolean;
+      editMemberFollowUp?: boolean;
+      viewMemberFollowUp?: boolean;
     };
     appAccess?: {
       viewEnquiryTab?: boolean;
@@ -187,6 +193,12 @@ const EmployeeSchema = new Schema<IEmployee>(
         viewPlanMaster: { type: Boolean, default: false },
         createRemoveOffers: { type: Boolean, default: false },
         editFollowUp: { type: Boolean, default: false },
+        createEnquiryFollowUp: { type: Boolean, default: false },
+        editEnquiryFollowUp: { type: Boolean, default: false },
+        viewEnquiryFollowUp: { type: Boolean, default: false },
+        createMemberFollowUp: { type: Boolean, default: false },
+        editMemberFollowUp: { type: Boolean, default: false },
+        viewMemberFollowUp: { type: Boolean, default: false },
       },
       appAccess: {
         viewEnquiryTab: { type: Boolean, default: false },

@@ -399,7 +399,12 @@ exports.getEmployeeById = getEmployeeById;
 const updateEmployee = async (req, res) => {
     try {
         if (req.body.password) {
+            // If password is provided and not empty, hash it
             req.body.password = await bcryptjs_1.default.hash(req.body.password, 10);
+        }
+        else {
+            // If password is empty or missing, delete it from req.body
+            delete req.body.password;
         }
         if (req.body.branches && req.body.branches.length > 0) {
             req.body.branchId = req.body.branches[0];

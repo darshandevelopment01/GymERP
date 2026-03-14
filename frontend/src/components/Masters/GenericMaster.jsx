@@ -22,7 +22,8 @@ const GenericMaster = ({
   showEditButton = true, // ✅ Independently control edit button
   showDeleteButton = true, // ✅ Independently control delete button
   apiOptions = {}, // ✅ Extra options to pass to apiService.getAll()
-  refreshKey // ✅ Change this to trigger data re-fetch from parent
+  refreshKey, // ✅ Change this to trigger data re-fetch from parent
+  onCreateClick // ✅ New prop for custom create logic
 }) => {
   // Include apiOptions in cache key so selfOnly-filtered data is cached separately
   const apiOptKey = Object.keys(apiOptions).length > 0 ? `_${JSON.stringify(apiOptions)}` : '';
@@ -241,6 +242,10 @@ const GenericMaster = ({
   };
 
   const handleCreate = () => {
+    if (onCreateClick) {
+      onCreateClick();
+      return;
+    }
     setEditingItem(null);
     setFormData({});
     setShowModal(true);

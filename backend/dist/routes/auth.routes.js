@@ -150,12 +150,19 @@ router.post('/forgot-password', async (req, res) => {
     `;
         // Only attempt to send if the identifier is an email or if the user found has an email
         const recipientEmail = userModel.email;
+        let emailSent = false;
         if (recipientEmail) {
-            await (0, mailer_1.sendEmail)(recipientEmail, emailSubject, emailHtml);
+            emailSent = await (0, mailer_1.sendEmail)(recipientEmail, emailSubject, emailHtml);
+        }
+        if (!emailSent) {
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to send OTP email. Please try again later or contact support.'
+            });
         }
         res.json({
             success: true,
-            message: 'If the account exists, an OTP has been sent. Check terminal logs for the OTP.'
+            message: 'If the account exists, an OTP has been sent to your email.'
         });
     }
     catch (error) {

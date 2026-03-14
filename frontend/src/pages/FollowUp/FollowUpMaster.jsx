@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import GenericMaster from '../../components/Masters/GenericMaster';
 import followupApi from '../../services/followupApi';
+import enquiryApi from '../../services/enquiryApi';
+import memberApi from '../../services/memberApi';
 import { usePermissions } from '../../hooks/usePermissions';
 import './FollowUpMaster.css';
 
@@ -36,9 +38,98 @@ const FollowUpMaster = () => {
   // Refresh key to trigger GenericMaster re-fetch
   const [refreshKey, setRefreshKey] = useState(0);
 
+  // Custom Create Modal State
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createType, setCreateType] = useState('enquiry'); // 'enquiry' or 'member'
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const [selectedTarget, setSelectedTarget] = useState(null);
+  const [createFormData, setCreateFormData] = useState({
+    note: '',
+    followUpDate: new Date().toISOString().split('T')[0],
+    followUpTime: ''
+  });
+
   useEffect(() => {
     fetchInitialData();
   }, []);
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      if (searchQuery.trim().length >= 2) {
+        handleSearch();
+      } else {
+        setSearchResults([]);
+      }
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery, createType]);
+
+  const handleSearch = async () => {
+    setSearching(true);
+    try {
+      if (createType === 'enquiry') {
+        const response = await enquiryApi.getAll();
+        const data = response.data || response || [];
+        const filtered = data.filter(item =>
+          item.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.mobileNumber?.includes(searchQuery) ||
+          item.enquiryId?.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+        setSearchResults(filtered);
+      } else {
+        const response = await memberApi.getAll();
+        const data = response.data || response || [];
+        const filtered = data.filter(item =>
+          item.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.mobileNumber?.includes(searchQuery) ||
+          item.memberId?.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+        setSearchResults(filtered);
+      }
+    } catch (error) {
+      console.error('Error searching:', error);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleCreateSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedTarget) {
+      alert(`Please select a ${createType} first`);
+      return;
+    }
+
+    try {
+      const submitData = {
+        note: createFormData.note,
+        followUpDate: createFormData.followUpDate,
+        followUpTime: createFormData.followUpTime,
+        [createType]: selectedTarget._id
+      };
+
+      await followupApi.create(submitData);
+      alert('✅ Follow-up created successfully!');
+
+      setShowCreateModal(false);
+      setSelectedTarget(null);
+      setSearchQuery('');
+      setSearchResults([]);
+      setCreateFormData({
+        note: '',
+        followUpDate: new Date().toISOString().split('T')[0],
+        followUpTime: ''
+      });
+      setRefreshKey(prev => prev + 1);
+      fetchFollowUps();
+    } catch (error) {
+      console.error('Error creating follow-up:', error);
+      alert('❌ Failed to create follow-up');
+    }
+  };
 
   const fetchInitialData = async () => {
     if (!hasCache) setLoading(true);
@@ -402,7 +493,8 @@ const FollowUpMaster = () => {
           filterConfig={filterConfig}
           searchPlaceholder="Search by name, note..."
           icon="📝"
-          showCreateButton={false}
+          showCreateButton={can('createEnquiryFollowUp') || can('createMemberFollowUp')}
+          onCreateClick={() => setShowCreateModal(true)}
           showExportButton={true}
           exportFileName="followups"
           onRowClick={handleRowClick}
@@ -410,8 +502,8 @@ const FollowUpMaster = () => {
           refreshKey={refreshKey}
           customActions={(item) => (
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-              {/* ✅ Edit Button - Permission gated */}
-              {can('editFollowUp') && (
+              {/* ✅ Edit Button - Gated by granular permissions */}
+              {((item.member && can('editMemberFollowUp')) || (item.enquiry && can('editEnquiryFollowUp'))) && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -951,6 +1043,249 @@ const FollowUpMaster = () => {
                   }}
                 >
                   💾 Update
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* CUSTOM CREATE FOLLOW-UP MODAL */}
+      {showCreateModal && (
+        <div
+          className="modal-overlay"
+          onClick={() => {
+            setShowCreateModal(false);
+            setSelectedTarget(null);
+            setSearchQuery('');
+          }}
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0, 0, 0, 0.6)', display: 'flex',
+            alignItems: 'center', justifyContent: 'center', zIndex: 999999, padding: '1rem'
+          }}
+        >
+          <div
+            className="modal-content"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'white', borderRadius: '16px', maxWidth: '600px',
+              width: '100%', maxHeight: '90vh', overflow: 'auto',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+            }}
+          >
+            {/* Modal Header */}
+            <div style={{
+              background: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)',
+              padding: '1.5rem', borderRadius: '16px 16px 0 0',
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+            }}>
+              <h2 style={{ margin: 0, color: 'white', fontSize: '1.5rem', fontWeight: '700' }}>
+                📝 Create New Follow-up
+              </h2>
+              <button
+                onClick={() => {
+                  setShowCreateModal(false);
+                  setSelectedTarget(null);
+                  setSearchQuery('');
+                }}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.2)', border: 'none', color: 'white',
+                  width: '40px', height: '40px', borderRadius: '50%', cursor: 'pointer',
+                  fontSize: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateSubmit}>
+              <div style={{ padding: '2rem' }}>
+                {/* Type Selection */}
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#1e293b' }}>
+                    Follow-up For
+                  </label>
+                  <div style={{ display: 'flex', gap: '1rem' }}>
+                    {can('createEnquiryFollowUp') && (
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                        <input
+                          type="radio"
+                          name="createType"
+                          value="enquiry"
+                          checked={createType === 'enquiry'}
+                          onChange={(e) => {
+                            setCreateType(e.target.value);
+                            setSelectedTarget(null);
+                            setSearchQuery('');
+                          }}
+                        />
+                        <span>Enquiry</span>
+                      </label>
+                    )}
+                    {can('createMemberFollowUp') && (
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                        <input
+                          type="radio"
+                          name="createType"
+                          value="member"
+                          checked={createType === 'member'}
+                          onChange={(e) => {
+                            setCreateType(e.target.value);
+                            setSelectedTarget(null);
+                            setSearchQuery('');
+                          }}
+                        />
+                        <span>Member</span>
+                      </label>
+                    )}
+                  </div>
+                </div>
+
+                {/* Target Search */}
+                <div style={{ marginBottom: '1.5rem', position: 'relative' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#1e293b' }}>
+                    Search {createType === 'enquiry' ? 'Enquiry' : 'Member'}
+                  </label>
+                  {selectedTarget ? (
+                    <div style={{
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                      background: '#f8fafc', padding: '0.75rem 1rem', borderRadius: '8px', border: '2px solid #6366f1'
+                    }}>
+                      <div>
+                        <div style={{ fontWeight: '600', color: '#1e293b' }}>{selectedTarget.name}</div>
+                        <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                          ID: {selectedTarget.enquiryId || selectedTarget.memberId} | {selectedTarget.mobileNumber}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedTarget(null)}
+                        style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontWeight: '600' }}
+                      >
+                        Change
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <input
+                        type="text"
+                        placeholder={`Search by name, ID, or mobile...`}
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        style={{
+                          width: '100%', padding: '0.75rem 1rem', borderRadius: '8px',
+                          border: '1px solid #e2e8f0', outline: 'none', fontSize: '1rem'
+                        }}
+                      />
+                      {searching && <div style={{ fontSize: '0.8rem', color: '#6366f1', marginTop: '0.25rem' }}>Searching...</div>}
+                      {searchResults.length > 0 && (
+                        <div style={{
+                          position: 'absolute', top: '100%', left: 0, right: 0, background: 'white',
+                          boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', borderRadius: '8px',
+                          border: '1px solid #e2e8f0', zIndex: 10, marginTop: '0.25rem', maxHeight: '200px', overflowY: 'auto'
+                        }}>
+                          {searchResults.map(result => (
+                            <div
+                              key={result._id}
+                              onClick={() => setSelectedTarget(result)}
+                              style={{
+                                padding: '0.75rem 1rem', cursor: 'pointer', borderBottom: '1px solid #f1f5f9'
+                              }}
+                              className="search-result-item"
+                            >
+                              <div style={{ fontWeight: '600', color: '#1e293b' }}>{result.name}</div>
+                              <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                                ID: {result.enquiryId || result.memberId} | {result.mobileNumber}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+
+                {/* Note */}
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#1e293b' }}>
+                    Note <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <textarea
+                    required
+                    value={createFormData.note}
+                    onChange={(e) => setCreateFormData({ ...createFormData, note: e.target.value })}
+                    placeholder="Enter follow-up instructions or details..."
+                    style={{
+                      width: '100%', padding: '0.75rem 1rem', borderRadius: '8px',
+                      border: '1px solid #e2e8f0', outline: 'none', minHeight: '100px', resize: 'vertical'
+                    }}
+                  />
+                </div>
+
+                {/* Date & Time */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#1e293b' }}>
+                      Follow-up Date <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={createFormData.followUpDate}
+                      onChange={(e) => setCreateFormData({ ...createFormData, followUpDate: e.target.value })}
+                      style={{
+                        width: '100%', padding: '0.75rem 1rem', borderRadius: '8px',
+                        border: '1px solid #e2e8f0', outline: 'none'
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#1e293b' }}>
+                      Time
+                    </label>
+                    <input
+                      type="time"
+                      value={createFormData.followUpTime}
+                      onChange={(e) => setCreateFormData({ ...createFormData, followUpTime: e.target.value })}
+                      style={{
+                        width: '100%', padding: '0.75rem 1rem', borderRadius: '8px',
+                        border: '1px solid #e2e8f0', outline: 'none'
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div style={{
+                padding: '1.5rem 2rem', background: '#f8fafc', borderTop: '2px solid #e2e8f0',
+                display: 'flex', justifyContent: 'flex-end', gap: '1rem', borderRadius: '0 0 16px 16px'
+              }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCreateModal(false);
+                    setSelectedTarget(null);
+                    setSearchQuery('');
+                  }}
+                  style={{
+                    padding: '0.75rem 1.5rem', borderRadius: '10px', border: '2px solid #e2e8f0',
+                    background: 'white', color: '#64748b', fontWeight: '700', cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  style={{
+                    padding: '0.75rem 2rem', borderRadius: '10px', border: 'none',
+                    background: 'linear-gradient(135deg, #6366f1 0%, #4338ca 100%)',
+                    color: 'white', fontWeight: '700', cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)'
+                  }}
+                >
+                  🚀 Create Follow-up
                 </button>
               </div>
             </form>
