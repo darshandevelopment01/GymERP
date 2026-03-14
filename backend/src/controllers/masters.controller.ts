@@ -505,7 +505,11 @@ export const getEmployeeById = (req: Request, res: Response) =>
 export const updateEmployee = async (req: Request, res: Response) => {
   try {
     if (req.body.password) {
+      // If password is provided and not empty, hash it
       req.body.password = await bcrypt.hash(req.body.password, 10);
+    } else {
+      // If password is empty or missing, delete it from req.body
+      delete req.body.password;
     }
 
 

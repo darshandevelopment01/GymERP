@@ -56,6 +56,8 @@ router.put('/:id', authMiddleware, async (req: Request, res: Response) => {
     if (updateData.password) {
       const bcrypt = require('bcryptjs');
       updateData.password = await bcrypt.hash(updateData.password, 10);
+    } else {
+      delete updateData.password;
     }
 
     // Sanitize Empty Strings to prevent Mongoose CastError on ObjectIds
