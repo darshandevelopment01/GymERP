@@ -15,6 +15,7 @@ export default function LoginCard() {
   const [identifier, setIdentifier] = useState('');
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -76,6 +77,11 @@ export default function LoginCard() {
     e.preventDefault();
     setError('');
     setSuccess('');
+
+    if (newPassword !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
 
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/reset-password`, {
@@ -154,6 +160,7 @@ export default function LoginCard() {
                     setMode('forgot');
                     setError('');
                     setSuccess('');
+                    setConfirmPassword('');
                   }}
                   style={{ color: '#3b82f6', fontSize: '13px', textDecoration: 'none' }}
                 >
@@ -231,6 +238,18 @@ export default function LoginCard() {
                   placeholder="Enter new password (min. 6 chars)"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="input-group">
+                <label className="label">Confirm Password</label>
+                <input
+                  type="password"
+                  className="input"
+                  placeholder="Confirm your new password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                 />
               </div>
