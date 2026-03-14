@@ -10,6 +10,7 @@ const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const Employee_1 = __importDefault(require("../models/Employee"));
 const Designation_1 = __importDefault(require("../models/Designation"));
 const auth_middleware_1 = require("../middleware/auth.middleware");
+const mailer_1 = require("../utils/mailer");
 const router = (0, express_1.Router)();
 // Login
 router.post('/login', async (req, res) => {
@@ -131,6 +132,27 @@ router.post('/forgot-password', async (req, res) => {
         console.log(`To: ${identifier}`);
         console.log(`OTP: ${otp}`);
         console.log(`================================\n`);
+        // Send the OTP via email
+        const emailSubject = 'Your Password Reset OTP - MuscleTime ERP';
+        const emailHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
+        <h2 style="color: #1e293b; text-align: center;">Password Reset Request</h2>
+        <p style="color: #475569; font-size: 16px;">Hello,</p>
+        <p style="color: #475569; font-size: 16px;">We received a request to reset your password for your MuscleTime ERP account. Use the code below to proceed:</p>
+        <div style="background-color: #f1f5f9; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0;">
+          <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #3b82f6;">${otp}</span>
+        </div>
+        <p style="color: #475569; font-size: 14px;">This code will expire in 15 minutes.</p>
+        <p style="color: #475569; font-size: 14px;">If you didn't request this, you can safely ignore this email.</p>
+        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+        <p style="color: #94a3b8; font-size: 12px; text-align: center;">&copy; ${new Date().getFullYear()} MuscleTime ERP. All rights reserved.</p>
+      </div>
+    `;
+        // Only attempt to send if the identifier is an email or if the user found has an email
+        const recipientEmail = userModel.email;
+        if (recipientEmail) {
+            await (0, mailer_1.sendEmail)(recipientEmail, emailSubject, emailHtml);
+        }
         res.json({
             success: true,
             message: 'If the account exists, an OTP has been sent. Check terminal logs for the OTP.'

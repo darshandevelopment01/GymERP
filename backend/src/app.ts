@@ -1,8 +1,11 @@
 import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import connectDB from './config/db';
 
+// Load env vars BEFORE local imports
+dotenv.config();
+
+import connectDB from './config/db';
 import authRoutes from './routes/auth.routes';
 import dashboardRoutes from './routes/dashboard.routes';
 import memberRoutes from './routes/member.routes';
@@ -13,8 +16,6 @@ import enquiryRoutes from './routes/enquiry.routes';
 import followupRoutes from './routes/followup.routes';
 import uploadRoutes from './routes/upload.routes';
 import activityLogRoutes from './routes/activityLog.routes';
-
-dotenv.config();
 
 const app: Application = express();
 
