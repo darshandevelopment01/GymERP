@@ -93,9 +93,42 @@ router.post('/', auth_middleware_1.authMiddleware, async (req, res) => {
 router.get('/', auth_middleware_1.authMiddleware, async (req, res) => {
     try {
         await autoExpireFollowUps();
-        // Support selfOnly filter for viewOnlySelfCreated permission
+        // Construct granular filter based on permissions
         const filter = {};
-        if (req.query.selfOnly === 'true' && req.user?.id) {
+        if (req.user?.role === 'User') {
+            const userEmployee = await Employee_1.default.findById(req.user.id);
+            const permissions = userEmployee?.permissions?.panelAccess;
+            if (!permissions) {
+                // No permissions found, return nothing
+                return res.json({ success: true, data: [] });
+            }
+            const orConditions = [];
+            // Enquiry Follow-up conditions
+            if (permissions.viewEnquiryFollowUp) {
+                if (permissions.viewOnlySelfCreatedEnquiryFollowUps) {
+                    orConditions.push({ enquiry: { $exists: true }, createdBy: req.user.id });
+                }
+                else {
+                    orConditions.push({ enquiry: { $exists: true } });
+                }
+            }
+            // Member Follow-up conditions
+            if (permissions.viewMemberFollowUp) {
+                if (permissions.viewOnlySelfCreatedMemberFollowUps) {
+                    orConditions.push({ member: { $exists: true }, createdBy: req.user.id });
+                }
+                else {
+                    orConditions.push({ member: { $exists: true } });
+                }
+            }
+            if (orConditions.length === 0) {
+                // No view permissions at all
+                return res.json({ success: true, data: [] });
+            }
+            filter.$or = orConditions;
+        }
+        else if (req.query.selfOnly === 'true' && req.user?.id) {
+            // Legacy/Admin selfOnly filter (if still used)
             filter.createdBy = req.user.id;
         }
         const followUps = await FollowUp_1.default.find(filter)

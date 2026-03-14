@@ -62,7 +62,16 @@ export function usePermissions() {
                 return !!panelAccess.viewEnquiryTab || !!panelAccess.createEnquiry || !!panelAccess.convertToMember || !!panelAccess.viewOnlySelfCreatedEnquiry || !!panelAccess.noDiscountLimit;
             }
             if (key === 'viewFollowUpTab') {
-                return !!panelAccess.viewFollowUpTab;
+                return (
+                    !!panelAccess.viewEnquiryFollowUp ||
+                    !!panelAccess.viewMemberFollowUp ||
+                    !!panelAccess.createEnquiryFollowUp ||
+                    !!panelAccess.createMemberFollowUp ||
+                    !!panelAccess.editEnquiryFollowUp ||
+                    !!panelAccess.editMemberFollowUp ||
+                    !!panelAccess.viewOnlySelfCreatedEnquiryFollowUps ||
+                    !!panelAccess.viewOnlySelfCreatedMemberFollowUps
+                );
             }
             if (key === 'viewMembersTab') {
                 return !!panelAccess.viewMembersTab || !!panelAccess.renewMember || !!panelAccess.activeMember || !!panelAccess.viewOnlySelfCreatedMembers;

@@ -34,8 +34,10 @@ export interface IEmployee extends Document {
       viewOnlySelfCreatedEnquiry?: boolean;
       deleteEnquiry?: boolean;
       editEnquiry?: boolean;
-      viewFollowUpTab?: boolean;
-      viewOnlySelfCreatedFollowUps?: boolean;
+      viewEnquiryFollowUp?: boolean;
+      viewMemberFollowUp?: boolean;
+      viewOnlySelfCreatedEnquiryFollowUps?: boolean;
+      viewOnlySelfCreatedMemberFollowUps?: boolean;
       viewMembersTab?: boolean;
       renewMember?: boolean;
       activeMember?: boolean;
@@ -51,10 +53,8 @@ export interface IEmployee extends Document {
       editFollowUp?: boolean;
       createEnquiryFollowUp?: boolean;
       editEnquiryFollowUp?: boolean;
-      viewEnquiryFollowUp?: boolean;
       createMemberFollowUp?: boolean;
       editMemberFollowUp?: boolean;
-      viewMemberFollowUp?: boolean;
     };
     appAccess?: {
       viewEnquiryTab?: boolean;
@@ -63,9 +63,12 @@ export interface IEmployee extends Document {
       noDiscountLimit?: boolean;
       viewOnlySelfCreatedEnquiry?: boolean;
       markEnquiryAsLost?: boolean;
-      viewFollowUpTab?: boolean;
-      addFollowUps?: boolean;
-      viewOnlySelfCreatedFollowUps?: boolean;
+      viewEnquiryFollowUp?: boolean;
+      viewMemberFollowUp?: boolean;
+      viewOnlySelfCreatedEnquiryFollowUps?: boolean;
+      viewOnlySelfCreatedMemberFollowUps?: boolean;
+      addEnquiryFollowUps?: boolean;
+      addMemberFollowUps?: boolean;
       viewMembersTab?: boolean;
       renewMember?: boolean;
       activeMember?: boolean;
@@ -178,8 +181,12 @@ const EmployeeSchema = new Schema<IEmployee>(
         viewOnlySelfCreatedEnquiry: { type: Boolean, default: false },
         deleteEnquiry: { type: Boolean, default: false },
         editEnquiry: { type: Boolean, default: false },
-        viewFollowUpTab: { type: Boolean, default: false },
-        viewOnlySelfCreatedFollowUps: { type: Boolean, default: false },
+        viewEnquiryFollowUp: { type: Boolean, default: false },
+        viewMemberFollowUp: { type: Boolean, default: false },
+        viewOnlySelfCreatedEnquiryFollowUps: { type: Boolean, default: false },
+        viewOnlySelfCreatedMemberFollowUps: { type: Boolean, default: false },
+        addEnquiryFollowUps: { type: Boolean, default: false },
+        addMemberFollowUps: { type: Boolean, default: false },
         viewMembersTab: { type: Boolean, default: false },
         renewMember: { type: Boolean, default: false },
         activeMember: { type: Boolean, default: false },
@@ -195,10 +202,8 @@ const EmployeeSchema = new Schema<IEmployee>(
         editFollowUp: { type: Boolean, default: false },
         createEnquiryFollowUp: { type: Boolean, default: false },
         editEnquiryFollowUp: { type: Boolean, default: false },
-        viewEnquiryFollowUp: { type: Boolean, default: false },
         createMemberFollowUp: { type: Boolean, default: false },
         editMemberFollowUp: { type: Boolean, default: false },
-        viewMemberFollowUp: { type: Boolean, default: false },
       },
       appAccess: {
         viewEnquiryTab: { type: Boolean, default: false },
@@ -207,9 +212,10 @@ const EmployeeSchema = new Schema<IEmployee>(
         noDiscountLimit: { type: Boolean, default: false },
         viewOnlySelfCreatedEnquiry: { type: Boolean, default: false },
         markEnquiryAsLost: { type: Boolean, default: false },
-        viewFollowUpTab: { type: Boolean, default: false },
-        addFollowUps: { type: Boolean, default: false },
-        viewOnlySelfCreatedFollowUps: { type: Boolean, default: false },
+        viewEnquiryFollowUp: { type: Boolean, default: false },
+        viewMemberFollowUp: { type: Boolean, default: false },
+        viewOnlySelfCreatedEnquiryFollowUps: { type: Boolean, default: false },
+        viewOnlySelfCreatedMemberFollowUps: { type: Boolean, default: false },
         viewMembersTab: { type: Boolean, default: false },
         renewMember: { type: Boolean, default: false },
         activeMember: { type: Boolean, default: false },

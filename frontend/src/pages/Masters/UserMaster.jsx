@@ -304,14 +304,14 @@ const UserMaster = () => {
             {
               label: 'Follow-Up Tab',
               items: [
-                { key: 'viewFollowUpTab', label: 'View Follow-Up Tab' },
-                { key: 'viewOnlySelfCreatedFollowUps', label: 'View Only Self-Created Follow-Ups' },
+                { key: 'viewEnquiryFollowUp', label: 'View Enquiry Follow-Up' },
                 { key: 'createEnquiryFollowUp', label: 'Create Enquiry Follow-Up' },
                 { key: 'editEnquiryFollowUp', label: 'Edit Enquiry Follow-Up' },
-                { key: 'viewEnquiryFollowUp', label: 'View Enquiry Follow-Up' },
+                { key: 'viewOnlySelfCreatedEnquiryFollowUps', label: 'View Only Self-Created Enquiry Follow-Ups' },
+                { key: 'viewMemberFollowUp', label: 'View Member Follow-Up' },
                 { key: 'createMemberFollowUp', label: 'Create Member Follow-Up' },
                 { key: 'editMemberFollowUp', label: 'Edit Member Follow-Up' },
-                { key: 'viewMemberFollowUp', label: 'View Member Follow-Up' },
+                { key: 'viewOnlySelfCreatedMemberFollowUps', label: 'View Only Self-Created Member Follow-Ups' },
               ]
             },
             {
@@ -367,9 +367,11 @@ const UserMaster = () => {
             {
               label: 'Follow-Up Tab',
               items: [
-                { key: 'viewFollowUpTab', label: 'View Follow-Up Tab' },
-                { key: 'viewOnlySelfCreatedFollowUps', label: 'View Only Self-Created Follow-Ups' },
+                { key: 'viewEnquiryFollowUp', label: 'View Enquiry Follow-Up' },
+                { key: 'viewOnlySelfCreatedEnquiryFollowUps', label: 'View Only Self-Created Enquiry Follow-Ups' },
                 { key: 'addEnquiryFollowUps', label: 'Add Enquiry Follow-Ups' },
+                { key: 'viewMemberFollowUp', label: 'View Member Follow-Up' },
+                { key: 'viewOnlySelfCreatedMemberFollowUps', label: 'View Only Self-Created Member Follow-Ups' },
                 { key: 'addMemberFollowUps', label: 'Add Member Follow-Ups' },
               ]
             },

@@ -102,9 +102,46 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
   try {
     await autoExpireFollowUps();
 
-    // Support selfOnly filter for viewOnlySelfCreated permission
+    // Construct granular filter based on permissions
     const filter: any = {};
-    if (req.query.selfOnly === 'true' && req.user?.id) {
+
+    if (req.user?.role === 'User') {
+      const userEmployee = await Employee.findById(req.user.id);
+      const permissions = userEmployee?.permissions?.panelAccess;
+
+      if (!permissions) {
+        // No permissions found, return nothing
+        return res.json({ success: true, data: [] });
+      }
+
+      const orConditions: any[] = [];
+
+      // Enquiry Follow-up conditions
+      if (permissions.viewEnquiryFollowUp) {
+        if (permissions.viewOnlySelfCreatedEnquiryFollowUps) {
+          orConditions.push({ enquiry: { $exists: true }, createdBy: req.user.id });
+        } else {
+          orConditions.push({ enquiry: { $exists: true } });
+        }
+      }
+
+      // Member Follow-up conditions
+      if (permissions.viewMemberFollowUp) {
+        if (permissions.viewOnlySelfCreatedMemberFollowUps) {
+          orConditions.push({ member: { $exists: true }, createdBy: req.user.id });
+        } else {
+          orConditions.push({ member: { $exists: true } });
+        }
+      }
+
+      if (orConditions.length === 0) {
+        // No view permissions at all
+        return res.json({ success: true, data: [] });
+      }
+
+      filter.$or = orConditions;
+    } else if (req.query.selfOnly === 'true' && req.user?.id) {
+      // Legacy/Admin selfOnly filter (if still used)
       filter.createdBy = req.user.id;
     }
 
