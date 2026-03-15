@@ -109,10 +109,12 @@ const GenericMaster = ({
         fetchedData = fetchedData.data;
       }
 
+      console.log(`[GenericMaster:${title}] Fresh data fetched:`, fetchedData);
       // 3. Update UI and Cache with fresh data
-      setData(fetchedData);
-      setFilteredData(fetchedData);
+      setData(fetchedData || []);
+      setFilteredData(fetchedData || []);
       localStorage.setItem(cacheKey, JSON.stringify(fetchedData));
+      sessionStorage.setItem(cacheKey, JSON.stringify(fetchedData)); // Fix storage mismatch
 
     } catch (error) {
       if (error.name === 'CanceledError' || error.name === 'AbortError') {
@@ -178,7 +180,9 @@ const GenericMaster = ({
       }
     });
 
+    console.log(`[GenericMaster:${title}] Applying filters to:`, data, 'Filters:', filters, 'Search:', searchQuery);
     setFilteredData(filtered);
+    console.log(`[GenericMaster:${title}] Filtered result:`, filtered);
     setCurrentPage(1); // Reset to first page on search/filter
   };
 

@@ -40,7 +40,6 @@ const PlanMaster = () => {
   useEffect(() => {
     if (activeSubTab === 'plans') {
       fetchCategories();
-      setRefreshKey(prev => prev + 1);
     }
   }, [activeSubTab]);
 
