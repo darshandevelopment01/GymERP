@@ -7,7 +7,7 @@ const router = Router();
 
 router.get('/', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const employees = await Employee.find().populate('branchId', 'name');
+    const employees = await Employee.find().select('-password').populate('branchId', 'name');
     res.json(employees);
   } catch (error: any) {
     res.status(500).json({ message: 'Error fetching employees', error: error.message });

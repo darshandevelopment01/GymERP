@@ -47,11 +47,14 @@ const createMaster = async (Model: any, idField: string, data: any, res: Respons
 };
 
 
-const getAllMaster = async (Model: any, res: Response, populateFields?: string) => {
+const getAllMaster = async (Model: any, res: Response, populateFields?: string, selectFields?: string) => {
   try {
     let query = Model.find({ status: 'active' });
     if (populateFields) {
       query = query.populate(populateFields);
+    }
+    if (selectFields) {
+      query = query.select(selectFields);
     }
     const items = await query.sort({ createdAt: -1 });
     res.json({ data: items, count: items.length });
@@ -61,11 +64,14 @@ const getAllMaster = async (Model: any, res: Response, populateFields?: string) 
 };
 
 
-const getMasterById = async (Model: any, id: string, res: Response, populateFields?: string) => {
+const getMasterById = async (Model: any, id: string, res: Response, populateFields?: string, selectFields?: string) => {
   try {
     let query = Model.findById(id);
     if (populateFields) {
       query = query.populate(populateFields);
+    }
+    if (selectFields) {
+      query = query.select(selectFields);
     }
     const item = await query;
     if (!item) {
@@ -78,11 +84,14 @@ const getMasterById = async (Model: any, id: string, res: Response, populateFiel
 };
 
 
-const updateMaster = async (Model: any, id: string, data: any, res: Response, populateFields?: string) => {
+const updateMaster = async (Model: any, id: string, data: any, res: Response, populateFields?: string, selectFields?: string) => {
   try {
     let query = Model.findByIdAndUpdate(id, data, { new: true, runValidators: true });
     if (populateFields) {
       query = query.populate(populateFields);
+    }
+    if (selectFields) {
+      query = query.select(selectFields);
     }
     const item = await query;
     if (!item) {
@@ -495,11 +504,11 @@ export const createEmployee = async (req: Request, res: Response) => {
 
 
 export const getAllEmployees = (req: Request, res: Response) =>
-  getAllMaster(Employee, res, 'designation branches branchId shift');
+  getAllMaster(Employee, res, 'designation branches branchId shift', '-password');
 
 
 export const getEmployeeById = (req: Request, res: Response) =>
-  getMasterById(Employee, String(req.params.id), res, 'designation branches branchId shift');
+  getMasterById(Employee, String(req.params.id), res, 'designation branches branchId shift', '-password');
 
 
 export const updateEmployee = async (req: Request, res: Response) => {
@@ -518,7 +527,7 @@ export const updateEmployee = async (req: Request, res: Response) => {
     }
 
 
-    await updateMaster(Employee, String(req.params.id), req.body, res, 'designation branches branchId shift');
+    await updateMaster(Employee, String(req.params.id), req.body, res, 'designation branches branchId shift', '-password');
   } catch (error: any) {
     console.error('Update employee error:', error);
     res.status(500).json({ message: 'Error updating employee', error: error.message });

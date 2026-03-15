@@ -307,11 +307,11 @@ const GenericMaster = ({
     try {
       const cleanedData = {};
 
-      Object.keys(formData).forEach(key => {
-        const value = formData[key];
-
+      // Only include fields that are explicitly defined in formFields
+      formFields.forEach(field => {
+        const value = formData[field.name];
         if (value !== '' && value !== null && value !== undefined) {
-          cleanedData[key] = value;
+          cleanedData[field.name] = value;
         }
       });
 
