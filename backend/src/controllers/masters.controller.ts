@@ -521,11 +521,14 @@ export const updateEmployee = async (req: Request, res: Response) => {
       delete req.body.password;
     }
 
-
     if (req.body.branches && req.body.branches.length > 0) {
       req.body.branchId = req.body.branches[0];
     }
 
+    console.log('📝 Incoming update for employee:', req.params.id);
+    if (req.body.permissions) {
+      console.log('🔐 Permissions payload detected:', JSON.stringify(req.body.permissions, null, 2));
+    }
 
     await updateMaster(Employee, String(req.params.id), req.body, res, 'designation branches branchId shift', '-password');
   } catch (error: any) {

@@ -318,9 +318,10 @@ const GenericMaster = ({
       // Explicitly allow permissions object if it exists (it's not in formFields)
       if (formData.permissions) {
         cleanedData.permissions = formData.permissions;
+        console.log('📦 Permissions detected in formData:', formData.permissions);
       }
 
-      console.log('📤 Cleaned Data to Send:', cleanedData);
+      console.log('🚀 FINAL cleanedData to be sent:', JSON.stringify(cleanedData, null, 2));
 
       if (editingItem) {
         const response = await apiService.update(editingItem._id, cleanedData);
@@ -349,16 +350,27 @@ const GenericMaster = ({
   };
 
   const handlePermissionChange = (groupKey, permKey) => {
-    setFormData(prev => ({
-      ...prev,
-      permissions: {
-        ...(prev.permissions || {}),
+    console.log(`🔑 Permission Change Triggered: [${groupKey}] -> ${permKey}`);
+    setFormData(prev => {
+      const currentPermissions = prev.permissions || {};
+      const currentGroup = currentPermissions[groupKey] || {};
+      const newValue = !currentGroup[permKey];
+
+      const newPermissions = {
+        ...currentPermissions,
         [groupKey]: {
-          ...((prev.permissions || {})[groupKey] || {}),
-          [permKey]: !((prev.permissions || {})[groupKey] || {})[permKey]
+          ...currentGroup,
+          [permKey]: newValue
         }
-      }
-    }));
+      };
+
+      console.log('🔄 New Permissions State:', newPermissions);
+
+      return {
+        ...prev,
+        permissions: newPermissions
+      };
+    });
   };
 
   const handleDateChange = (date, fieldName) => {
