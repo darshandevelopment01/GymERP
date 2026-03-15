@@ -315,6 +315,11 @@ const GenericMaster = ({
         }
       });
 
+      // Explicitly allow permissions object if it exists (it's not in formFields)
+      if (formData.permissions) {
+        cleanedData.permissions = formData.permissions;
+      }
+
       console.log('📤 Cleaned Data to Send:', cleanedData);
 
       if (editingItem) {
