@@ -1,12 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import GenericMaster from '../../components/Masters/GenericMaster';
 import { planAPI, planCategoryAPI } from '../../services/mastersApi';
-
+import { usePermissions } from '../../hooks/usePermissions';
 
 const PlanMaster = () => {
+  const { can } = usePermissions();
   const [activeSubTab, setActiveSubTab] = useState('categories');
   const [categoryOptions, setCategoryOptions] = useState([]);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Set initial active sub-tab based on permissions
+  useEffect(() => {
+    if (!can('viewPlanCategory') && can('viewMembershipPlan')) {
+      setActiveSubTab('plans');
+    }
+  }, []);
 
   const fetchCategories = async () => {
     try {
@@ -109,6 +117,18 @@ const PlanMaster = () => {
     },
   ];
 
+  const showCategoriesTab = can('viewPlanCategory');
+  const showPlansTab = can('viewMembershipPlan');
+
+  if (!showCategoriesTab && !showPlansTab) {
+    return (
+      <div style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>
+        <h3>Access Denied</h3>
+        <p>You do not have permission to view Plan Categories or Membership Plans.</p>
+      </div>
+    );
+  }
+
   return (
     <div>
       {/* Sub-tab Switcher */}
@@ -120,48 +140,52 @@ const PlanMaster = () => {
         marginTop: '1.25rem',
         marginBottom: '0.25rem',
       }}>
-        <button
-          onClick={() => setActiveSubTab('categories')}
-          style={{
-            padding: '0.7rem 2rem',
-            borderRadius: '8px 8px 0 0',
-            border: 'none',
-            cursor: 'pointer',
-            fontWeight: '600',
-            fontSize: '0.95rem',
-            transition: 'all 0.2s ease',
-            background: activeSubTab === 'categories'
-              ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-              : '#f1f5f9',
-            color: activeSubTab === 'categories' ? 'white' : '#64748b',
-            boxShadow: activeSubTab === 'categories' ? '0 2px 8px rgba(16, 185, 129, 0.3)' : 'none',
-          }}
-        >
-          🏷️ Plan Category
-        </button>
-        <button
-          onClick={() => setActiveSubTab('plans')}
-          style={{
-            padding: '0.7rem 2rem',
-            borderRadius: '8px 8px 0 0',
-            border: 'none',
-            cursor: 'pointer',
-            fontWeight: '600',
-            fontSize: '0.95rem',
-            transition: 'all 0.2s ease',
-            background: activeSubTab === 'plans'
-              ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-              : '#f1f5f9',
-            color: activeSubTab === 'plans' ? 'white' : '#64748b',
-            boxShadow: activeSubTab === 'plans' ? '0 2px 8px rgba(16, 185, 129, 0.3)' : 'none',
-          }}
-        >
-          📋 Membership Plan
-        </button>
+        {showCategoriesTab && (
+          <button
+            onClick={() => setActiveSubTab('categories')}
+            style={{
+              padding: '0.7rem 2rem',
+              borderRadius: '8px 8px 0 0',
+              border: 'none',
+              cursor: 'pointer',
+              fontWeight: '600',
+              fontSize: '0.95rem',
+              transition: 'all 0.2s ease',
+              background: activeSubTab === 'categories'
+                ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+                : '#f1f5f9',
+              color: activeSubTab === 'categories' ? 'white' : '#64748b',
+              boxShadow: activeSubTab === 'categories' ? '0 2px 8px rgba(16, 185, 129, 0.3)' : 'none',
+            }}
+          >
+            🏷️ Plan Category
+          </button>
+        )}
+        {showPlansTab && (
+          <button
+            onClick={() => setActiveSubTab('plans')}
+            style={{
+              padding: '0.7rem 2rem',
+              borderRadius: '8px 8px 0 0',
+              border: 'none',
+              cursor: 'pointer',
+              fontWeight: '600',
+              fontSize: '0.95rem',
+              transition: 'all 0.2s ease',
+              background: activeSubTab === 'plans'
+                ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+                : '#f1f5f9',
+              color: activeSubTab === 'plans' ? 'white' : '#64748b',
+              boxShadow: activeSubTab === 'plans' ? '0 2px 8px rgba(16, 185, 129, 0.3)' : 'none',
+            }}
+          >
+            📋 Membership Plan
+          </button>
+        )}
       </div>
 
       {/* Render the active sub-tab */}
-      {activeSubTab === 'plans' ? (
+      {activeSubTab === 'plans' && showPlansTab ? (
         <GenericMaster
           key="membership-plan-master"
           title="Membership Plan"
@@ -171,8 +195,11 @@ const PlanMaster = () => {
           searchPlaceholder="Search plans..."
           icon="📋"
           refreshKey={refreshKey}
+          showCreateButton={can('createMembershipPlan')}
+          showEditButton={can('editMembershipPlan')}
+          showDeleteButton={can('deleteMembershipPlan')}
         />
-      ) : (
+      ) : showCategoriesTab ? (
         <GenericMaster
           key="plan-category-master"
           title="Plan Category Master"
@@ -181,7 +208,14 @@ const PlanMaster = () => {
           formFields={categoryFormFields}
           searchPlaceholder="Search categories..."
           icon="🏷️"
+          showCreateButton={can('createPlanCategory')}
+          showEditButton={can('editPlanCategory')}
+          showDeleteButton={can('deletePlanCategory')}
         />
+      ) : (
+        <div style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>
+          <p>Please select a tab or contact administrator for access.</p>
+        </div>
       )}
     </div>
   );

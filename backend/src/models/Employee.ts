@@ -49,6 +49,14 @@ export interface IEmployee extends Document {
       viewEmployeeAttendance?: boolean;
       viewMemberAttendance?: boolean;
       viewPlanMaster?: boolean;
+      viewPlanCategory?: boolean;
+      createPlanCategory?: boolean;
+      editPlanCategory?: boolean;
+      deletePlanCategory?: boolean;
+      viewMembershipPlan?: boolean;
+      createMembershipPlan?: boolean;
+      editMembershipPlan?: boolean;
+      deleteMembershipPlan?: boolean;
       createRemoveOffers?: boolean;
       editFollowUp?: boolean;
       createEnquiryFollowUp?: boolean;
@@ -198,6 +206,14 @@ const EmployeeSchema = new Schema<IEmployee>(
         viewEmployeeAttendance: { type: Boolean, default: false },
         viewMemberAttendance: { type: Boolean, default: false },
         viewPlanMaster: { type: Boolean, default: false },
+        viewPlanCategory: { type: Boolean, default: false },
+        createPlanCategory: { type: Boolean, default: false },
+        editPlanCategory: { type: Boolean, default: false },
+        deletePlanCategory: { type: Boolean, default: false },
+        viewMembershipPlan: { type: Boolean, default: false },
+        createMembershipPlan: { type: Boolean, default: false },
+        editMembershipPlan: { type: Boolean, default: false },
+        deleteMembershipPlan: { type: Boolean, default: false },
         createRemoveOffers: { type: Boolean, default: false },
         editFollowUp: { type: Boolean, default: false },
         createEnquiryFollowUp: { type: Boolean, default: false },

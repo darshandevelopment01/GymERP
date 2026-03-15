@@ -79,6 +79,19 @@ export function usePermissions() {
             if (key === 'viewAttendanceTab') {
                 return !!panelAccess.viewAttendanceTab || !!panelAccess.viewEmployeeAttendance || !!panelAccess.viewMemberAttendance;
             }
+            if (key === 'viewPlanMaster') {
+                return (
+                    !!panelAccess.viewPlanMaster ||
+                    !!panelAccess.viewPlanCategory ||
+                    !!panelAccess.viewMembershipPlan ||
+                    !!panelAccess.createPlanCategory ||
+                    !!panelAccess.editPlanCategory ||
+                    !!panelAccess.deletePlanCategory ||
+                    !!panelAccess.createMembershipPlan ||
+                    !!panelAccess.editMembershipPlan ||
+                    !!panelAccess.deleteMembershipPlan
+                );
+            }
         }
 
         return isAdmin || !!panelAccess[key];

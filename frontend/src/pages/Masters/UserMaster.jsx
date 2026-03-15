@@ -338,6 +338,14 @@ const UserMaster = () => {
               label: 'Plan Master',
               items: [
                 { key: 'viewPlanMaster', label: 'View Plan Master' },
+                { key: 'viewPlanCategory', label: 'View Plan Category' },
+                { key: 'createPlanCategory', label: 'Create Plan Category' },
+                { key: 'editPlanCategory', label: 'Edit Plan Category' },
+                { key: 'deletePlanCategory', label: 'Delete Plan Category' },
+                { key: 'viewMembershipPlan', label: 'View Membership Plan' },
+                { key: 'createMembershipPlan', label: 'Create Membership Plan' },
+                { key: 'editMembershipPlan', label: 'Edit Membership Plan' },
+                { key: 'deleteMembershipPlan', label: 'Delete Membership Plan' },
               ]
             },
             {
