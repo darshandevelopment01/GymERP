@@ -121,18 +121,31 @@ export const createMember = async (req: Request, res: Response): Promise<void> =
       const templatePath = path.join(__dirname, '..', 'assets', 'MTF Reseat.docx');
       console.log('📄 Generating DOCX from:', templatePath);
 
+      const user = await Employee.findById(req.user?.id);
+
       receiptBuffer = generateDocxBuffer(templatePath, {
         name: trimmedData.name,
         email: trimmedData.email,
         mobile: trimmedData.mobileNumber,
         planName: planExists.planName,
+        packageDetail: planExists.planName,
         price: planExists.price,
+        packagePrice: planExists.price,
         startDate: new Date(trimmedData.membershipStartDate).toLocaleDateString('en-IN'),
         endDate: endDate.toLocaleDateString('en-IN'),
         memberId: member.memberId,
         branch: branchExists?.name || 'N/A',
         city: branchExists?.city || 'N/A',
-        date: new Date().toLocaleDateString('en-IN')
+        date: new Date().toLocaleDateString('en-IN'),
+        dateTime: new Date().toLocaleString('en-IN'),
+        dateOfInvoice: new Date().toLocaleDateString('en-IN'),
+        responsibleLog: user?.name || 'Reception',
+        invoiceType: 'New Booking',
+        paidPrice: trimmedData.paymentReceived || 0,
+        balanceAmount: paymentRemaining,
+        totalPayment: trimmedData.totalAmount || planExists.price,
+        discount: trimmedData.discountAmount || 0,
+        paymentMode: trimmedData.paymentMode || 'UPI'
       });
 
       attachments.push({
@@ -299,8 +312,8 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
 
       const isRenewal = isNewEndDateProvided;
       const receiptTitle = isRenewal ? 'Membership Renewal' : 'Partial Payment';
-      const emailSubject = isRenewal 
-        ? `Payment Receipt - Membership Renewal (${member.memberId})` 
+      const emailSubject = isRenewal
+        ? `Payment Receipt - Membership Renewal (${member.memberId})`
         : `Payment Receipt - Additional Payment (${member.memberId})`;
 
       const receiptHtml = `
@@ -363,18 +376,31 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
         const templatePath = path.join(__dirname, '..', 'assets', 'MTF Reseat.docx');
         console.log('📄 Generating Receipt DOCX from:', templatePath);
 
+        const user = await Employee.findById(req.user?.id);
+
         receiptBuffer = generateDocxBuffer(templatePath, {
           name: member.name,
           email: member.email,
           mobile: member.mobileNumber,
           planName: (member.plan as any)?.planName || 'N/A',
+          packageDetail: (member.plan as any)?.planName || 'N/A',
           price: (member.plan as any)?.price || 0,
+          packagePrice: (member.plan as any)?.price || 0,
           startDate: new Date(member.membershipStartDate).toLocaleDateString('en-IN'),
           endDate: new Date(member.membershipEndDate).toLocaleDateString('en-IN'),
           memberId: member.memberId,
           branch: (member.branch as any)?.name || 'N/A',
           city: (member.branch as any)?.city || 'N/A',
-          date: new Date().toLocaleDateString('en-IN')
+          date: new Date().toLocaleDateString('en-IN'),
+          dateTime: new Date().toLocaleString('en-IN'),
+          dateOfInvoice: new Date().toLocaleDateString('en-IN'),
+          responsibleLog: user?.name || 'Reception',
+          invoiceType: isRenewal ? 'Renewal' : 'Partial Payment',
+          paidPrice: freshPayment,
+          balanceAmount: member.paymentRemaining,
+          totalPayment: (member as any).totalAmount || (member.plan as any)?.price || 0,
+          discount: (member as any).discountAmount || 0,
+          paymentMode: req.body.paymentMode || 'UPI'
         });
 
         receiptFilename = `${member.name}_MTF_Reseat.docx`;
