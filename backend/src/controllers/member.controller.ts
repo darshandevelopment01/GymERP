@@ -278,13 +278,16 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
     }
 
     // ✅ Detect Renewal and Send Receipt
-    const oldEndDate = oldMember?.membershipEndDate ? new Date(oldMember.membershipEndDate).getTime() : 0;
-    const newEndDate = req.body.membershipEndDate ? new Date(req.body.membershipEndDate).getTime() : 0;
-    const isRenewal = newEndDate > oldEndDate;
+    // Using math (payment difference) instead of just date string comparison for higher reliability
+    const oldPayment = oldMember?.paymentReceived || 0;
+    const newPayment = req.body.paymentReceived || 0;
+    const freshPayment = newPayment - oldPayment;
 
-    if (isRenewal && req.body.paymentReceived > 0) {
-      const newPaymentAmount = Math.max(0, (req.body.paymentReceived || 0) - (oldMember?.paymentReceived || 0));
-      console.log(`🔄 RENEWAL DETECTED for member: ${member.name}. Fresh Payment: ₹${newPaymentAmount}`);
+    // Also check if membership end date was actually provided/changed
+    const isNewEndDateProvided = !!req.body.membershipEndDate;
+
+    if (freshPayment > 0 && isNewEndDateProvided) {
+      console.log(`🔄 RENEWAL DETECTED for member: ${member.name}. Fresh Payment: ₹${freshPayment}`);
 
       const receiptHtml = `
         <div style="font-family: sans-serif; color: #333; max-width: 600px; margin: auto; border: 1px solid #6366f1; padding: 0; border-radius: 12px; overflow: hidden;">
@@ -313,7 +316,7 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
                 </tr>
                 <tr style="border-top: 1px solid #e2e8f0;">
                   <td style="padding: 15px 0 8px 0; color: #64748b; font-size: 1.1em;">Amount Received:</td>
-                  <td style="padding: 15px 0 8px 0; text-align: right; font-size: 1.5em; font-weight: bold; color: #10b981;">₹${newPaymentAmount}</td>
+                  <td style="padding: 15px 0 8px 0; text-align: right; font-size: 1.5em; font-weight: bold; color: #10b981;">₹${freshPayment}</td>
                 </tr>
                 <tr>
                   <td style="padding: 0 0 8px 0; color: #64748b;">New Expiry Date:</td>
