@@ -6,7 +6,8 @@ import ActivityLog from '../models/ActivityLog';
 import Employee from '../models/Employee';
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
-import { sendEmail } from '../utils/mailer';
+import { sendEmail, generateDocxBuffer } from '../utils/mailer';
+import path from 'path';
 
 // Create new member
 export const createMember = async (req: Request, res: Response): Promise<void> => {
@@ -93,24 +94,57 @@ export const createMember = async (req: Request, res: Response): Promise<void> =
     console.log(`================================\n`);
 
     const htmlMessage = `
-      <div style="font-family: sans-serif; color: #333;">
-        <h2 style="color: #6366f1;">Welcome to MuscleTime ERP!</h2>
+      <div style="font-family: sans-serif; color: #333; max-width: 600px; margin: auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
+        <h2 style="color: #6366f1; text-align: center;">Welcome to MuscleTime!</h2>
         <p>Hello <strong>${trimmedData.name}</strong>,</p>
-        <p>Your gym membership has been successfully created. Here are your login credentials for the member portal:</p>
-        <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e2e8f0;">
-          <p style="margin: 0 0 10px 0;"><strong>System URL:</strong> <a href="https://muscletime.net">https://muscletime.net</a></p>
-          <p style="margin: 0 0 10px 0;"><strong>Email ID:</strong> <span style="font-family: monospace; font-size: 1.1em; background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">${trimmedData.email}</span></p>
+        <p>Your gym membership has been successfully created. Please use the following credentials to log in to our <strong>Mobile Application</strong>:</p>
+        
+        <div style="background: #f1f5f9; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 5px solid #6366f1;">
+          <p style="margin: 0 0 10px 0;"><strong>Username:</strong> ${trimmedData.email} (or ${trimmedData.mobileNumber})</p>
           <p style="margin: 0;"><strong>Password:</strong> <span style="font-family: monospace; font-size: 1.1em; background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">${generatedPassword}</span></p>
         </div>
-        <p><em>Please log in and change your password immediately.</em></p>
-        <p>Best regards,<br/>MuscleTime Admin</p>
+
+        <p style="background: #fffbeb; color: #92400e; padding: 10px; border-radius: 6px; font-size: 0.9rem;">
+          <strong>⚠️ Note:</strong> These credentials are for <u>Mobile App Access only</u>. Web login is currently restricted to administrators.
+        </p>
+
+        <p>We have also attached your <strong>Membership Details (MTF Reseat)</strong> to this email for your records.</p>
+        
+        <p>Best regards,<br/>Team MuscleTime</p>
       </div>
     `;
 
+    // 📄 Prepare DOCX Attachment
+    let attachments: any[] = [];
+    try {
+      const templatePath = path.join(__dirname, '..', 'assets', 'MTF Reseat.docx');
+      console.log('📄 Generating DOCX from:', templatePath);
+
+      const docxBuffer = generateDocxBuffer(templatePath, {
+        name: trimmedData.name,
+        email: trimmedData.email,
+        mobile: trimmedData.mobileNumber,
+        planName: planExists.planName,
+        price: planExists.price,
+        startDate: new Date(trimmedData.membershipStartDate).toLocaleDateString('en-IN'),
+        endDate: endDate.toLocaleDateString('en-IN'),
+        memberId: member.memberId,
+        date: new Date().toLocaleDateString('en-IN')
+      });
+
+      attachments.push({
+        filename: `${trimmedData.name}_MTF_Reseat.docx`,
+        content: docxBuffer
+      });
+    } catch (docxErr) {
+      console.error('❌ Failed to generate DOCX attachment:', docxErr);
+    }
+
     const emailSent = await sendEmail(
       trimmedData.email,
-      'Your MuscleTime Gym Member Login Credentials',
-      htmlMessage
+      'Welcome to MuscleTime - Your Membership Credentials',
+      htmlMessage,
+      attachments
     );
 
     // ✅ Create activity log
@@ -241,6 +275,64 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
       });
     } catch (logError) {
       console.error('Failed to create activity log:', logError);
+    }
+
+    // ✅ Detect Renewal and Send Receipt
+    if (req.body.paymentReceived > 0 && req.body.membershipEndDate) {
+      console.log(`🔄 RENEWAL DETECTED for member: ${member.name}`);
+
+      const receiptHtml = `
+        <div style="font-family: sans-serif; color: #333; max-width: 600px; margin: auto; border: 1px solid #6366f1; padding: 0; border-radius: 12px; overflow: hidden;">
+          <div style="background: #6366f1; color: white; padding: 20px; text-align: center;">
+            <h1 style="margin: 0; font-size: 24px;">Payment Receipt</h1>
+            <p style="margin: 5px 0 0 0; opacity: 0.9;">Membership Renewal Successful</p>
+          </div>
+          
+          <div style="padding: 30px;">
+            <p>Dear <strong>${member.name}</strong>,</p>
+            <p>Thank you for renewing your membership with MuscleTime. Your payment has been successfully processed.</p>
+            
+            <div style="background: #f8fafc; border: 1px dashed #cbd5e1; padding: 20px; border-radius: 8px; margin: 25px 0;">
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 8px 0; color: #64748b;">Receipt Date:</td>
+                  <td style="padding: 8px 0; text-align: right; font-weight: bold;">${new Date().toLocaleDateString('en-IN')}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #64748b;">Member ID:</td>
+                  <td style="padding: 8px 0; text-align: right; font-weight: bold;">${member.memberId}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #64748b;">Plan:</td>
+                  <td style="padding: 8px 0; text-align: right; font-weight: bold;">${(member.plan as any)?.planName || 'N/A'}</td>
+                </tr>
+                <tr style="border-top: 1px solid #e2e8f0;">
+                  <td style="padding: 15px 0 8px 0; color: #64748b; font-size: 1.1em;">Amount Received:</td>
+                  <td style="padding: 15px 0 8px 0; text-align: right; font-size: 1.5em; font-weight: bold; color: #10b981;">₹${req.body.paymentReceived}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 0 0 8px 0; color: #64748b;">New Expiry Date:</td>
+                  <td style="padding: 0 0 8px 0; text-align: right; font-weight: bold; color: #ef4444;">${new Date(member.membershipEndDate).toLocaleDateString('en-IN')}</td>
+                </tr>
+              </table>
+            </div>
+            
+            <p style="text-align: center; color: #64748b; font-size: 0.9rem;">
+              Please keep this receipt for your records. See you at the gym!
+            </p>
+          </div>
+          
+          <div style="background: #f1f5f9; padding: 15px; text-align: center; font-size: 0.8rem; color: #94a3b8;">
+            © ${new Date().getFullYear()} MuscleTime ERP. All rights reserved.
+          </div>
+        </div>
+      `;
+
+      sendEmail(
+        member.email,
+        `Payment Receipt - Membership Renewal (${member.memberId})`,
+        receiptHtml
+      ).catch(err => console.error('❌ Failed to send renewal receipt:', err));
     }
 
     res.json({ success: true, data: member });

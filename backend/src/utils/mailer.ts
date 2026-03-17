@@ -1,6 +1,21 @@
 import nodemailer from 'nodemailer';
+import PizZip from 'pizzip';
+import Docxtemplater from 'docxtemplater';
+import fs from 'fs';
+import path from 'path';
 
-export const sendEmail = async (to: string, subject: string, htmlContent: string): Promise<boolean> => {
+export interface EmailAttachment {
+    filename: string;
+    content: Buffer | string;
+    contentType?: string;
+}
+
+export const sendEmail = async (
+    to: string,
+    subject: string,
+    htmlContent: string,
+    attachments: EmailAttachment[] = []
+): Promise<boolean> => {
     try {
         const host = process.env.SMTP_HOST || 'smtp.hostinger.com';
         const port = parseInt(process.env.SMTP_PORT || '465', 10);
@@ -12,7 +27,6 @@ export const sendEmail = async (to: string, subject: string, htmlContent: string
             return false;
         }
 
-        // Create transporter on demand or use a singleton that checks env
         const transporter = nodemailer.createTransport({
             host,
             port,
@@ -21,7 +35,6 @@ export const sendEmail = async (to: string, subject: string, htmlContent: string
                 user,
                 pass,
             },
-            // Debugging options
             debug: true,
             logger: true
         });
@@ -33,16 +46,44 @@ export const sendEmail = async (to: string, subject: string, htmlContent: string
             to,
             subject,
             html: htmlContent,
+            attachments: attachments.map(att => ({
+                filename: att.filename,
+                content: att.content,
+                contentType: att.contentType
+            }))
         });
 
         console.log(`✅ Email sent. MessageId: ${info.messageId}`);
         return true;
     } catch (error: any) {
         console.error('❌ SMTP Error:', error.message);
-        if (error.code === 'EAUTH') {
-            console.error('👉 Tip: Double check your SMTP_USER and SMTP_PASS in .env. Ensure there are no leading/trailing spaces.');
-        }
         return false;
+    }
+};
+
+/**
+ * Reads a docx file, replaces variables in brackets {variable}, and returns a Buffer
+ */
+export const generateDocxBuffer = (templatePath: string, data: any): Buffer => {
+    try {
+        const content = fs.readFileSync(templatePath, 'binary');
+        const zip = new PizZip(content);
+        const doc = new Docxtemplater(zip, {
+            paragraphLoop: true,
+            linebreaks: true,
+        });
+
+        doc.render(data);
+
+        const buf = doc.getZip().generate({
+            type: 'nodebuffer',
+            compression: 'DEFLATE',
+        });
+
+        return buf;
+    } catch (error: any) {
+        console.error('❌ Error generating DOCX buffer:', error);
+        throw error;
     }
 };
 
