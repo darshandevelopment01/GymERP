@@ -84,20 +84,63 @@ const createMember = async (req, res) => {
         console.log(`To: ${trimmedData.email}`);
         console.log(`================================\n`);
         const htmlMessage = `
-      <div style="font-family: sans-serif; color: #333;">
-        <h2 style="color: #6366f1;">Welcome to MuscleTime ERP!</h2>
+      <div style="font-family: sans-serif; color: #333; max-width: 600px; margin: auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
+        <h2 style="color: #6366f1; text-align: center;">Welcome to MuscleTime!</h2>
         <p>Hello <strong>${trimmedData.name}</strong>,</p>
-        <p>Your gym membership has been successfully created. Here are your login credentials for the member portal:</p>
-        <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e2e8f0;">
-          <p style="margin: 0 0 10px 0;"><strong>System URL:</strong> <a href="https://muscletime.net">https://muscletime.net</a></p>
-          <p style="margin: 0 0 10px 0;"><strong>Email ID:</strong> <span style="font-family: monospace; font-size: 1.1em; background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">${trimmedData.email}</span></p>
+        <p>Your gym membership has been successfully created. Please use the following credentials to log in to our <strong>Mobile Application</strong>:</p>
+        
+        <div style="background: #f1f5f9; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 5px solid #6366f1;">
+          <p style="margin: 0 0 10px 0;"><strong>Username:</strong> ${trimmedData.email} (or ${trimmedData.mobileNumber})</p>
           <p style="margin: 0;"><strong>Password:</strong> <span style="font-family: monospace; font-size: 1.1em; background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">${generatedPassword}</span></p>
         </div>
-        <p><em>Please log in and change your password immediately.</em></p>
-        <p>Best regards,<br/>MuscleTime Admin</p>
+
+        <p style="background: #fffbeb; color: #92400e; padding: 10px; border-radius: 6px; font-size: 0.9rem;">
+          <strong>⚠️ Note:</strong> These credentials are for <u>Mobile App Access only</u>. Web login is currently restricted to administrators.
+        </p>
+
+        <p>We have also attached your <strong>Membership Details (MTF Reseat)</strong> to this email for your records.</p>
+        
+        <p>Best regards,<br/>Team MuscleTime</p>
       </div>
     `;
-        const emailSent = await (0, mailer_1.sendEmail)(trimmedData.email, 'Your MuscleTime Gym Member Login Credentials', htmlMessage);
+        // 📄 Prepare DOCX Attachment
+        let attachments = [];
+        let receiptBuffer = null;
+        try {
+            const user = await Employee_1.default.findById(req.user?.id);
+            receiptBuffer = (0, mailer_1.generateDocxBuffer)({
+                name: trimmedData.name,
+                email: trimmedData.email,
+                mobile: trimmedData.mobileNumber,
+                planName: planExists.planName,
+                packageDetail: planExists.planName,
+                price: planExists.price,
+                packagePrice: planExists.price,
+                startDate: new Date(trimmedData.membershipStartDate).toLocaleDateString('en-IN'),
+                endDate: endDate.toLocaleDateString('en-IN'),
+                memberId: member.memberId,
+                branch: branchExists?.name || 'N/A',
+                city: branchExists?.city || 'N/A',
+                date: new Date().toLocaleDateString('en-IN'),
+                dateTime: new Date().toLocaleString('en-IN'),
+                dateOfInvoice: new Date().toLocaleDateString('en-IN'),
+                responsibleLog: user?.name || 'Reception',
+                invoiceType: 'New Booking',
+                paidPrice: trimmedData.paymentReceived || 0,
+                balanceAmount: paymentRemaining,
+                totalPayment: trimmedData.totalAmount || planExists.price,
+                discount: trimmedData.discountAmount || 0,
+                paymentMode: trimmedData.paymentMode || 'UPI'
+            });
+            attachments.push({
+                filename: `${trimmedData.name}_MTF_Reseat.docx`,
+                content: receiptBuffer
+            });
+        }
+        catch (docxErr) {
+            console.error('❌ Failed to generate DOCX attachment:', docxErr);
+        }
+        const emailSent = await (0, mailer_1.sendEmail)(trimmedData.email, 'Welcome to MuscleTime - Your Membership Credentials', htmlMessage, attachments);
         // ✅ Create activity log
         try {
             const user = await Employee_1.default.findById(req.user?.id);
@@ -121,6 +164,8 @@ const createMember = async (req, res) => {
         res.status(201).json({
             success: true,
             data: populatedMember,
+            receiptBuffer: receiptBuffer ? receiptBuffer.toString('base64') : null,
+            receiptFilename: receiptBuffer ? `${trimmedData.name}_MTF_Reseat.docx` : null,
             message: emailSent
                 ? 'Member created successfully! Credentials emailed.'
                 : 'Member created successfully! (⚠️ Email failed to send)'
@@ -216,7 +261,126 @@ const updateMember = async (req, res) => {
         catch (logError) {
             console.error('Failed to create activity log:', logError);
         }
-        res.json({ success: true, data: member });
+        // ✅ Detect Renewal and Send Receipt
+        // Using math (payment difference) instead of just date string comparison for higher reliability
+        const oldPayment = oldMember?.paymentReceived || 0;
+        const newPayment = req.body.paymentReceived || 0;
+        const freshPayment = newPayment - oldPayment;
+        // Also check if membership end date was actually provided/changed
+        const isNewEndDateProvided = !!req.body.membershipEndDate;
+        let receiptBuffer = null;
+        let receiptFilename = null;
+        if (freshPayment > 0) {
+            console.log(`💰 PAYMENT DETECTED for member: ${member.name}. Amount: ₹${freshPayment}`);
+            const isRenewal = isNewEndDateProvided;
+            const receiptTitle = isRenewal ? 'Membership Renewal' : 'Partial Payment';
+            const emailSubject = isRenewal
+                ? `Payment Receipt - Membership Renewal (${member.memberId})`
+                : `Payment Receipt - Additional Payment (${member.memberId})`;
+            const receiptHtml = `
+        <div style="font-family: sans-serif; color: #333; max-width: 600px; margin: auto; border: 1px solid #6366f1; padding: 0; border-radius: 12px; overflow: hidden;">
+          <div style="background: #6366f1; color: white; padding: 20px; text-align: center;">
+            <h1 style="margin: 0; font-size: 24px;">Payment Receipt</h1>
+            <p style="margin: 5px 0 0 0; opacity: 0.9;">${receiptTitle} Successful</p>
+          </div>
+          
+          <div style="padding: 30px;">
+            <p>Dear <strong>${member.name}</strong>,</p>
+            <p>Thank you for your payment to MuscleTime. Your transaction has been successfully processed.</p>
+            
+            <div style="background: #f8fafc; border: 1px dashed #cbd5e1; padding: 20px; border-radius: 8px; margin: 25px 0;">
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 8px 0; color: #64748b;">Receipt Date:</td>
+                  <td style="padding: 8px 0; text-align: right; font-weight: bold;">${new Date().toLocaleDateString('en-IN')}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #64748b;">Member ID:</td>
+                  <td style="padding: 8px 0; text-align: right; font-weight: bold;">${member.memberId}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #64748b;">Plan:</td>
+                  <td style="padding: 8px 0; text-align: right; font-weight: bold;">${member.plan?.planName || 'N/A'}</td>
+                </tr>
+                <tr style="border-top: 1px solid #e2e8f0;">
+                  <td style="padding: 15px 0 8px 0; color: #64748b; font-size: 1.1em;">Amount Received:</td>
+                  <td style="padding: 15px 0 8px 0; text-align: right; font-size: 1.5em; font-weight: bold; color: #10b981;">₹${freshPayment}</td>
+                </tr>
+                ${isRenewal ? `
+                <tr>
+                  <td style="padding: 0 0 8px 0; color: #64748b;">New Expiry Date:</td>
+                  <td style="padding: 0 0 8px 0; text-align: right; font-weight: bold; color: #ef4444;">${new Date(member.membershipEndDate).toLocaleDateString('en-IN')}</td>
+                </tr>
+                ` : `
+                <tr>
+                  <td style="padding: 0 0 8px 0; color: #64748b;">Remaining Balance:</td>
+                  <td style="padding: 0 0 8px 0; text-align: right; font-weight: bold; color: #ef4444;">₹${member.paymentRemaining}</td>
+                </tr>
+                `}
+              </table>
+            </div>
+            
+            <p style="text-align: center; color: #64748b; font-size: 0.9rem;">
+              Please keep this receipt for your records. See you at the gym!
+            </p>
+          </div>
+          
+          <div style="background: #f1f5f9; padding: 15px; text-align: center; font-size: 0.8rem; color: #94a3b8;">
+            © ${new Date().getFullYear()} MuscleTime ERP. All rights reserved.
+          </div>
+        </div>
+      `;
+            // 📄 Prepare DOCX Attachment
+            let attachments = [];
+            try {
+                const user = await Employee_1.default.findById(req.user?.id);
+                receiptBuffer = (0, mailer_1.generateDocxBuffer)({
+                    name: member.name,
+                    email: member.email,
+                    mobile: member.mobileNumber,
+                    planName: member.plan?.planName || 'N/A',
+                    packageDetail: member.plan?.planName || 'N/A',
+                    price: member.plan?.price || 0,
+                    packagePrice: member.plan?.price || 0,
+                    startDate: new Date(member.membershipStartDate).toLocaleDateString('en-IN'),
+                    endDate: new Date(member.membershipEndDate).toLocaleDateString('en-IN'),
+                    memberId: member.memberId,
+                    branch: member.branch?.name || 'N/A',
+                    city: member.branch?.city || 'N/A',
+                    date: new Date().toLocaleDateString('en-IN'),
+                    dateTime: new Date().toLocaleString('en-IN'),
+                    dateOfInvoice: new Date().toLocaleDateString('en-IN'),
+                    responsibleLog: user?.name || 'Reception',
+                    invoiceType: isRenewal ? 'Renewal' : 'Partial Payment',
+                    paidPrice: freshPayment,
+                    balanceAmount: member.paymentRemaining,
+                    totalPayment: member.totalAmount || member.plan?.price || 0,
+                    discount: member.discountAmount || 0,
+                    paymentMode: req.body.paymentMode || 'UPI'
+                });
+                receiptFilename = `${member.name}_MTF_Reseat.docx`;
+                attachments.push({
+                    filename: receiptFilename,
+                    content: receiptBuffer
+                });
+            }
+            catch (docxErr) {
+                console.error('❌ Failed to generate DOCX attachment:', docxErr);
+            }
+            try {
+                await (0, mailer_1.sendEmail)(member.email, emailSubject, receiptHtml, attachments);
+                console.log(`✅ Payment receipt emailed to ${member.email} with DOCX attachment`);
+            }
+            catch (err) {
+                console.error('❌ Failed to send payment receipt:', err);
+            }
+        }
+        res.json({
+            success: true,
+            data: member,
+            receiptBuffer: receiptBuffer ? receiptBuffer.toString('base64') : null,
+            receiptFilename: receiptFilename || null
+        });
     }
     catch (error) {
         console.error('Error updating member:', error);

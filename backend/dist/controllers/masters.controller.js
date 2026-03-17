@@ -53,11 +53,14 @@ const createMaster = async (Model, idField, data, res) => {
         res.status(500).json({ message: 'Error creating item', error: error.message });
     }
 };
-const getAllMaster = async (Model, res, populateFields) => {
+const getAllMaster = async (Model, res, populateFields, selectFields) => {
     try {
         let query = Model.find({ status: 'active' });
         if (populateFields) {
             query = query.populate(populateFields);
+        }
+        if (selectFields) {
+            query = query.select(selectFields);
         }
         const items = await query.sort({ createdAt: -1 });
         res.json({ data: items, count: items.length });
@@ -66,11 +69,14 @@ const getAllMaster = async (Model, res, populateFields) => {
         res.status(500).json({ message: 'Error fetching items', error: error.message });
     }
 };
-const getMasterById = async (Model, id, res, populateFields) => {
+const getMasterById = async (Model, id, res, populateFields, selectFields) => {
     try {
         let query = Model.findById(id);
         if (populateFields) {
             query = query.populate(populateFields);
+        }
+        if (selectFields) {
+            query = query.select(selectFields);
         }
         const item = await query;
         if (!item) {
@@ -82,11 +88,14 @@ const getMasterById = async (Model, id, res, populateFields) => {
         res.status(500).json({ message: 'Error fetching item', error: error.message });
     }
 };
-const updateMaster = async (Model, id, data, res, populateFields) => {
+const updateMaster = async (Model, id, data, res, populateFields, selectFields) => {
     try {
         let query = Model.findByIdAndUpdate(id, data, { new: true, runValidators: true });
         if (populateFields) {
             query = query.populate(populateFields);
+        }
+        if (selectFields) {
+            query = query.select(selectFields);
         }
         const item = await query;
         if (!item) {
@@ -392,9 +401,9 @@ const createEmployee = async (req, res) => {
     }
 };
 exports.createEmployee = createEmployee;
-const getAllEmployees = (req, res) => getAllMaster(Employee_1.default, res, 'designation branches branchId shift');
+const getAllEmployees = (req, res) => getAllMaster(Employee_1.default, res, 'designation branches branchId shift', '-password');
 exports.getAllEmployees = getAllEmployees;
-const getEmployeeById = (req, res) => getMasterById(Employee_1.default, String(req.params.id), res, 'designation branches branchId shift');
+const getEmployeeById = (req, res) => getMasterById(Employee_1.default, String(req.params.id), res, 'designation branches branchId shift', '-password');
 exports.getEmployeeById = getEmployeeById;
 const updateEmployee = async (req, res) => {
     try {
@@ -409,7 +418,11 @@ const updateEmployee = async (req, res) => {
         if (req.body.branches && req.body.branches.length > 0) {
             req.body.branchId = req.body.branches[0];
         }
-        await updateMaster(Employee_1.default, String(req.params.id), req.body, res, 'designation branches branchId shift');
+        console.log('📝 Incoming update for employee:', req.params.id);
+        if (req.body.permissions) {
+            console.log('🔐 Permissions payload detected:', JSON.stringify(req.body.permissions, null, 2));
+        }
+        await updateMaster(Employee_1.default, String(req.params.id), req.body, res, 'designation branches branchId shift', '-password');
     }
     catch (error) {
         console.error('Update employee error:', error);

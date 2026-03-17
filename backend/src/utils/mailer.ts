@@ -4,6 +4,8 @@ import Docxtemplater from 'docxtemplater';
 import fs from 'fs';
 import path from 'path';
 
+import { RECEIPT_TEMPLATE_BASE64 } from '../assets/receiptTemplate';
+
 export interface EmailAttachment {
     filename: string;
     content: Buffer | string;
@@ -62,11 +64,20 @@ export const sendEmail = async (
 };
 
 /**
- * Reads a docx file, replaces variables in brackets {variable}, and returns a Buffer
+ * Generates a docx buffer from a template.
+ * Uses an embedded base64 template by default for Vercel compatibility.
  */
-export const generateDocxBuffer = (templatePath: string, data: any): Buffer => {
+export const generateDocxBuffer = (data: any, templatePath?: string): Buffer => {
     try {
-        const content = fs.readFileSync(templatePath, 'binary');
+        let content: any;
+
+        if (templatePath && fs.existsSync(templatePath)) {
+            content = fs.readFileSync(templatePath, 'binary');
+        } else {
+            // Use embedded base64 template
+            content = Buffer.from(RECEIPT_TEMPLATE_BASE64, 'base64').toString('binary');
+        }
+
         const zip = new PizZip(content);
         const doc = new Docxtemplater(zip, {
             paragraphLoop: true,

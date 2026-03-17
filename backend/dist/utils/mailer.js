@@ -3,9 +3,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sendEmail = void 0;
+exports.generateDocxBuffer = exports.sendEmail = void 0;
 const nodemailer_1 = __importDefault(require("nodemailer"));
-const sendEmail = async (to, subject, htmlContent) => {
+const pizzip_1 = __importDefault(require("pizzip"));
+const docxtemplater_1 = __importDefault(require("docxtemplater"));
+const fs_1 = __importDefault(require("fs"));
+const receiptTemplate_1 = require("../assets/receiptTemplate");
+const sendEmail = async (to, subject, htmlContent, attachments = []) => {
     try {
         const host = process.env.SMTP_HOST || 'smtp.hostinger.com';
         const port = parseInt(process.env.SMTP_PORT || '465', 10);
@@ -15,7 +19,6 @@ const sendEmail = async (to, subject, htmlContent) => {
             console.warn('⚠️ SMTP password (SMTP_PASS) not found in environment!');
             return false;
         }
-        // Create transporter on demand or use a singleton that checks env
         const transporter = nodemailer_1.default.createTransport({
             host,
             port,
@@ -24,7 +27,6 @@ const sendEmail = async (to, subject, htmlContent) => {
                 user,
                 pass,
             },
-            // Debugging options
             debug: true,
             logger: true
         });
@@ -34,16 +36,50 @@ const sendEmail = async (to, subject, htmlContent) => {
             to,
             subject,
             html: htmlContent,
+            attachments: attachments.map(att => ({
+                filename: att.filename,
+                content: att.content,
+                contentType: att.contentType
+            }))
         });
         console.log(`✅ Email sent. MessageId: ${info.messageId}`);
         return true;
     }
     catch (error) {
         console.error('❌ SMTP Error:', error.message);
-        if (error.code === 'EAUTH') {
-            console.error('👉 Tip: Double check your SMTP_USER and SMTP_PASS in .env. Ensure there are no leading/trailing spaces.');
-        }
         return false;
     }
 };
 exports.sendEmail = sendEmail;
+/**
+ * Generates a docx buffer from a template.
+ * Uses an embedded base64 template by default for Vercel compatibility.
+ */
+const generateDocxBuffer = (data, templatePath) => {
+    try {
+        let content;
+        if (templatePath && fs_1.default.existsSync(templatePath)) {
+            content = fs_1.default.readFileSync(templatePath, 'binary');
+        }
+        else {
+            // Use embedded base64 template
+            content = Buffer.from(receiptTemplate_1.RECEIPT_TEMPLATE_BASE64, 'base64').toString('binary');
+        }
+        const zip = new pizzip_1.default(content);
+        const doc = new docxtemplater_1.default(zip, {
+            paragraphLoop: true,
+            linebreaks: true,
+        });
+        doc.render(data);
+        const buf = doc.getZip().generate({
+            type: 'nodebuffer',
+            compression: 'DEFLATE',
+        });
+        return buf;
+    }
+    catch (error) {
+        console.error('❌ Error generating DOCX buffer:', error);
+        throw error;
+    }
+};
+exports.generateDocxBuffer = generateDocxBuffer;

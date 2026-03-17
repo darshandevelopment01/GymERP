@@ -118,12 +118,9 @@ export const createMember = async (req: Request, res: Response): Promise<void> =
     let attachments: any[] = [];
     let receiptBuffer: Buffer | null = null;
     try {
-      const templatePath = path.join(__dirname, '..', 'assets', 'MTF Reseat.docx');
-      console.log('📄 Generating DOCX from:', templatePath);
-
       const user = await Employee.findById(req.user?.id);
 
-      receiptBuffer = generateDocxBuffer(templatePath, {
+      receiptBuffer = generateDocxBuffer({
         name: trimmedData.name,
         email: trimmedData.email,
         mobile: trimmedData.mobileNumber,
@@ -373,12 +370,9 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
       // 📄 Prepare DOCX Attachment
       let attachments: any[] = [];
       try {
-        const templatePath = path.join(__dirname, '..', 'assets', 'MTF Reseat.docx');
-        console.log('📄 Generating Receipt DOCX from:', templatePath);
-
         const user = await Employee.findById(req.user?.id);
 
-        receiptBuffer = generateDocxBuffer(templatePath, {
+        receiptBuffer = generateDocxBuffer({
           name: member.name,
           email: member.email,
           mobile: member.mobileNumber,

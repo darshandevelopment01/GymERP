@@ -10,7 +10,7 @@ const auth_middleware_1 = require("../middleware/auth.middleware");
 const router = (0, express_1.Router)();
 router.get('/', auth_middleware_1.authMiddleware, async (req, res) => {
     try {
-        const employees = await Employee_1.default.find().populate('branchId', 'name');
+        const employees = await Employee_1.default.find().select('-password').populate('branchId', 'name');
         res.json(employees);
     }
     catch (error) {
