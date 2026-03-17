@@ -336,13 +336,40 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
         </div>
       `;
 
+      // 📄 Prepare DOCX Attachment for Renewal
+      let attachments: any[] = [];
+      try {
+        const templatePath = path.join(__dirname, '..', 'assets', 'MTF Reseat.docx');
+        console.log('📄 Generating Renewal DOCX from:', templatePath);
+
+        const docxBuffer = generateDocxBuffer(templatePath, {
+          name: member.name,
+          email: member.email,
+          mobile: member.mobileNumber,
+          planName: (member.plan as any)?.planName || 'N/A',
+          price: (member.plan as any)?.price || 0,
+          startDate: new Date(member.membershipStartDate).toLocaleDateString('en-IN'),
+          endDate: new Date(member.membershipEndDate).toLocaleDateString('en-IN'),
+          memberId: member.memberId,
+          date: new Date().toLocaleDateString('en-IN')
+        });
+
+        attachments.push({
+          filename: `${member.name}_MTF_Reseat.docx`,
+          content: docxBuffer
+        });
+      } catch (docxErr) {
+        console.error('❌ Failed to generate DOCX attachment during renewal:', docxErr);
+      }
+
       try {
         await sendEmail(
           member.email,
           `Payment Receipt - Membership Renewal (${member.memberId})`,
-          receiptHtml
+          receiptHtml,
+          attachments
         );
-        console.log(`✅ Renewal receipt emailed to ${member.email}`);
+        console.log(`✅ Renewal receipt emailed to ${member.email} with DOCX attachment`);
       } catch (err) {
         console.error('❌ Failed to send renewal receipt:', err);
       }
