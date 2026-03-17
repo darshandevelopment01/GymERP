@@ -380,6 +380,32 @@ const MemberMaster = () => {
     setRenewData(prev => recalcRenewData({ ...prev, taxSlab: slabId }));
   };
 
+  const applyEndDateCalculation = (updatedData, setFormData) => {
+    const selectedPlan = plans.find(p => p._id === updatedData.plan);
+    if (selectedPlan && updatedData.membershipStartDate) {
+      const startDate = new Date(updatedData.membershipStartDate);
+      let monthsToAdd = 0;
+      switch (selectedPlan.duration) {
+        case 'Monthly': monthsToAdd = 1; break;
+        case 'Two Monthly': monthsToAdd = 2; break;
+        case 'Quarterly': monthsToAdd = 3; break;
+        case 'Four Monthly': monthsToAdd = 4; break;
+        case 'Six Monthly': monthsToAdd = 6; break;
+        case 'Yearly': monthsToAdd = 12; break;
+        default: monthsToAdd = 0;
+      }
+
+      if (monthsToAdd > 0) {
+        const calculatedEndDate = new Date(startDate);
+        calculatedEndDate.setMonth(calculatedEndDate.getMonth() + monthsToAdd);
+        calculatedEndDate.setDate(calculatedEndDate.getDate() - 1);
+
+        updatedData.membershipEndDate = calculatedEndDate.toISOString().split('T')[0];
+      }
+    }
+    setFormData({ ...updatedData });
+  };
+
   const handleRenewPaymentChange = (e) => {
     const received = parseFloat(e.target.value) || 0;
     setRenewData(prev => recalcRenewData({ ...prev, paymentReceived: received }));
@@ -528,7 +554,11 @@ const MemberMaster = () => {
           value: p._id,
           label: `${p.planName} - ₹${p.price}`
         }))
-      ]
+      ],
+      onChange: (value, formData, setFormData) => {
+        const updated = { ...formData, plan: value };
+        applyEndDateCalculation(updated, setFormData);
+      }
     },
     {
       name: 'paymentReceived',
@@ -542,13 +572,18 @@ const MemberMaster = () => {
       label: 'Membership Start Date',
       type: 'date',
       required: false,
-      displayValue: (item) => formatDate(item.membershipStartDate)
+      displayValue: (item) => formatDate(item.membershipStartDate),
+      onChange: (value, formData, setFormData) => {
+        const updated = { ...formData, membershipStartDate: value };
+        applyEndDateCalculation(updated, setFormData);
+      }
     },
     {
       name: 'membershipEndDate',
       label: 'Membership End Date',
       type: 'date',
       required: false,
+      disabled: true,
       displayValue: (item) => formatDate(item.membershipEndDate)
     },
     {
@@ -689,7 +724,12 @@ const MemberMaster = () => {
         exportFileName="members"
         onAddFollowUp={can('createMemberFollowUp') ? handleAddFollowUp : null}
         customActions={(item) => {
-          const isExpired = item.status === 'expired' || (item.membershipEndDate && new Date(item.membershipEndDate) < new Date());
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const end = item.membershipEndDate ? new Date(item.membershipEndDate) : null;
+          if (end) end.setHours(0, 0, 0, 0);
+
+          const isExpired = item.status === 'expired' || (end && end < today);
           return (
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               {item.paymentRemaining > 0 && can('collectPayment') && (

@@ -346,7 +346,13 @@ const GenericMaster = ({
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    const field = formFields.find(f => f.name === name);
+
+    if (field && field.onChange) {
+      field.onChange(value, formData, setFormData);
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
   const handlePermissionChange = (groupKey, permKey) => {
@@ -374,10 +380,17 @@ const GenericMaster = ({
   };
 
   const handleDateChange = (date, fieldName) => {
-    setFormData({
-      ...formData,
-      [fieldName]: date ? date.toISOString().split('T')[0] : ''
-    });
+    const field = formFields.find(f => f.name === fieldName);
+    const dateValue = date ? date.toISOString().split('T')[0] : '';
+
+    if (field && field.onChange) {
+      field.onChange(dateValue, formData, setFormData);
+    } else {
+      setFormData({
+        ...formData,
+        [fieldName]: dateValue
+      });
+    }
   };
 
   const handleGetLocation = () => {
@@ -794,6 +807,7 @@ const GenericMaster = ({
                           value={formData[field.name] || ''}
                           onChange={handleInputChange}
                           required={field.required}
+                          disabled={field.disabled}
                         >
                           {field.options?.map((opt, i) => (
                             <option key={i} value={opt.value}>{opt.label}</option>
@@ -822,6 +836,7 @@ const GenericMaster = ({
                             maxDate={field.futureOnly ? null : new Date()}
                             isClearable
                             required={field.required}
+                            disabled={field.disabled}
                             showPopperArrow={false}
                           />
                           <svg
