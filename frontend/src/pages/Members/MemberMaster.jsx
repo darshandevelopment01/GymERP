@@ -6,6 +6,7 @@ import planApi from '../../services/planApi';
 import followupApi from '../../services/followupApi';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import { taxSlabAPI, planCategoryAPI } from '../../services/mastersApi';
 import { usePermissions } from '../../hooks/usePermissions';
 import './MemberMaster.css';
 
@@ -14,6 +15,8 @@ const MemberMaster = () => {
   const cacheKeyBranches = 'cache_global_branches';
   const cacheKeyPlans = 'cache_global_plans';
   const cacheKeyStats = 'cache_member_stats';
+  const cacheKeyTaxSlabs = 'cache_global_taxSlabs';
+  const cacheKeyPlanCategories = 'cache_global_planCategories';
 
   const getInitialCache = (key, defaultVal) => {
     const cached = sessionStorage.getItem(key);
@@ -27,10 +30,28 @@ const MemberMaster = () => {
   const [stats, setStats] = useState(getInitialCache(cacheKeyStats, { total: 0, active: 0, expired: 0 }));
   const [loading, setLoading] = useState(!hasCache);
   const [error, setError] = useState(null);
+  const [taxSlabs, setTaxSlabs] = useState(getInitialCache(cacheKeyTaxSlabs, []));
+  const [planCategories, setPlanCategories] = useState(getInitialCache(cacheKeyPlanCategories, []));
+  const [maxDiscountPercentage, setMaxDiscountPercentage] = useState(0);
+  const [noDiscountLimit, setNoDiscountLimit] = useState(false);
+  const [discountOptions, setDiscountOptions] = useState([]);
 
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
   const [additionalPayment, setAdditionalPayment] = useState(0);
+
+  const [showRenewModal, setShowRenewModal] = useState(false);
+  const [selectedMemberForRenewal, setSelectedMemberForRenewal] = useState(null);
+  const [renewData, setRenewData] = useState({
+    planCategory: '',
+    plan: '',
+    taxSlab: '',
+    discountPercentage: 0,
+    paymentReceived: 0,
+    paymentRemaining: 0,
+    membershipStartDate: new Date(),
+    membershipEndDate: null
+  });
 
   const [showFollowUpModal, setShowFollowUpModal] = useState(false);
   const [selectedMemberForFollowUp, setSelectedMemberForFollowUp] = useState(null);
@@ -51,7 +72,10 @@ const MemberMaster = () => {
       await Promise.all([
         fetchBranches(),
         fetchPlans(),
-        fetchStats()
+        fetchStats(),
+        fetchTaxSlabs(),
+        fetchPlanCategories(),
+        fetchCurrentUserDiscount()
       ]);
     } catch (err) {
       console.error('Error loading data:', err);
@@ -85,6 +109,50 @@ const MemberMaster = () => {
     }
   };
 
+  const fetchTaxSlabs = async () => {
+    try {
+      const response = await taxSlabAPI.getAll();
+      const slabs = response.data || [];
+      setTaxSlabs(slabs.filter(s => s.status === 'active'));
+      sessionStorage.setItem(cacheKeyTaxSlabs, JSON.stringify(slabs.filter(s => s.status === 'active')));
+    } catch (error) {
+      console.error('Error fetching tax slabs:', error);
+      setTaxSlabs([]);
+    }
+  };
+
+  const fetchPlanCategories = async () => {
+    try {
+      const response = await planCategoryAPI.getAll();
+      const cats = response.data || [];
+      setPlanCategories(cats.filter(c => c.status === 'active'));
+      sessionStorage.setItem(cacheKeyPlanCategories, JSON.stringify(cats.filter(c => c.status === 'active')));
+    } catch (error) {
+      console.error('Error fetching plan categories:', error);
+      setPlanCategories([]);
+    }
+  };
+
+  const fetchCurrentUserDiscount = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/me`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const result = await response.json();
+      if (result.success && result.data) {
+        setMaxDiscountPercentage(result.data.maxDiscountPercentage || 0);
+        setNoDiscountLimit(result.data.noDiscountLimit || false);
+        setDiscountOptions(result.data.discountOptions || []);
+      }
+    } catch (error) {
+      console.error('Error fetching user discount:', error);
+      setMaxDiscountPercentage(0);
+      setNoDiscountLimit(false);
+      setDiscountOptions([]);
+    }
+  };
+
   const fetchStats = async () => {
     try {
       const response = await memberApi.getAll();
@@ -107,6 +175,82 @@ const MemberMaster = () => {
     setSelectedMember(member);
     setAdditionalPayment(0);
     setShowPaymentModal(true);
+  };
+
+  const handleRenewMember = (member) => {
+    setSelectedMemberForRenewal(member);
+    const initialRenewData = {
+      planCategory: '',
+      plan: '',
+      taxSlab: '',
+      discountPercentage: 0,
+      paymentReceived: 0,
+      paymentRemaining: 0,
+      membershipStartDate: new Date(),
+      membershipEndDate: null
+    };
+    setRenewData(recalcRenewData(initialRenewData));
+    setShowRenewModal(true);
+  };
+
+  const getDiscountedAmount = (price, discountPct) => {
+    const discount = (price * discountPct) / 100;
+    return Math.round(price - discount);
+  };
+
+  // Compute the full billing breakdown for renewal
+  const getRenewBillingBreakdown = () => {
+    const selectedPlan = plans.find(p => p._id === renewData.plan);
+    const planAmount = selectedPlan ? selectedPlan.price : 0;
+    const discountPct = renewData.discountPercentage || 0;
+    const discountAmt = Math.round((planAmount * discountPct) / 100);
+    const subtotal = planAmount - discountAmt;
+    const selectedSlab = taxSlabs.find(s => s._id === renewData.taxSlab);
+    const taxPct = selectedSlab ? selectedSlab.taxPercentage : 0;
+    const taxAmt = Math.round((subtotal * taxPct) / 100);
+    const total = subtotal + taxAmt;
+    return { planAmount, discountPct, discountAmt, subtotal, taxPct, taxAmt, total };
+  };
+
+  // Recalculate remaining and end date for renewal
+  const recalcRenewData = (updatedData) => {
+    const selectedPlan = plans.find(p => p._id === updatedData.plan);
+    const planAmount = selectedPlan ? selectedPlan.price : 0;
+    const discountAmt = Math.round((planAmount * (updatedData.discountPercentage || 0)) / 100);
+    const subtotal = planAmount - discountAmt;
+    const selectedSlab = taxSlabs.find(s => s._id === updatedData.taxSlab);
+    const taxPct = selectedSlab ? selectedSlab.taxPercentage : 0;
+    const taxAmt = Math.round((subtotal * taxPct) / 100);
+    const total = subtotal + taxAmt;
+    const remaining = total - (updatedData.paymentReceived || 0);
+
+    // End date calculation
+    let calculatedEndDate = null;
+    if (selectedPlan && updatedData.membershipStartDate) {
+      const startDate = new Date(updatedData.membershipStartDate);
+      let monthsToAdd = 0;
+      switch (selectedPlan.duration) {
+        case 'Monthly': monthsToAdd = 1; break;
+        case 'Two Monthly': monthsToAdd = 2; break;
+        case 'Quarterly': monthsToAdd = 3; break;
+        case 'Four Monthly': monthsToAdd = 4; break;
+        case 'Six Monthly': monthsToAdd = 6; break;
+        case 'Yearly': monthsToAdd = 12; break;
+        default: monthsToAdd = 0;
+      }
+
+      if (monthsToAdd > 0) {
+        calculatedEndDate = new Date(startDate);
+        calculatedEndDate.setMonth(calculatedEndDate.getMonth() + monthsToAdd);
+        calculatedEndDate.setDate(calculatedEndDate.getDate() - 1);
+      }
+    }
+
+    return {
+      ...updatedData,
+      paymentRemaining: remaining > 0 ? remaining : 0,
+      membershipEndDate: calculatedEndDate
+    };
   };
 
   const handlePaymentSubmit = async (e) => {
@@ -176,6 +320,69 @@ const MemberMaster = () => {
       console.error('Error adding follow-up:', error);
       alert('❌ Failed to add follow-up. Please try again.');
     }
+  };
+
+  const handleRenewSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!renewData.plan || !renewData.membershipStartDate || !renewData.membershipEndDate) {
+      alert('Please fill all required fields');
+      return;
+    }
+
+    try {
+      const billing = getRenewBillingBreakdown();
+      const updateData = {
+        plan: renewData.plan,
+        membershipStartDate: renewData.membershipStartDate.toISOString(),
+        membershipEndDate: renewData.membershipEndDate.toISOString(),
+        status: 'active',
+        // Updated billing fields for the new plan
+        planAmount: billing.planAmount,
+        discountPercentage: billing.discountPct,
+        discountAmount: billing.discountAmt,
+        taxPercentage: billing.taxPct,
+        taxAmount: billing.taxAmt,
+        totalAmount: billing.total,
+        // Increment lifetime payment and set new pending
+        paymentReceived: (selectedMemberForRenewal.paymentReceived || 0) + renewData.paymentReceived,
+        paymentRemaining: renewData.paymentRemaining,
+        taxSlab: renewData.taxSlab || null
+      };
+
+      await memberApi.update(selectedMemberForRenewal._id, updateData);
+
+      alert('✅ Member plan renewed successfully!');
+      setShowRenewModal(false);
+      setSelectedMemberForRenewal(null);
+      fetchInitialData();
+    } catch (error) {
+      console.error('Error renewing member:', error);
+      alert(`❌ Failed to renew member: ${error.response?.data?.message || error.message}`);
+    }
+  };
+
+  const handleRenewPlanChange = (e) => {
+    const planId = e.target.value;
+    setRenewData(prev => recalcRenewData({ ...prev, plan: planId }));
+  };
+
+  const handleRenewDiscountChange = (e) => {
+    let discount = parseFloat(e.target.value) || 0;
+    if (!noDiscountLimit && discount > maxDiscountPercentage) discount = maxDiscountPercentage;
+    if (discount < 0) discount = 0;
+    if (discount > 100) discount = 100;
+    setRenewData(prev => recalcRenewData({ ...prev, discountPercentage: discount }));
+  };
+
+  const handleRenewTaxSlabChange = (e) => {
+    const slabId = e.target.value;
+    setRenewData(prev => recalcRenewData({ ...prev, taxSlab: slabId }));
+  };
+
+  const handleRenewPaymentChange = (e) => {
+    const received = parseFloat(e.target.value) || 0;
+    setRenewData(prev => recalcRenewData({ ...prev, paymentReceived: received }));
   };
 
   const formatDate = (date) => {
@@ -481,30 +688,55 @@ const MemberMaster = () => {
         showExportButton={true}
         exportFileName="members"
         onAddFollowUp={can('createMemberFollowUp') ? handleAddFollowUp : null}
-        customActions={(item) => (
-          item.paymentRemaining > 0 && can('collectPayment') && (
-            <button
-              className="btn-add-payment"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleAddPayment(item);
-              }}
-              style={{
-                background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                color: 'white',
-                border: 'none',
-                padding: '0.5rem 1rem',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '0.85rem',
-                fontWeight: '600',
-                marginLeft: '0.5rem'
-              }}
-            >
-              💰 Add Payment
-            </button>
-          )
-        )}
+        customActions={(item) => {
+          const isExpired = item.status === 'expired' || (item.membershipEndDate && new Date(item.membershipEndDate) < new Date());
+          return (
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              {item.paymentRemaining > 0 && can('collectPayment') && (
+                <button
+                  className="btn-add-payment"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAddPayment(item);
+                  }}
+                  style={{
+                    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                    color: 'white',
+                    border: 'none',
+                    padding: '0.5rem 1rem',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '0.85rem',
+                    fontWeight: '600'
+                  }}
+                >
+                  💰 Add Payment
+                </button>
+              )}
+              {isExpired && can('editMember') && (
+                <button
+                  className="btn-renew"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRenewMember(item);
+                  }}
+                  style={{
+                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                    color: 'white',
+                    border: 'none',
+                    padding: '0.5rem 1rem',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '0.85rem',
+                    fontWeight: '600'
+                  }}
+                >
+                  🔄 Renew
+                </button>
+              )}
+            </div>
+          );
+        }}
       />
 
       {/* Add Payment Modal */}
@@ -771,6 +1003,205 @@ const MemberMaster = () => {
                   }}
                 >
                   💾 Save Follow-up
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Renew Modal */}
+      {showRenewModal && selectedMemberForRenewal && (
+        <div className="modal-overlay" onClick={() => setShowRenewModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header" style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}>
+              <h2 style={{ color: 'white' }}>🔄 Renew Membership</h2>
+              <button className="btn-close" onClick={() => setShowRenewModal(false)}>✕</button>
+            </div>
+
+            <form onSubmit={handleRenewSubmit}>
+              <div className="form-content">
+                <div className="member-info" style={{
+                  background: '#f8fafc',
+                  padding: '1rem',
+                  borderRadius: '8px',
+                  marginBottom: '1.5rem'
+                }}>
+                  <h3 style={{ margin: '0 0 0.5rem 0', color: '#1e293b' }}>Member Details</h3>
+                  <p style={{ margin: '0.25rem 0', color: '#64748b' }}><strong>Name:</strong> {selectedMemberForRenewal.name}</p>
+                  <p style={{ margin: '0.25rem 0', color: '#64748b' }}><strong>Member ID:</strong> {selectedMemberForRenewal.memberId}</p>
+                  <p style={{ margin: '0.25rem 0', color: '#64748b' }}><strong>Previous Plan:</strong> {selectedMemberForRenewal.plan?.planName || '-'}</p>
+                </div>
+
+                <div className="form-group">
+                  <label>Plan Category <span className="required">*</span></label>
+                  <select
+                    value={renewData.planCategory}
+                    onChange={(e) => {
+                      const catId = e.target.value;
+                      setRenewData(prev => recalcRenewData({ ...prev, planCategory: catId, plan: '' }));
+                    }}
+                    required
+                  >
+                    <option value="">Select Category</option>
+                    {planCategories.map(cat => (
+                      <option key={cat._id} value={cat._id}>
+                        {cat.categoryName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Membership Plan <span className="required">*</span></label>
+                  <select
+                    value={renewData.plan}
+                    onChange={handleRenewPlanChange}
+                    required
+                    disabled={!renewData.planCategory}
+                  >
+                    <option value="">{renewData.planCategory ? 'Select Membership Plan' : 'Select a category first'}</option>
+                    {plans
+                      .filter(p => {
+                        if (!renewData.planCategory) return false;
+                        const catId = typeof p.category === 'object' ? p.category?._id : p.category;
+                        return catId === renewData.planCategory;
+                      })
+                      .map(p => (
+                        <option key={p._id} value={p._id}>
+                          {p.planName} - ₹{p.price} ({p.duration})
+                        </option>
+                      ))}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Membership Start Date <span className="required">*</span></label>
+                  <DatePicker
+                    selected={renewData.membershipStartDate}
+                    onChange={(date) => setRenewData(prev => recalcRenewData({ ...prev, membershipStartDate: date }))}
+                    dateFormat="dd/MM/yyyy"
+                    placeholderText="Select start date"
+                    required
+                    className="custom-datepicker"
+                    wrapperClassName="datepicker-wrapper"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Membership End Date</label>
+                  <DatePicker
+                    selected={renewData.membershipEndDate}
+                    onChange={() => { }} // Read-only
+                    dateFormat="dd/MM/yyyy"
+                    placeholderText="Calculated automatically"
+                    disabled
+                    className="custom-datepicker"
+                    wrapperClassName="datepicker-wrapper"
+                    style={{ background: '#f1f5f9', cursor: 'not-allowed' }}
+                  />
+                </div>
+
+                {/* Tax Slab Dropdown */}
+                <div className="form-group">
+                  <label>Tax Slab (GST)</label>
+                  <select
+                    value={renewData.taxSlab}
+                    onChange={handleRenewTaxSlabChange}
+                  >
+                    <option value="">No Tax</option>
+                    {taxSlabs.map(slab => (
+                      <option key={slab._id} value={slab._id}>
+                        GST {slab.taxPercentage}%
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Discount */}
+                {can('noDiscountLimit') && (
+                  <div className="form-group">
+                    <label>Discount %</label>
+                    <select
+                      value={renewData.discountPercentage}
+                      onChange={handleRenewDiscountChange}
+                    >
+                      <option value={0}>0% (No Discount)</option>
+                      {discountOptions.map(val => (
+                        <option key={val} value={val}>{val}%</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                <div className="form-group">
+                  <label>Payment Received <span className="required">*</span></label>
+                  <input
+                    type="number"
+                    value={renewData.paymentReceived}
+                    onChange={handleRenewPaymentChange}
+                    required
+                    min="0"
+                    placeholder="Enter amount received"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Payment Remaining</label>
+                  <input
+                    type="number"
+                    value={renewData.paymentRemaining}
+                    readOnly
+                    disabled
+                    style={{ background: '#f1f5f9', cursor: 'not-allowed' }}
+                  />
+                </div>
+
+                {/* Billing Summary */}
+                {renewData.plan && (() => {
+                  const b = getRenewBillingBreakdown();
+                  return (
+                    <div style={{
+                      background: '#f8fafc',
+                      border: '1px solid #e2e8f0',
+                      padding: '1rem 1.25rem',
+                      borderRadius: '10px',
+                      marginTop: '1rem',
+                    }}>
+                      <h4 style={{ margin: '0 0 0.75rem', color: '#1e293b', fontSize: '0.95rem' }}>💰 Billing Summary</h4>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem', color: '#475569', fontSize: '0.9rem' }}>
+                        <span>New Plan Amount</span>
+                        <span style={{ fontWeight: '600' }}>₹{b.planAmount}</span>
+                      </div>
+                      {b.discountPct > 0 && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem', color: '#16a34a', fontSize: '0.9rem' }}>
+                          <span>Discount ({b.discountPct}%)</span>
+                          <span style={{ fontWeight: '600' }}>- ₹{b.discountAmt}</span>
+                        </div>
+                      )}
+                      {b.taxPct > 0 && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem', color: '#ea580c', fontSize: '0.9rem' }}>
+                          <span>GST ({b.taxPct}%)</span>
+                          <span style={{ fontWeight: '600' }}>+ ₹{b.taxAmt}</span>
+                        </div>
+                      )}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px solid #f59e0b', paddingTop: '0.5rem', marginTop: '0.35rem', color: '#1e293b', fontSize: '1rem' }}>
+                        <span style={{ fontWeight: '700' }}>Renewal Total</span>
+                        <span style={{ fontWeight: '700', color: '#f59e0b' }}>₹{b.total}</span>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+
+              <div className="modal-footer">
+                <button type="button" className="btn-cancel" onClick={() => setShowRenewModal(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn-save" style={{
+                  background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
+                }}>
+                  ✅ Renew Membership
                 </button>
               </div>
             </form>
