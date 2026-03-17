@@ -278,8 +278,13 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
     }
 
     // ✅ Detect Renewal and Send Receipt
-    if (req.body.paymentReceived > 0 && req.body.membershipEndDate) {
-      console.log(`🔄 RENEWAL DETECTED for member: ${member.name}`);
+    const oldEndDate = oldMember?.membershipEndDate ? new Date(oldMember.membershipEndDate).getTime() : 0;
+    const newEndDate = req.body.membershipEndDate ? new Date(req.body.membershipEndDate).getTime() : 0;
+    const isRenewal = newEndDate > oldEndDate;
+
+    if (isRenewal && req.body.paymentReceived > 0) {
+      const newPaymentAmount = Math.max(0, (req.body.paymentReceived || 0) - (oldMember?.paymentReceived || 0));
+      console.log(`🔄 RENEWAL DETECTED for member: ${member.name}. Fresh Payment: ₹${newPaymentAmount}`);
 
       const receiptHtml = `
         <div style="font-family: sans-serif; color: #333; max-width: 600px; margin: auto; border: 1px solid #6366f1; padding: 0; border-radius: 12px; overflow: hidden;">
@@ -308,7 +313,7 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
                 </tr>
                 <tr style="border-top: 1px solid #e2e8f0;">
                   <td style="padding: 15px 0 8px 0; color: #64748b; font-size: 1.1em;">Amount Received:</td>
-                  <td style="padding: 15px 0 8px 0; text-align: right; font-size: 1.5em; font-weight: bold; color: #10b981;">₹${req.body.paymentReceived}</td>
+                  <td style="padding: 15px 0 8px 0; text-align: right; font-size: 1.5em; font-weight: bold; color: #10b981;">₹${newPaymentAmount}</td>
                 </tr>
                 <tr>
                   <td style="padding: 0 0 8px 0; color: #64748b;">New Expiry Date:</td>
@@ -328,11 +333,16 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
         </div>
       `;
 
-      sendEmail(
-        member.email,
-        `Payment Receipt - Membership Renewal (${member.memberId})`,
-        receiptHtml
-      ).catch(err => console.error('❌ Failed to send renewal receipt:', err));
+      try {
+        await sendEmail(
+          member.email,
+          `Payment Receipt - Membership Renewal (${member.memberId})`,
+          receiptHtml
+        );
+        console.log(`✅ Renewal receipt emailed to ${member.email}`);
+      } catch (err) {
+        console.error('❌ Failed to send renewal receipt:', err);
+      }
     }
 
     res.json({ success: true, data: member });
