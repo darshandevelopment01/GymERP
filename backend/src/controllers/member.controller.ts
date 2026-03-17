@@ -116,11 +116,12 @@ export const createMember = async (req: Request, res: Response): Promise<void> =
 
     // 📄 Prepare DOCX Attachment
     let attachments: any[] = [];
+    let receiptBuffer: Buffer | null = null;
     try {
       const templatePath = path.join(__dirname, '..', 'assets', 'MTF Reseat.docx');
       console.log('📄 Generating DOCX from:', templatePath);
 
-      const docxBuffer = generateDocxBuffer(templatePath, {
+      receiptBuffer = generateDocxBuffer(templatePath, {
         name: trimmedData.name,
         email: trimmedData.email,
         mobile: trimmedData.mobileNumber,
@@ -136,7 +137,7 @@ export const createMember = async (req: Request, res: Response): Promise<void> =
 
       attachments.push({
         filename: `${trimmedData.name}_MTF_Reseat.docx`,
-        content: docxBuffer
+        content: receiptBuffer
       });
     } catch (docxErr) {
       console.error('❌ Failed to generate DOCX attachment:', docxErr);
@@ -174,6 +175,8 @@ export const createMember = async (req: Request, res: Response): Promise<void> =
     res.status(201).json({
       success: true,
       data: populatedMember,
+      receiptBuffer: receiptBuffer ? receiptBuffer.toString('base64') : null,
+      receiptFilename: receiptBuffer ? `${trimmedData.name}_MTF_Reseat.docx` : null,
       message: emailSent
         ? 'Member created successfully! Credentials emailed.'
         : 'Member created successfully! (⚠️ Email failed to send)'
@@ -288,6 +291,9 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
     // Also check if membership end date was actually provided/changed
     const isNewEndDateProvided = !!req.body.membershipEndDate;
 
+    let receiptBuffer: Buffer | null = null;
+    let receiptFilename: string | null = null;
+
     if (freshPayment > 0 && isNewEndDateProvided) {
       console.log(`🔄 RENEWAL DETECTED for member: ${member.name}. Fresh Payment: ₹${freshPayment}`);
 
@@ -344,7 +350,7 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
         const templatePath = path.join(__dirname, '..', 'assets', 'MTF Reseat.docx');
         console.log('📄 Generating Renewal DOCX from:', templatePath);
 
-        const docxBuffer = generateDocxBuffer(templatePath, {
+        receiptBuffer = generateDocxBuffer(templatePath, {
           name: member.name,
           email: member.email,
           mobile: member.mobileNumber,
@@ -358,9 +364,11 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
           date: new Date().toLocaleDateString('en-IN')
         });
 
+        receiptFilename = `${member.name}_MTF_Reseat.docx`;
+
         attachments.push({
-          filename: `${member.name}_MTF_Reseat.docx`,
-          content: docxBuffer
+          filename: receiptFilename,
+          content: receiptBuffer
         });
       } catch (docxErr) {
         console.error('❌ Failed to generate DOCX attachment during renewal:', docxErr);
@@ -379,7 +387,12 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
       }
     }
 
-    res.json({ success: true, data: member });
+    res.json({
+      success: true,
+      data: member,
+      receiptBuffer: receiptBuffer ? receiptBuffer.toString('base64') : null,
+      receiptFilename: receiptFilename || null
+    });
   } catch (error) {
     console.error('Error updating member:', error);
     res.status(500).json({ success: false, message: 'Failed to update member' });

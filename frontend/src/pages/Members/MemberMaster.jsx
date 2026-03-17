@@ -350,7 +350,31 @@ const MemberMaster = () => {
         taxSlab: renewData.taxSlab || null
       };
 
-      await memberApi.update(selectedMemberForRenewal._id, updateData);
+      const response = await memberApi.update(selectedMemberForRenewal._id, updateData);
+
+      // 📥 Automatic Download of Receipt
+      if (response.receiptBuffer && response.receiptFilename) {
+        try {
+          const byteCharacters = atob(response.receiptBuffer);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          const blob = new Blob([byteArray], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = response.receiptFilename;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+          console.log('✅ Receipt download triggered');
+        } catch (downloadErr) {
+          console.error('❌ Failed to download receipt:', downloadErr);
+        }
+      }
 
       alert('✅ Member plan renewed successfully!');
       setShowRenewModal(false);
