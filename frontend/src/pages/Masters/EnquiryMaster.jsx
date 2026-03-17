@@ -46,7 +46,9 @@ const EnquiryMaster = () => {
     taxSlab: '',
     discountPercentage: 0,
     paymentReceived: 0,
-    paymentRemaining: 0
+    paymentRemaining: 0,
+    membershipStartDate: new Date(),
+    membershipEndDate: null
   });
 
   const [showFollowUpModal, setShowFollowUpModal] = useState(false);
@@ -161,15 +163,18 @@ const EnquiryMaster = () => {
 
   const handleConvertToMember = (enquiry) => {
     setSelectedEnquiry(enquiry);
-    setPaymentData({
+    const initialData = {
       planCategory: '',
       plan: enquiry.plan?._id || '',
       dateOfBirth: enquiry.dateOfBirth ? new Date(enquiry.dateOfBirth) : null,
       taxSlab: '',
       discountPercentage: 0,
       paymentReceived: 0,
-      paymentRemaining: 0
-    });
+      paymentRemaining: 0,
+      membershipStartDate: new Date(),
+      membershipEndDate: null
+    };
+    setPaymentData(recalcRemaining(initialData));
     setShowPaymentModal(true);
   };
 
@@ -231,7 +236,7 @@ const EnquiryMaster = () => {
     return { planAmount, discountPct, discountAmt, subtotal, taxPct, taxAmt, total };
   };
 
-  // Recalculate remaining whenever any billing field changes
+  // Recalculate remaining and end date whenever any billing field or start date changes
   const recalcRemaining = (updatedData) => {
     const selectedPlan = plans.find(p => p._id === updatedData.plan);
     const planAmount = selectedPlan ? selectedPlan.price : 0;
@@ -242,7 +247,34 @@ const EnquiryMaster = () => {
     const taxAmt = Math.round((subtotal * taxPct) / 100);
     const total = subtotal + taxAmt;
     const remaining = total - (updatedData.paymentReceived || 0);
-    return { ...updatedData, paymentRemaining: remaining > 0 ? remaining : 0 };
+
+    // End date calculation
+    let calculatedEndDate = null;
+    if (selectedPlan && updatedData.membershipStartDate) {
+      const startDate = new Date(updatedData.membershipStartDate);
+      let monthsToAdd = 0;
+      switch (selectedPlan.duration) {
+        case 'Monthly': monthsToAdd = 1; break;
+        case 'Two Monthly': monthsToAdd = 2; break;
+        case 'Quarterly': monthsToAdd = 3; break;
+        case 'Four Monthly': monthsToAdd = 4; break;
+        case 'Six Monthly': monthsToAdd = 6; break;
+        case 'Yearly': monthsToAdd = 12; break;
+        default: monthsToAdd = 0;
+      }
+
+      if (monthsToAdd > 0) {
+        calculatedEndDate = new Date(startDate);
+        calculatedEndDate.setMonth(calculatedEndDate.getMonth() + monthsToAdd);
+        calculatedEndDate.setDate(calculatedEndDate.getDate() - 1);
+      }
+    }
+
+    return {
+      ...updatedData,
+      paymentRemaining: remaining > 0 ? remaining : 0,
+      membershipEndDate: calculatedEndDate
+    };
   };
 
   const handlePaymentChange = (e) => {
@@ -302,7 +334,8 @@ const EnquiryMaster = () => {
         paymentReceived: paymentData.paymentReceived,
         paymentRemaining: paymentData.paymentRemaining,
         status: 'active',
-        membershipStartDate: new Date().toISOString(),
+        membershipStartDate: paymentData.membershipStartDate.toISOString(),
+        membershipEndDate: paymentData.membershipEndDate ? paymentData.membershipEndDate.toISOString() : null,
         enquiryId: selectedEnquiry._id,
         ...(selectedEnquiry.profilePhoto && { profilePhoto: selectedEnquiry.profilePhoto })
       };
@@ -662,6 +695,33 @@ const EnquiryMaster = () => {
                     required
                     className="custom-datepicker"
                     wrapperClassName="datepicker-wrapper"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Membership Start Date <span className="required">*</span></label>
+                  <DatePicker
+                    selected={paymentData.membershipStartDate}
+                    onChange={(date) => setPaymentData(prev => recalcRemaining({ ...prev, membershipStartDate: date }))}
+                    dateFormat="dd/MM/yyyy"
+                    placeholderText="Select start date"
+                    required
+                    className="custom-datepicker"
+                    wrapperClassName="datepicker-wrapper"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Membership End Date</label>
+                  <DatePicker
+                    selected={paymentData.membershipEndDate}
+                    onChange={() => { }} // Read-only
+                    dateFormat="dd/MM/yyyy"
+                    placeholderText="Calculated automatically"
+                    disabled
+                    className="custom-datepicker"
+                    wrapperClassName="datepicker-wrapper"
+                    style={{ background: '#f1f5f9', cursor: 'not-allowed' }}
                   />
                 </div>
 
