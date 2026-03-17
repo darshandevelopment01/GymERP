@@ -129,6 +129,8 @@ export const createMember = async (req: Request, res: Response): Promise<void> =
         startDate: new Date(trimmedData.membershipStartDate).toLocaleDateString('en-IN'),
         endDate: endDate.toLocaleDateString('en-IN'),
         memberId: member.memberId,
+        branch: branchExists?.name || 'N/A',
+        city: branchExists?.city || 'N/A',
         date: new Date().toLocaleDateString('en-IN')
       });
 
@@ -351,6 +353,8 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
           startDate: new Date(member.membershipStartDate).toLocaleDateString('en-IN'),
           endDate: new Date(member.membershipEndDate).toLocaleDateString('en-IN'),
           memberId: member.memberId,
+          branch: (member.branch as any)?.name || 'N/A',
+          city: (member.branch as any)?.city || 'N/A',
           date: new Date().toLocaleDateString('en-IN')
         });
 
