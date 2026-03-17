@@ -294,19 +294,25 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
     let receiptBuffer: Buffer | null = null;
     let receiptFilename: string | null = null;
 
-    if (freshPayment > 0 && isNewEndDateProvided) {
-      console.log(`🔄 RENEWAL DETECTED for member: ${member.name}. Fresh Payment: ₹${freshPayment}`);
+    if (freshPayment > 0) {
+      console.log(`💰 PAYMENT DETECTED for member: ${member.name}. Amount: ₹${freshPayment}`);
+
+      const isRenewal = isNewEndDateProvided;
+      const receiptTitle = isRenewal ? 'Membership Renewal' : 'Partial Payment';
+      const emailSubject = isRenewal 
+        ? `Payment Receipt - Membership Renewal (${member.memberId})` 
+        : `Payment Receipt - Additional Payment (${member.memberId})`;
 
       const receiptHtml = `
         <div style="font-family: sans-serif; color: #333; max-width: 600px; margin: auto; border: 1px solid #6366f1; padding: 0; border-radius: 12px; overflow: hidden;">
           <div style="background: #6366f1; color: white; padding: 20px; text-align: center;">
             <h1 style="margin: 0; font-size: 24px;">Payment Receipt</h1>
-            <p style="margin: 5px 0 0 0; opacity: 0.9;">Membership Renewal Successful</p>
+            <p style="margin: 5px 0 0 0; opacity: 0.9;">${receiptTitle} Successful</p>
           </div>
           
           <div style="padding: 30px;">
             <p>Dear <strong>${member.name}</strong>,</p>
-            <p>Thank you for renewing your membership with MuscleTime. Your payment has been successfully processed.</p>
+            <p>Thank you for your payment to MuscleTime. Your transaction has been successfully processed.</p>
             
             <div style="background: #f8fafc; border: 1px dashed #cbd5e1; padding: 20px; border-radius: 8px; margin: 25px 0;">
               <table style="width: 100%; border-collapse: collapse;">
@@ -326,10 +332,17 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
                   <td style="padding: 15px 0 8px 0; color: #64748b; font-size: 1.1em;">Amount Received:</td>
                   <td style="padding: 15px 0 8px 0; text-align: right; font-size: 1.5em; font-weight: bold; color: #10b981;">₹${freshPayment}</td>
                 </tr>
+                ${isRenewal ? `
                 <tr>
                   <td style="padding: 0 0 8px 0; color: #64748b;">New Expiry Date:</td>
                   <td style="padding: 0 0 8px 0; text-align: right; font-weight: bold; color: #ef4444;">${new Date(member.membershipEndDate).toLocaleDateString('en-IN')}</td>
                 </tr>
+                ` : `
+                <tr>
+                  <td style="padding: 0 0 8px 0; color: #64748b;">Remaining Balance:</td>
+                  <td style="padding: 0 0 8px 0; text-align: right; font-weight: bold; color: #ef4444;">₹${member.paymentRemaining}</td>
+                </tr>
+                `}
               </table>
             </div>
             
@@ -344,11 +357,11 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
         </div>
       `;
 
-      // 📄 Prepare DOCX Attachment for Renewal
+      // 📄 Prepare DOCX Attachment
       let attachments: any[] = [];
       try {
         const templatePath = path.join(__dirname, '..', 'assets', 'MTF Reseat.docx');
-        console.log('📄 Generating Renewal DOCX from:', templatePath);
+        console.log('📄 Generating Receipt DOCX from:', templatePath);
 
         receiptBuffer = generateDocxBuffer(templatePath, {
           name: member.name,
@@ -371,19 +384,19 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
           content: receiptBuffer
         });
       } catch (docxErr) {
-        console.error('❌ Failed to generate DOCX attachment during renewal:', docxErr);
+        console.error('❌ Failed to generate DOCX attachment:', docxErr);
       }
 
       try {
         await sendEmail(
           member.email,
-          `Payment Receipt - Membership Renewal (${member.memberId})`,
+          emailSubject,
           receiptHtml,
           attachments
         );
-        console.log(`✅ Renewal receipt emailed to ${member.email} with DOCX attachment`);
+        console.log(`✅ Payment receipt emailed to ${member.email} with DOCX attachment`);
       } catch (err) {
-        console.error('❌ Failed to send renewal receipt:', err);
+        console.error('❌ Failed to send payment receipt:', err);
       }
     }
 
