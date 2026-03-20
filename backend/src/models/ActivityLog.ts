@@ -19,7 +19,7 @@ const activityLogSchema = new Schema<IActivityLog>({
     },
     performedBy: {
         type: Schema.Types.ObjectId,
-        ref: 'User',
+        ref: 'Employee',
         required: true
     },
     performedByName: {

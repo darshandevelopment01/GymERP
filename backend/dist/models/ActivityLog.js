@@ -42,7 +42,7 @@ const activityLogSchema = new mongoose_1.Schema({
     },
     performedBy: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'User',
+        ref: 'Employee',
         required: true
     },
     performedByName: {

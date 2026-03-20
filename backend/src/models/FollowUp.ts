@@ -45,7 +45,7 @@ const FollowUpSchema = new Schema<IFollowUp>(
     },
     createdBy: {
       type: Schema.Types.ObjectId,
-      ref: 'User',
+      ref: 'Employee',
       required: false
     }
   },
