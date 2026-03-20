@@ -128,7 +128,7 @@ export const createMember = async (req: Request, res: Response): Promise<void> =
         packageDetail: planExists.planName,
         price: planExists.price,
         packagePrice: planExists.price,
-        startDate: new Date(trimmedData.membershipStartDate).toLocaleDateString('en-IN'),
+        startDate: startDate.toLocaleDateString('en-IN'),
         endDate: endDate.toLocaleDateString('en-IN'),
         memberId: member.memberId,
         branch: branchExists?.name || 'N/A',

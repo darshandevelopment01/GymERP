@@ -326,10 +326,60 @@ const GenericMaster = ({
       if (editingItem) {
         const response = await apiService.update(editingItem._id, cleanedData);
         console.log('✅ Update response:', response);
+
+        // 📥 Automatic Download of Receipt (if provided by API)
+        if (response.receiptBuffer && response.receiptFilename) {
+          try {
+            const byteCharacters = atob(response.receiptBuffer);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = response.receiptFilename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+            console.log('✅ Receipt download triggered from GenericMaster (Update)');
+          } catch (downloadErr) {
+            console.error('❌ Failed to download receipt from GenericMaster (Update):', downloadErr);
+          }
+        }
+
         alert(response.message || 'Updated successfully');
       } else {
         const response = await apiService.create(cleanedData);
         console.log('✅ Create response:', response);
+
+        // 📥 Automatic Download of Receipt (if provided by API)
+        if (response.receiptBuffer && response.receiptFilename) {
+          try {
+            const byteCharacters = atob(response.receiptBuffer);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = response.receiptFilename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+            console.log('✅ Receipt download triggered from GenericMaster');
+          } catch (downloadErr) {
+            console.error('❌ Failed to download receipt from GenericMaster:', downloadErr);
+          }
+        }
+
         alert(response.message || 'Created successfully');
       }
 
