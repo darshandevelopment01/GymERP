@@ -117,6 +117,7 @@ export const createMember = async (req: Request, res: Response): Promise<void> =
     // 📄 Prepare DOCX Attachment
     let attachments: any[] = [];
     let receiptBuffer: Buffer | null = null;
+    let receiptErrorMsg: string | null = null;
     try {
       const user = await Employee.findById(req.user?.id);
 
@@ -149,8 +150,9 @@ export const createMember = async (req: Request, res: Response): Promise<void> =
         filename: `${trimmedData.name}_MTF_Reseat.docx`,
         content: receiptBuffer
       });
-    } catch (docxErr) {
+    } catch (docxErr: any) {
       console.error('❌ Failed to generate DOCX attachment:', docxErr);
+      receiptErrorMsg = docxErr?.message || 'Unknown template error';
     }
 
     const emailSent = await sendEmail(
@@ -187,9 +189,10 @@ export const createMember = async (req: Request, res: Response): Promise<void> =
       data: populatedMember,
       receiptBuffer: receiptBuffer ? receiptBuffer.toString('base64') : null,
       receiptFilename: receiptBuffer ? `${trimmedData.name}_MTF_Reseat.docx` : null,
-      message: emailSent
+      message: (emailSent
         ? 'Member created successfully! Credentials emailed.'
-        : 'Member created successfully! (⚠️ Email failed to send)'
+        : 'Member created successfully! (⚠️ Email failed to send)') +
+        (receiptErrorMsg ? ` \n⚠️ Receipt Error: ${receiptErrorMsg}` : '')
     });
   } catch (error: any) {
     console.error('❌ Error creating member:', error);
@@ -403,8 +406,9 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
           filename: receiptFilename,
           content: receiptBuffer
         });
-      } catch (docxErr) {
+      } catch (docxErr: any) {
         console.error('❌ Failed to generate DOCX attachment:', docxErr);
+        receiptErrorMsg = docxErr?.message || 'Unknown template error';
       }
 
       try {
@@ -424,7 +428,8 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
       success: true,
       data: member,
       receiptBuffer: receiptBuffer ? receiptBuffer.toString('base64') : null,
-      receiptFilename: receiptFilename || null
+      receiptFilename: receiptFilename || null,
+      message: receiptErrorMsg ? `Update successful, but Receipt Error: ${receiptErrorMsg}` : undefined
     });
   } catch (error) {
     console.error('Error updating member:', error);

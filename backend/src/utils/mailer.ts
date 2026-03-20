@@ -108,6 +108,10 @@ export const generateDocxBuffer = (data: any, templatePath?: string): Buffer => 
 
         return buf;
     } catch (error: any) {
+        if (error.code === 'EBUSY' || error.message?.includes('EBUSY')) {
+            console.error('❌ File Lock Error: Please close Microsoft Word. The DOCX template is currently locked.', error);
+            throw new Error('Please close Microsoft Word. The MTF Reseat.docx file is locked and cannot be read.');
+        }
         console.error('❌ Error generating DOCX buffer:', error);
         throw error;
     }
