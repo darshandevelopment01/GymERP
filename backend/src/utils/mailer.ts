@@ -70,11 +70,26 @@ export const sendEmail = async (
 export const generateDocxBuffer = (data: any, templatePath?: string): Buffer => {
     try {
         let content: any;
+        let actualPath = templatePath;
+        if (!actualPath) {
+            // Check both src/assets and dist/assets (standard path in dist will be ../assets relative to this file)
+            const defaultPaths = [
+                path.join(__dirname, '../../src/assets/MTF Reseat.docx'),
+                path.join(__dirname, '../assets/MTF Reseat.docx'),
+            ];
+            for (const p of defaultPaths) {
+                if (fs.existsSync(p)) {
+                    actualPath = p;
+                    console.log(`📄 Found physical template at: ${p}`);
+                    break;
+                }
+            }
+        }
 
-        if (templatePath && fs.existsSync(templatePath)) {
-            content = fs.readFileSync(templatePath, 'binary');
+        if (actualPath && fs.existsSync(actualPath)) {
+            content = fs.readFileSync(actualPath, 'binary');
         } else {
-            // Use embedded base64 template
+            console.log('📦 Using embedded base64 template');
             content = Buffer.from(RECEIPT_TEMPLATE_BASE64, 'base64').toString('binary');
         }
 
