@@ -133,7 +133,7 @@ router.get('/', auth_middleware_1.authMiddleware, async (req, res) => {
         }
         const followUps = await FollowUp_1.default.find(filter)
             .populate('member', 'name memberId mobileNumber')
-            .populate('enquiry', 'name mobileNumber email')
+            .populate('enquiry', 'name mobileNumber email enquiryId')
             .populate('createdBy', 'name')
             .sort({ followUpDate: 1, createdAt: -1 });
         res.json({
@@ -188,7 +188,7 @@ router.put('/:id', auth_middleware_1.authMiddleware, async (req, res) => {
         const oldFollowUp = await FollowUp_1.default.findById(req.params.id).lean();
         const followUp = await FollowUp_1.default.findByIdAndUpdate(req.params.id, { note, followUpDate, followUpTime, status }, { new: true, runValidators: true })
             .populate('member', 'name memberId mobileNumber')
-            .populate('enquiry', 'name mobileNumber email');
+            .populate('enquiry', 'name mobileNumber email enquiryId');
         if (!followUp) {
             return res.status(404).json({ message: 'Follow-up not found' });
         }
