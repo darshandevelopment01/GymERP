@@ -59,10 +59,12 @@ export const createMember = async (req: Request, res: Response): Promise<void> =
 
       if (unit.includes('month')) {
         endDate.setMonth(endDate.getMonth() + value);
+        endDate.setDate(endDate.getDate() - 1);
       } else if (unit.includes('year')) {
         endDate.setFullYear(endDate.getFullYear() + value);
+        endDate.setDate(endDate.getDate() - 1);
       } else if (unit.includes('day')) {
-        endDate.setDate(endDate.getDate() + value);
+        endDate.setDate(endDate.getDate() + value - 1);
       }
     } else {
       // Default to 1 year if parsing fails

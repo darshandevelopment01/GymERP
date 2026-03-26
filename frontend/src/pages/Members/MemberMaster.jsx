@@ -246,7 +246,7 @@ const MemberMaster = () => {
       if (monthsToAdd > 0) {
         calculatedEndDate = new Date(startDate);
         calculatedEndDate.setMonth(calculatedEndDate.getMonth() + monthsToAdd);
-        // Do not subtract 1 day, so the duration aligns perfectly with the calendar months.
+        calculatedEndDate.setDate(calculatedEndDate.getDate() - 1);
       }
     }
 
@@ -450,7 +450,7 @@ const MemberMaster = () => {
       if (monthsToAdd > 0) {
         const calculatedEndDate = new Date(startDate);
         calculatedEndDate.setMonth(calculatedEndDate.getMonth() + monthsToAdd);
-        // Do not subtract 1 day to align with backend's logic 
+        calculatedEndDate.setDate(calculatedEndDate.getDate() - 1);
 
         updatedData.membershipEndDate = calculatedEndDate.toISOString().split('T')[0];
       }
