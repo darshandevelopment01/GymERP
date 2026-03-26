@@ -266,7 +266,7 @@ const EnquiryMaster = () => {
       if (monthsToAdd > 0) {
         calculatedEndDate = new Date(startDate);
         calculatedEndDate.setMonth(calculatedEndDate.getMonth() + monthsToAdd);
-        calculatedEndDate.setDate(calculatedEndDate.getDate() - 1);
+        // Do not subtract 1 day, so the duration aligns perfectly with the calendar months.
       }
     }
 
