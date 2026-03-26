@@ -30,13 +30,24 @@ export interface IMember extends Document {
     plan: mongoose.Types.ObjectId;
     membershipStartDate: Date;
     membershipEndDate: Date;
-    planAmount: number;
+    planAmount: Number;
+    discountPercentage: number;
     discountAmount: number;
+    taxPercentage: number;
     taxAmount: number;
     totalAmount: number;
     paymentReceived: number;
     paymentRemaining: number;
+    status: string;
     recordedAt: Date;
+  }[];
+  payments: {
+    amount: number;
+    paymentDate: Date;
+    paymentMode: string;
+    transactionId?: string;
+    recordedBy?: mongoose.Types.ObjectId;
+    note?: string;
   }[];
   createdAt: Date;
   updatedAt: Date;
@@ -171,12 +182,25 @@ const MemberSchema = new Schema<IMember>(
         membershipStartDate: Date,
         membershipEndDate: Date,
         planAmount: Number,
+        discountPercentage: { type: Number, default: 0 },
         discountAmount: Number,
+        taxPercentage: { type: Number, default: 0 },
         taxAmount: Number,
         totalAmount: Number,
         paymentReceived: Number,
         paymentRemaining: Number,
+        status: { type: String, default: 'active' },
         recordedAt: { type: Date, default: Date.now }
+      }
+    ],
+    payments: [
+      {
+        amount: { type: Number, required: true },
+        paymentDate: { type: Date, default: Date.now },
+        paymentMode: { type: String, default: 'Cash' },
+        transactionId: { type: String, default: '' },
+        recordedBy: { type: Schema.Types.ObjectId, ref: 'Employee', default: null },
+        note: { type: String, default: '' }
       }
     ]
   },

@@ -70,7 +70,7 @@ export const createMember = async (req: Request, res: Response): Promise<void> =
     }
 
     // ✅ Calculate payment remaining
-    const paymentRemaining = Math.max(0, planExists.price - (trimmedData.paymentReceived || 0));
+    const paymentRemaining = Math.max(0, (trimmedData.totalAmount || planExists.price) - (trimmedData.paymentReceived || 0));
 
     const memberData = {
       ...trimmedData,
@@ -82,6 +82,18 @@ export const createMember = async (req: Request, res: Response): Promise<void> =
     console.log('📝 Final member data:', JSON.stringify(memberData, null, 2));
 
     const member = new Member(memberData);
+
+    // ✅ Track initial payment in payments history
+    if (trimmedData.paymentReceived > 0) {
+      member.payments.push({
+        amount: trimmedData.paymentReceived,
+        paymentDate: new Date(),
+        paymentMode: trimmedData.paymentMode || 'Cash',
+        recordedBy: (req.user?.id as any) || null,
+        note: 'Initial payment for membership creation'
+      });
+    }
+
     await member.save();
 
     // Generate credentials for email notification
@@ -99,7 +111,7 @@ export const createMember = async (req: Request, res: Response): Promise<void> =
         <p>Hello <strong>${trimmedData.name}</strong>,</p>
         <p>Your gym membership has been successfully created. Please use the following credentials to log in to our <strong>Mobile Application</strong>:</p>
         
-        <div style="background: #f1f5f9; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 5px solid #6366f1;">
+        <div style="background: #f1f5f9; padding: 20px; border-radius: 8px; margin: 25px 0; border-left: 5px solid #6366f1;">
           <p style="margin: 0 0 10px 0;"><strong>Username:</strong> ${trimmedData.email} (or ${trimmedData.mobileNumber})</p>
           <p style="margin: 0;"><strong>Password:</strong> <span style="font-family: monospace; font-size: 1.1em; background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">${generatedPassword}</span></p>
         </div>
@@ -226,7 +238,6 @@ export const getAllMembers = async (req: Request, res: Response): Promise<void> 
   }
 };
 
-// Rest of your controller functions remain the same...
 export const getMemberById = async (req: Request, res: Response): Promise<void> => {
   try {
     const member = await Member.findById(req.params.id)
@@ -249,231 +260,151 @@ export const getMemberById = async (req: Request, res: Response): Promise<void> 
 
 export const updateMember = async (req: Request, res: Response): Promise<void> => {
   try {
-    const oldMember: any = await Member.findById(req.params.id).lean();
-    if (!oldMember) {
-      res.status(404).json({ success: false, message: 'Member not found' });
-      return;
-    }
-
-    const updateData = { ...req.body };
-
-    // ✅ ARCHIVE HISTORY ON RENEWAL
-    // Detect renewal: if membershipEndDate is being updated and it's different from old one
-    if (updateData.membershipEndDate && oldMember.membershipEndDate) {
-      const oldEndDate = new Date(oldMember.membershipEndDate).toISOString();
-      const newEndDate = new Date(updateData.membershipEndDate).toISOString();
-
-      if (oldEndDate !== newEndDate) {
-         console.log(`📦 ARCHIVING HISTORY: Member ${oldMember.memberId} is being renewed.`);
-         
-         // Build history entry from current (old) state
-         const historyEntry = {
-           plan: oldMember.plan,
-           membershipStartDate: oldMember.membershipStartDate,
-           membershipEndDate: oldMember.membershipEndDate,
-           planAmount: oldMember.planAmount || 0,
-           discountAmount: oldMember.discountAmount || 0,
-           taxAmount: oldMember.taxAmount || 0,
-           totalAmount: oldMember.totalAmount || 0,
-           paymentReceived: oldMember.paymentReceived || 0,
-           paymentRemaining: oldMember.paymentRemaining || 0,
-           recordedAt: new Date()
-         };
-
-         // Use $push to add to history array during the update
-         // Important: If you use findByIdAndUpdate with req.body, you must ensure 
-         // we don't overwrite the array but append to it.
-         if (!updateData.$push) updateData.$push = {};
-         updateData.$push.history = historyEntry;
-      }
-    }
-
-    const member = await Member.findByIdAndUpdate(
-      req.params.id,
-      updateData,
-      { new: true, runValidators: true }
-    )
-      .populate('branch', 'name city')
-      .populate('plan', 'planName duration price')
-      .populate('history.plan', 'planName duration price');
-
+    // 1. Find member and capture old state for history/receipt logic
+    const member = await Member.findById(req.params.id);
     if (!member) {
       res.status(404).json({ success: false, message: 'Member not found' });
       return;
     }
 
-    // ✅ Log member update with field-level changes
+    // Capture old values BEFORE updating for comparison and history archiving
+    const oldState = JSON.parse(JSON.stringify(member));
+    const oldEndDate = oldState.membershipEndDate ? new Date(oldState.membershipEndDate).toISOString() : null;
+    const oldPaymentTotal = oldState.paymentReceived || 0;
+
+    // 2. Prepare new values
+    const newEndDate = req.body.membershipEndDate ? new Date(req.body.membershipEndDate).toISOString() : null;
+    const newPaymentTotal = req.body.paymentReceived || 0;
+    const freshPaymentAmount = newPaymentTotal - oldPaymentTotal;
+
+    // ✅ RENEWAL ARCHIVING
+    if (newEndDate && oldEndDate && oldEndDate !== newEndDate) {
+      console.log(`📦 ARCHIVING HISTORY: Member ${member.memberId} is being renewed.`);
+      member.history.push({
+        plan: member.plan,
+        membershipStartDate: member.membershipStartDate,
+        membershipEndDate: member.membershipEndDate,
+        planAmount: member.planAmount || 0,
+        discountPercentage: member.discountPercentage || 0,
+        discountAmount: member.discountAmount || 0,
+        taxPercentage: member.taxPercentage || 0,
+        taxAmount: member.taxAmount || 0,
+        totalAmount: member.totalAmount || 0,
+        paymentReceived: member.paymentReceived || 0,
+        paymentRemaining: member.paymentRemaining || 0,
+        status: member.status,
+        recordedAt: new Date()
+      });
+    }
+
+    // ✅ PAYMENT TRACKING
+    if (freshPaymentAmount > 0) {
+      console.log(`💰 RECORDING PAYMENT: ₹${freshPaymentAmount} for ${member.name}`);
+      member.payments.push({
+        amount: freshPaymentAmount,
+        paymentDate: new Date(),
+        paymentMode: req.body.paymentMode || 'UPI',
+        recordedBy: (req.user?.id as any) || null,
+        note: req.body.paymentNote || (newEndDate && oldEndDate !== newEndDate ? 'Renewal payment' : 'Additional payment')
+      });
+    }
+
+    // 3. Apply updates to the document
+    const updateFields = { ...req.body };
+    delete updateFields.history; // Don't let user overwrite history/payments arrays directly
+    delete updateFields.payments;
+    
+    Object.assign(member, updateFields);
+    await member.save();
+
+    // 4. Send Receipt if Payment detected
+    let receiptBuffer: Buffer | null = null;
+    let receiptFilename: string | null = null;
+    let receiptErrorMsg: string | null = null;
+
+    if (freshPaymentAmount > 0) {
+      console.log(`💰 DISPATCHING RECEIPT for ₹${freshPaymentAmount}`);
+      const isRenewal = !!req.body.membershipEndDate && oldEndDate !== newEndDate;
+      const receiptTitle = isRenewal ? 'Membership Renewal' : 'Partial Payment';
+      
+      try {
+          const user = await Employee.findById(req.user?.id);
+          const populatedForEmail = await Member.findById(member._id)
+            .populate('branch', 'name city')
+            .populate('plan', 'planName duration price');
+
+          receiptBuffer = generateDocxBuffer({
+            name: member.name,
+            email: member.email,
+            mobile: member.mobileNumber,
+            planName: (populatedForEmail?.plan as any)?.planName || 'N/A',
+            packageDetail: (populatedForEmail?.plan as any)?.planName || 'N/A',
+            price: (populatedForEmail?.plan as any)?.price || 0,
+            packagePrice: (populatedForEmail?.plan as any)?.price || 0,
+            startDate: member.membershipStartDate ? new Date(member.membershipStartDate).toLocaleDateString('en-IN') : 'N/A',
+            endDate: member.membershipEndDate ? new Date(member.membershipEndDate).toLocaleDateString('en-IN') : 'N/A',
+            memberId: member.memberId,
+            branch: (populatedForEmail?.branch as any)?.name || 'N/A',
+            city: (populatedForEmail?.branch as any)?.city || 'N/A',
+            date: new Date().toLocaleDateString('en-IN'),
+            dateTime: new Date().toLocaleString('en-IN'),
+            dateOfInvoice: new Date().toLocaleDateString('en-IN'),
+            responsibleLog: user?.name || 'Reception',
+            invoiceType: isRenewal ? 'Renewal' : 'Partial Payment',
+            paidPrice: freshPaymentAmount,
+            balanceAmount: member.paymentRemaining,
+            totalPayment: member.totalAmount || (populatedForEmail?.plan as any)?.price || 0,
+            discount: member.discountAmount || 0,
+            paymentMode: req.body.paymentMode || 'UPI'
+          });
+
+          receiptFilename = `${member.name}_MTF_Reseat.docx`;
+
+          await sendEmail(
+            member.email,
+            `Payment Receipt - ${receiptTitle} (${member.memberId})`,
+            `<p>Dear ${member.name}, your payment of ₹${freshPaymentAmount} has been received.</p>`,
+            [{ filename: receiptFilename, content: receiptBuffer }]
+          );
+      } catch (err: any) {
+          console.error('❌ Failed to send payment receipt:', err);
+          receiptErrorMsg = err.message;
+      }
+    }
+
+    // 5. Activity Logging
     try {
       const user = await Employee.findById(req.user?.id);
-      const skipFields = ['_id', '__v', 'createdAt', 'updatedAt', 'memberId', 'convertedBy', 'enquiryId'];
-      const changes: string[] = [];
-
-      if (oldMember) {
-        Object.keys(req.body).forEach((key: string) => {
-          if (skipFields.includes(key)) return;
-          const oldVal = oldMember[key]?.toString?.() || '';
-          const newVal = req.body[key]?.toString?.() || '';
-          if (oldVal !== newVal) {
-            changes.push(`${key}: "${oldVal || '-'}" → "${newVal || '-'}"`);
-          }
-        });
-      }
-
-      const changeStr = changes.length > 0 ? changes.join(', ') : 'No field changes detected';
-
       await ActivityLog.create({
         action: 'member_updated',
         performedBy: req.user?.id,
         performedByName: user?.name || 'Unknown',
         targetType: 'Member',
         targetId: member._id,
-        targetName: member.name || 'Unknown',
-        details: `Member "${member.name}" (${member.memberId}) updated by ${user?.name || 'Unknown'} — ${changeStr}`
+        targetName: member.name,
+        details: `Member updated. Payments recorded: ${freshPaymentAmount > 0 ? 'Yes' : 'No'}. Renewal: ${oldEndDate !== newEndDate ? 'Yes' : 'No'}.`
       });
     } catch (logError) {
       console.error('Failed to create activity log:', logError);
     }
 
-    // ✅ Detect Renewal and Send Receipt
-    // Using math (payment difference) instead of just date string comparison for higher reliability
-    const oldPayment = oldMember?.paymentReceived || 0;
-    const newPayment = req.body.paymentReceived || 0;
-    const freshPayment = newPayment - oldPayment;
-
-    // Also check if membership end date was actually provided/changed
-    const isNewEndDateProvided = !!req.body.membershipEndDate;
-
-    let receiptBuffer: Buffer | null = null;
-    let receiptFilename: string | null = null;
-    let receiptErrorMsg: string | null = null;
-
-    if (freshPayment > 0) {
-      console.log(`💰 PAYMENT DETECTED for member: ${member.name}. Amount: ₹${freshPayment}`);
-
-      const isRenewal = isNewEndDateProvided;
-      const receiptTitle = isRenewal ? 'Membership Renewal' : 'Partial Payment';
-      const emailSubject = isRenewal
-        ? `Payment Receipt - Membership Renewal (${member.memberId})`
-        : `Payment Receipt - Additional Payment (${member.memberId})`;
-
-      const receiptHtml = `
-        <div style="font-family: sans-serif; color: #333; max-width: 600px; margin: auto; border: 1px solid #6366f1; padding: 0; border-radius: 12px; overflow: hidden;">
-          <div style="background: #6366f1; color: white; padding: 20px; text-align: center;">
-            <h1 style="margin: 0; font-size: 24px;">Payment Receipt</h1>
-            <p style="margin: 5px 0 0 0; opacity: 0.9;">${receiptTitle} Successful</p>
-          </div>
-          
-          <div style="padding: 30px;">
-            <p>Dear <strong>${member.name}</strong>,</p>
-            <p>Thank you for your payment to MuscleTime. Your transaction has been successfully processed.</p>
-            
-            <div style="background: #f8fafc; border: 1px dashed #cbd5e1; padding: 20px; border-radius: 8px; margin: 25px 0;">
-              <table style="width: 100%; border-collapse: collapse;">
-                <tr>
-                  <td style="padding: 8px 0; color: #64748b;">Receipt Date:</td>
-                  <td style="padding: 8px 0; text-align: right; font-weight: bold;">${new Date().toLocaleDateString('en-IN')}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0; color: #64748b;">Member ID:</td>
-                  <td style="padding: 8px 0; text-align: right; font-weight: bold;">${member.memberId}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0; color: #64748b;">Plan:</td>
-                  <td style="padding: 8px 0; text-align: right; font-weight: bold;">${(member.plan as any)?.planName || 'N/A'}</td>
-                </tr>
-                <tr style="border-top: 1px solid #e2e8f0;">
-                  <td style="padding: 15px 0 8px 0; color: #64748b; font-size: 1.1em;">Amount Received:</td>
-                  <td style="padding: 15px 0 8px 0; text-align: right; font-size: 1.5em; font-weight: bold; color: #10b981;">₹${freshPayment}</td>
-                </tr>
-                ${isRenewal ? `
-                <tr>
-                  <td style="padding: 0 0 8px 0; color: #64748b;">New Expiry Date:</td>
-                  <td style="padding: 0 0 8px 0; text-align: right; font-weight: bold; color: #ef4444;">${new Date(member.membershipEndDate).toLocaleDateString('en-IN')}</td>
-                </tr>
-                ` : `
-                <tr>
-                  <td style="padding: 0 0 8px 0; color: #64748b;">Remaining Balance:</td>
-                  <td style="padding: 0 0 8px 0; text-align: right; font-weight: bold; color: #ef4444;">₹${member.paymentRemaining}</td>
-                </tr>
-                `}
-              </table>
-            </div>
-            
-            <p style="text-align: center; color: #64748b; font-size: 0.9rem;">
-              Please keep this receipt for your records. See you at the gym!
-            </p>
-          </div>
-          
-          <div style="background: #f1f5f9; padding: 15px; text-align: center; font-size: 0.8rem; color: #94a3b8;">
-            © ${new Date().getFullYear()} MuscleTime ERP. All rights reserved.
-          </div>
-        </div>
-      `;
-
-      // 📄 Prepare DOCX Attachment
-      let attachments: any[] = [];
-      try {
-        const user = await Employee.findById(req.user?.id);
-
-        receiptBuffer = generateDocxBuffer({
-          name: member.name,
-          email: member.email,
-          mobile: member.mobileNumber,
-          planName: (member.plan as any)?.planName || 'N/A',
-          packageDetail: (member.plan as any)?.planName || 'N/A',
-          price: (member.plan as any)?.price || 0,
-          packagePrice: (member.plan as any)?.price || 0,
-          startDate: member.membershipStartDate ? new Date(member.membershipStartDate).toLocaleDateString('en-IN') : 'N/A',
-          endDate: member.membershipEndDate ? new Date(member.membershipEndDate).toLocaleDateString('en-IN') : 'N/A',
-          memberId: member.memberId,
-          branch: (member.branch as any)?.name || 'N/A',
-          city: (member.branch as any)?.city || 'N/A',
-          date: new Date().toLocaleDateString('en-IN'),
-          dateTime: new Date().toLocaleString('en-IN'),
-          dateOfInvoice: new Date().toLocaleDateString('en-IN'),
-          responsibleLog: user?.name || 'Reception',
-          invoiceType: isRenewal ? 'Renewal' : 'Partial Payment',
-          paidPrice: freshPayment,
-          balanceAmount: member.paymentRemaining,
-          totalPayment: (member as any).totalAmount || (member.plan as any)?.price || 0,
-          discount: (member as any).discountAmount || 0,
-          paymentMode: req.body.paymentMode || 'UPI'
-        });
-
-        receiptFilename = `${member.name}_MTF_Reseat.docx`;
-
-        attachments.push({
-          filename: receiptFilename,
-          content: receiptBuffer
-        });
-      } catch (docxErr: any) {
-        console.error('❌ Failed to generate DOCX attachment:', docxErr);
-        receiptErrorMsg = docxErr?.message || 'Unknown template error';
-      }
-
-      try {
-        await sendEmail(
-          member.email,
-          emailSubject,
-          receiptHtml,
-          attachments
-        );
-        console.log(`✅ Payment receipt emailed to ${member.email} with DOCX attachment`);
-      } catch (err) {
-        console.error('❌ Failed to send payment receipt:', err);
-      }
-    }
+    // 6. Return response
+    const populatedMember = await Member.findById(member._id)
+      .populate('branch', 'name city')
+      .populate('plan', 'planName duration price')
+      .populate('history.plan', 'planName duration price');
 
     res.json({
       success: true,
-      data: member,
+      data: populatedMember,
       receiptBuffer: receiptBuffer ? receiptBuffer.toString('base64') : null,
       receiptFilename: receiptFilename || null,
       message: receiptErrorMsg ? `Update successful, but Receipt Error: ${receiptErrorMsg}` : undefined
     });
-  } catch (error) {
+
+  } catch (error: any) {
     console.error('Error updating member:', error);
-    res.status(500).json({ success: false, message: 'Failed to update member' });
+    res.status(500).json({ success: false, message: error.message || 'Failed to update member' });
   }
 };
 
@@ -490,5 +421,43 @@ export const deleteMember = async (req: Request, res: Response): Promise<void> =
   } catch (error) {
     console.error('Error deleting member:', error);
     res.status(500).json({ success: false, message: 'Failed to delete member' });
+  }
+};
+
+// Get member history
+export const getMemberHistory = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const member = await Member.findById(req.params.id)
+      .select('memberId name history payments plan membershipStartDate membershipEndDate totalAmount paymentReceived paymentRemaining status')
+      .populate('history.plan', 'planName duration price')
+      .populate('plan', 'planName duration price')
+      .populate('payments.recordedBy', 'name');
+
+    if (!member) {
+      res.status(404).json({ success: false, message: 'Member not found' });
+      return;
+    }
+
+    res.json({
+      success: true,
+      data: {
+        memberId: member.memberId,
+        name: member.name,
+        currentPlan: {
+          plan: member.plan,
+          startDate: member.membershipStartDate,
+          endDate: member.membershipEndDate,
+          totalAmount: member.totalAmount,
+          paymentReceived: member.paymentReceived,
+          paymentRemaining: member.paymentRemaining,
+          status: member.status
+        },
+        planHistory: member.history,
+        paymentHistory: member.payments
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching member history:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch member history' });
   }
 };

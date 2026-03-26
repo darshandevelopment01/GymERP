@@ -44,6 +44,8 @@ const MemberMaster = () => {
   const [selectedMemberForRenewal, setSelectedMemberForRenewal] = useState(null);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [selectedMemberForHistory, setSelectedMemberForHistory] = useState(null);
+  const [historyData, setHistoryData] = useState(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [renewData, setRenewData] = useState({
     planCategory: '',
     plan: '',
@@ -826,11 +828,22 @@ const MemberMaster = () => {
               )}
               <button
                 className="btn-history"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSelectedMemberForHistory(item);
-                  setShowHistoryModal(true);
-                }}
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    setSelectedMemberForHistory(item);
+                    setShowHistoryModal(true);
+                    setHistoryLoading(true);
+                    try {
+                      const response = await memberApi.getHistory(item._id);
+                      if (response.success) {
+                        setHistoryData(response.data);
+                      }
+                    } catch (err) {
+                      console.error('Failed to fetch history:', err);
+                    } finally {
+                      setHistoryLoading(false);
+                    }
+                  }}
                 style={{
                   background: 'linear-gradient(135deg, #64748b 0%, #475569 100%)',
                   color: 'white',
@@ -1318,66 +1331,172 @@ const MemberMaster = () => {
           </div>
         </div>
       )}
-      {/* History Modal */}
+      {/* Redesigned History Modal */}
       {showHistoryModal && selectedMemberForHistory && (
-        <div className="modal-overlay" onClick={() => setShowHistoryModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '800px' }}>
-            <div className="modal-header" style={{ background: 'linear-gradient(135deg, #64748b 0%, #475569 100%)' }}>
-              <h2 style={{ color: 'white' }}>📜 Plan History: {selectedMemberForHistory.name}</h2>
+        <div className="modal-overlay history-modal-overlay" onClick={() => setShowHistoryModal(false)}>
+          <div className="modal-content history-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header history-modal-header">
+              <div className="header-title-group">
+                <span className="header-icon">📜</span>
+                <h2>Member Activity History</h2>
+              </div>
               <button className="btn-close" onClick={() => setShowHistoryModal(false)}>✕</button>
             </div>
 
-            <div className="form-content" style={{ padding: '1.5rem' }}>
-              {!selectedMemberForHistory.history || selectedMemberForHistory.history.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
-                  <p>No past plan history available for this member.</p>
+            <div className="history-modal-body">
+              {/* Member Profile Quick View */}
+              <div className="history-member-card">
+                <div className="member-avatar">
+                  {selectedMemberForHistory.profilePhoto ? (
+                    <img src={selectedMemberForHistory.profilePhoto} alt="" />
+                  ) : (
+                    <div className="avatar-placeholder">{selectedMemberForHistory.name.charAt(0)}</div>
+                  )}
                 </div>
+                <div className="member-details">
+                  <h3>{selectedMemberForHistory.name}</h3>
+                  <div className="member-badges">
+                    <span className="badge-id">{selectedMemberForHistory.memberId}</span>
+                    <span className={`badge-status status-${selectedMemberForHistory.status}`}>
+                      {selectedMemberForHistory.status}
+                    </span>
+                  </div>
+                </div>
+                <div className="member-contact-info">
+                  <p>📞 {selectedMemberForHistory.mobileNumber}</p>
+                  <p>📧 {selectedMemberForHistory.email}</p>
+                </div>
+              </div>
+
+              {historyLoading ? (
+                <div className="history-loading">
+                  <div className="spinner-small"></div>
+                  <p>Loading timeline...</p>
+                </div>
+              ) : !historyData ? (
+                <div className="history-empty">No activity data found.</div>
               ) : (
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
-                    <thead>
-                      <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
-                        <th style={{ padding: '12px', textAlign: 'left' }}>Plan Name</th>
-                        <th style={{ padding: '12px', textAlign: 'left' }}>Duration</th>
-                        <th style={{ padding: '12px', textAlign: 'right' }}>Total Amount</th>
-                        <th style={{ padding: '12px', textAlign: 'right' }}>Received</th>
-                        <th style={{ padding: '12px', textAlign: 'right' }}>Remaining</th>
-                        <th style={{ padding: '12px', textAlign: 'center' }}>Archived On</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {selectedMemberForHistory.history.map((h, index) => (
-                        <tr key={index} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                          <td style={{ padding: '12px' }}>
-                            <div style={{ fontWeight: '600', color: '#1e293b' }}>
-                              {h.plan?.planName || 'Unknown Plan'}
+                <>
+                  {/* Current Active Plan Section */}
+                  <div className="current-plan-section">
+                    <div className="section-label">Current Active Plan</div>
+                    <div className="current-plan-card">
+                      <div className="plan-main">
+                        <h4>{historyData.currentPlan?.plan?.planName || 'N/A'}</h4>
+                        <div className="plan-dates">
+                          <span>{formatDate(historyData.currentPlan?.startDate)}</span>
+                          <span className="date-arrow">→</span>
+                          <span className="expiry-date">{formatDate(historyData.currentPlan?.endDate)}</span>
+                        </div>
+                      </div>
+                      <div className="plan-stats">
+                        <div className="stat-item">
+                          <label>Bill Amount</label>
+                          <span className="val highlight">₹{historyData.currentPlan?.totalAmount}</span>
+                        </div>
+                        <div className="stat-item">
+                          <label>Paid</label>
+                          <span className="val success">₹{historyData.currentPlan?.paymentReceived}</span>
+                        </div>
+                        <div className="stat-item">
+                          <label>Pending</label>
+                          <span className="val danger">₹{historyData.currentPlan?.paymentRemaining}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Activity Timeline */}
+                  <div className="timeline-container">
+                    <div className="section-label">Activity Timeline</div>
+                    
+                    {(() => {
+                      // Merge and sort activities
+                      const activities = [
+                        ...(historyData.planHistory || []).map(p => ({ ...p, type: 'plan', date: p.recordedAt })),
+                        ...(historyData.paymentHistory || []).map(p => ({ ...p, type: 'payment', date: p.paymentDate }))
+                      ].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                      if (activities.length === 0) {
+                        return <div className="timeline-empty">No past history recorded.</div>;
+                      }
+
+                      return (
+                        <div className="timeline-list">
+                          {activities.map((item, idx) => (
+                            <div key={idx} className={`timeline-item ${item.type}`}>
+                              <div className="timeline-marker">
+                                <div className="marker-circle">
+                                  {item.type === 'plan' ? '🔄' : '💰'}
+                                </div>
+                                <div className="marker-line"></div>
+                              </div>
+                              <div className="timeline-content">
+                                <div className="content-header">
+                                  <span className="activity-type">
+                                    {item.type === 'plan' ? 'Plan Renewal' : 'Payment Received'}
+                                  </span>
+                                  <span className="activity-date">
+                                    {new Date(item.date).toLocaleDateString('en-IN', {
+                                      day: '2-digit', month: 'short', year: 'numeric',
+                                      hour: '2-digit', minute: '2-digit'
+                                    })}
+                                  </span>
+                                </div>
+                                
+                                <div className="activity-card">
+                                  {item.type === 'plan' ? (
+                                    <div className="plan-activity-detail">
+                                      <div className="detail-row">
+                                        <strong>{item.plan?.planName || 'Previous Plan'}</strong>
+                                        <span className="price">₹{item.totalAmount}</span>
+                                      </div>
+                                      <div className="detail-row sub">
+                                        <span>{formatDate(item.membershipStartDate)} to {formatDate(item.membershipEndDate)}</span>
+                                        <span className="status-sub">{item.status}</span>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="payment-activity-detail">
+                                      <div className="detail-row">
+                                        <span className="amount">+ ₹{item.amount}</span>
+                                        <span className="mode">{item.paymentMode}</span>
+                                      </div>
+                                      <div className="detail-row sub">
+                                        <span>Recorded by {item.recordedBy?.name || 'Staff'}</span>
+                                        {item.note && <span className="note">"{item.note}"</span>}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
                             </div>
-                          </td>
-                          <td style={{ padding: '12px' }}>
-                            <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
-                              {new Date(h.membershipStartDate).toLocaleDateString('en-IN')} - 
-                              {new Date(h.membershipEndDate).toLocaleDateString('en-IN')}
-                            </div>
-                          </td>
-                          <td style={{ padding: '12px', textAlign: 'right', fontWeight: 'bold' }}>₹{h.totalAmount}</td>
-                          <td style={{ padding: '12px', textAlign: 'right', color: '#16a34a' }}>₹{h.paymentReceived}</td>
-                          <td style={{ padding: '12px', textAlign: 'right', color: h.paymentRemaining > 0 ? '#ef4444' : '#64748b' }}>
-                            ₹{h.paymentRemaining}
-                          </td>
-                          <td style={{ padding: '12px', textAlign: 'center', color: '#94a3b8', fontSize: '0.75rem' }}>
-                            {new Date(h.recordedAt).toLocaleDateString('en-IN')}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </>
               )}
             </div>
 
-            <div className="modal-footer">
+            <div className="modal-footer history-modal-footer">
+               <div className="history-summary">
+                  {historyData && (
+                    <>
+                      <div className="summary-item">
+                        <label>Lifetime Billing</label>
+                        <span>₹{(historyData.planHistory?.reduce((sum, p) => sum + (p.totalAmount || 0), 0) || 0) + (historyData.currentPlan?.totalAmount || 0)}</span>
+                      </div>
+                      <div className="summary-item">
+                        <label>Total Received</label>
+                        <span className="success">₹{historyData.paymentHistory?.reduce((sum, p) => sum + (p.amount || 0), 0) || 0}</span>
+                      </div>
+                    </>
+                  )}
+               </div>
               <button className="btn-cancel" onClick={() => setShowHistoryModal(false)}>
-                Close
+                Close History
               </button>
             </div>
           </div>

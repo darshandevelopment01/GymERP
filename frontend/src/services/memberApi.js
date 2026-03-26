@@ -71,6 +71,17 @@ const memberApi = {
       throw error;
     }
   },
+
+  async getHistory(id) {
+    try {
+      const response = await fetchWithAuth(`${API_URL}/members/${id}/history`);
+      if (!response.ok) throw new Error('Failed to fetch history');
+      return await response.json();
+    } catch (error) {
+      console.error('Get history error:', error);
+      throw error;
+    }
+  },
 };
 
 export default memberApi;

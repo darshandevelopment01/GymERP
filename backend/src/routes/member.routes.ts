@@ -4,7 +4,8 @@ import {
   getMemberById,
   createMember, 
   updateMember, 
-  deleteMember 
+  deleteMember,
+  getMemberHistory
 } from '../controllers/member.controller';
 import { authMiddleware } from '../middleware/auth.middleware';
 
@@ -14,6 +15,7 @@ const router = Router();
 router.get('/', authMiddleware, getAllMembers);
 router.get('/:id', authMiddleware, getMemberById);
 router.post('/', authMiddleware, createMember);
+router.get('/:id/history', authMiddleware, getMemberHistory);
 router.put('/:id', authMiddleware, updateMember);
 router.delete('/:id', authMiddleware, deleteMember);
 
