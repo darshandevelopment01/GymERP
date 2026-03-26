@@ -832,14 +832,33 @@ const MemberMaster = () => {
                     e.stopPropagation();
                     setSelectedMemberForHistory(item);
                     setShowHistoryModal(true);
+                    setHistoryData(null); // Reset stale data
                     setHistoryLoading(true);
                     try {
                       const response = await memberApi.getHistory(item._id);
                       if (response.success) {
                         setHistoryData(response.data);
+                      } else {
+                        throw new Error('API returned unsuccessful');
                       }
                     } catch (err) {
-                      console.error('Failed to fetch history:', err);
+                      console.error('Failed to fetch history API, falling back to member data:', err);
+                      // Fallback: build historyData from the already-loaded member object
+                      setHistoryData({
+                        memberId: item.memberId,
+                        name: item.name,
+                        currentPlan: {
+                          plan: item.plan,
+                          startDate: item.membershipStartDate,
+                          endDate: item.membershipEndDate,
+                          totalAmount: item.totalAmount,
+                          paymentReceived: item.paymentReceived,
+                          paymentRemaining: item.paymentRemaining,
+                          status: item.status
+                        },
+                        planHistory: item.history || [],
+                        paymentHistory: item.payments || []
+                      });
                     } finally {
                       setHistoryLoading(false);
                     }

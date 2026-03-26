@@ -162,12 +162,25 @@ const MemberSchema = new mongoose_1.Schema({
             membershipStartDate: Date,
             membershipEndDate: Date,
             planAmount: Number,
+            discountPercentage: { type: Number, default: 0 },
             discountAmount: Number,
+            taxPercentage: { type: Number, default: 0 },
             taxAmount: Number,
             totalAmount: Number,
             paymentReceived: Number,
             paymentRemaining: Number,
+            status: { type: String, default: 'active' },
             recordedAt: { type: Date, default: Date.now }
+        }
+    ],
+    payments: [
+        {
+            amount: { type: Number, required: true },
+            paymentDate: { type: Date, default: Date.now },
+            paymentMode: { type: String, default: 'Cash' },
+            transactionId: { type: String, default: '' },
+            recordedBy: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Employee', default: null },
+            note: { type: String, default: '' }
         }
     ]
 }, {

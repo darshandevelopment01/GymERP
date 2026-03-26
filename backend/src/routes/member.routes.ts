@@ -13,9 +13,9 @@ const router = Router();
 
 // All routes use authMiddleware
 router.get('/', authMiddleware, getAllMembers);
+router.get('/:id/history', authMiddleware, getMemberHistory);
 router.get('/:id', authMiddleware, getMemberById);
 router.post('/', authMiddleware, createMember);
-router.get('/:id/history', authMiddleware, getMemberHistory);
 router.put('/:id', authMiddleware, updateMember);
 router.delete('/:id', authMiddleware, deleteMember);
 
