@@ -42,6 +42,8 @@ const MemberMaster = () => {
 
   const [showRenewModal, setShowRenewModal] = useState(false);
   const [selectedMemberForRenewal, setSelectedMemberForRenewal] = useState(null);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [selectedMemberForHistory, setSelectedMemberForHistory] = useState(null);
   const [renewData, setRenewData] = useState({
     planCategory: '',
     plan: '',
@@ -822,6 +824,26 @@ const MemberMaster = () => {
                   🔄 Renew
                 </button>
               )}
+              <button
+                className="btn-history"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedMemberForHistory(item);
+                  setShowHistoryModal(true);
+                }}
+                style={{
+                  background: 'linear-gradient(135deg, #64748b 0%, #475569 100%)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '0.85rem',
+                  fontWeight: '600'
+                }}
+              >
+                📜 History
+              </button>
             </div>
           );
         }}
@@ -1293,6 +1315,71 @@ const MemberMaster = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* History Modal */}
+      {showHistoryModal && selectedMemberForHistory && (
+        <div className="modal-overlay" onClick={() => setShowHistoryModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '800px' }}>
+            <div className="modal-header" style={{ background: 'linear-gradient(135deg, #64748b 0%, #475569 100%)' }}>
+              <h2 style={{ color: 'white' }}>📜 Plan History: {selectedMemberForHistory.name}</h2>
+              <button className="btn-close" onClick={() => setShowHistoryModal(false)}>✕</button>
+            </div>
+
+            <div className="form-content" style={{ padding: '1.5rem' }}>
+              {!selectedMemberForHistory.history || selectedMemberForHistory.history.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
+                  <p>No past plan history available for this member.</p>
+                </div>
+              ) : (
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                    <thead>
+                      <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
+                        <th style={{ padding: '12px', textAlign: 'left' }}>Plan Name</th>
+                        <th style={{ padding: '12px', textAlign: 'left' }}>Duration</th>
+                        <th style={{ padding: '12px', textAlign: 'right' }}>Total Amount</th>
+                        <th style={{ padding: '12px', textAlign: 'right' }}>Received</th>
+                        <th style={{ padding: '12px', textAlign: 'right' }}>Remaining</th>
+                        <th style={{ padding: '12px', textAlign: 'center' }}>Archived On</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedMemberForHistory.history.map((h, index) => (
+                        <tr key={index} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                          <td style={{ padding: '12px' }}>
+                            <div style={{ fontWeight: '600', color: '#1e293b' }}>
+                              {h.plan?.planName || 'Unknown Plan'}
+                            </div>
+                          </td>
+                          <td style={{ padding: '12px' }}>
+                            <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                              {new Date(h.membershipStartDate).toLocaleDateString('en-IN')} - 
+                              {new Date(h.membershipEndDate).toLocaleDateString('en-IN')}
+                            </div>
+                          </td>
+                          <td style={{ padding: '12px', textAlign: 'right', fontWeight: 'bold' }}>₹{h.totalAmount}</td>
+                          <td style={{ padding: '12px', textAlign: 'right', color: '#16a34a' }}>₹{h.paymentReceived}</td>
+                          <td style={{ padding: '12px', textAlign: 'right', color: h.paymentRemaining > 0 ? '#ef4444' : '#64748b' }}>
+                            ₹{h.paymentRemaining}
+                          </td>
+                          <td style={{ padding: '12px', textAlign: 'center', color: '#94a3b8', fontSize: '0.75rem' }}>
+                            {new Date(h.recordedAt).toLocaleDateString('en-IN')}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            <div className="modal-footer">
+              <button className="btn-cancel" onClick={() => setShowHistoryModal(false)}>
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

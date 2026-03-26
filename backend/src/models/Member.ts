@@ -26,6 +26,18 @@ export interface IMember extends Document {
   profilePhoto?: string;
   enquiryId?: mongoose.Types.ObjectId;
   convertedBy?: mongoose.Types.ObjectId;
+  history: {
+    plan: mongoose.Types.ObjectId;
+    membershipStartDate: Date;
+    membershipEndDate: Date;
+    planAmount: number;
+    discountAmount: number;
+    taxAmount: number;
+    totalAmount: number;
+    paymentReceived: number;
+    paymentRemaining: number;
+    recordedAt: Date;
+  }[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -152,7 +164,21 @@ const MemberSchema = new Schema<IMember>(
       type: Schema.Types.ObjectId,
       ref: 'Employee',
       default: null
-    }
+    },
+    history: [
+      {
+        plan: { type: Schema.Types.ObjectId, ref: 'Plan' },
+        membershipStartDate: Date,
+        membershipEndDate: Date,
+        planAmount: Number,
+        discountAmount: Number,
+        taxAmount: Number,
+        totalAmount: Number,
+        paymentReceived: Number,
+        paymentRemaining: Number,
+        recordedAt: { type: Date, default: Date.now }
+      }
+    ]
   },
   {
     timestamps: true

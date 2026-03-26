@@ -216,6 +216,7 @@ export const getAllMembers = async (req: Request, res: Response): Promise<void> 
       .populate('branch', 'name city')
       .populate('plan', 'planName duration price')
       .populate('convertedBy', 'name')
+      .populate('history.plan', 'planName duration price')
       .sort({ createdAt: -1 });
 
     res.json({ success: true, data: members });
@@ -231,7 +232,8 @@ export const getMemberById = async (req: Request, res: Response): Promise<void> 
     const member = await Member.findById(req.params.id)
       .populate('branch', 'name city')
       .populate('plan', 'planName duration price')
-      .populate('convertedBy', 'name');
+      .populate('convertedBy', 'name')
+      .populate('history.plan', 'planName duration price');
 
     if (!member) {
       res.status(404).json({ success: false, message: 'Member not found' });
@@ -247,16 +249,53 @@ export const getMemberById = async (req: Request, res: Response): Promise<void> 
 
 export const updateMember = async (req: Request, res: Response): Promise<void> => {
   try {
-    // ✅ Fetch old member before update to track changes
     const oldMember: any = await Member.findById(req.params.id).lean();
+    if (!oldMember) {
+      res.status(404).json({ success: false, message: 'Member not found' });
+      return;
+    }
+
+    const updateData = { ...req.body };
+
+    // ✅ ARCHIVE HISTORY ON RENEWAL
+    // Detect renewal: if membershipEndDate is being updated and it's different from old one
+    if (updateData.membershipEndDate && oldMember.membershipEndDate) {
+      const oldEndDate = new Date(oldMember.membershipEndDate).toISOString();
+      const newEndDate = new Date(updateData.membershipEndDate).toISOString();
+
+      if (oldEndDate !== newEndDate) {
+         console.log(`📦 ARCHIVING HISTORY: Member ${oldMember.memberId} is being renewed.`);
+         
+         // Build history entry from current (old) state
+         const historyEntry = {
+           plan: oldMember.plan,
+           membershipStartDate: oldMember.membershipStartDate,
+           membershipEndDate: oldMember.membershipEndDate,
+           planAmount: oldMember.planAmount || 0,
+           discountAmount: oldMember.discountAmount || 0,
+           taxAmount: oldMember.taxAmount || 0,
+           totalAmount: oldMember.totalAmount || 0,
+           paymentReceived: oldMember.paymentReceived || 0,
+           paymentRemaining: oldMember.paymentRemaining || 0,
+           recordedAt: new Date()
+         };
+
+         // Use $push to add to history array during the update
+         // Important: If you use findByIdAndUpdate with req.body, you must ensure 
+         // we don't overwrite the array but append to it.
+         if (!updateData.$push) updateData.$push = {};
+         updateData.$push.history = historyEntry;
+      }
+    }
 
     const member = await Member.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updateData,
       { new: true, runValidators: true }
     )
       .populate('branch', 'name city')
-      .populate('plan', 'planName duration price');
+      .populate('plan', 'planName duration price')
+      .populate('history.plan', 'planName duration price');
 
     if (!member) {
       res.status(404).json({ success: false, message: 'Member not found' });
@@ -306,6 +345,7 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
 
     let receiptBuffer: Buffer | null = null;
     let receiptFilename: string | null = null;
+    let receiptErrorMsg: string | null = null;
 
     if (freshPayment > 0) {
       console.log(`💰 PAYMENT DETECTED for member: ${member.name}. Amount: ₹${freshPayment}`);
