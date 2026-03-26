@@ -1,9 +1,10 @@
 import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
 
-// Load env vars BEFORE local imports
-dotenv.config();
+// Load env vars BEFORE local imports with explicit path
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 import connectDB from './config/db';
 import authRoutes from './routes/auth.routes';
@@ -52,10 +53,13 @@ app.use(async (req: Request, res: Response, next: NextFunction) => {
     await connectDB();
     next();
   } catch (error: any) {
-    console.error('DB Connection failed:', error.message);
+    console.error('DB Connection middleware caught error:', error.message);
     res.status(503).json({
       message: 'Database connection failed. Please try again.',
-      error: error.message
+      error: error.message,
+      suggestion: error.message.includes('MONGODB_URI environment variable is not set')
+        ? 'Check your environment variables (Vercel Settings).'
+        : 'Check your MongoDB Atlas IP whitelist (0.0.0.0/0).'
     });
   }
 });

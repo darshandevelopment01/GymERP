@@ -155,7 +155,21 @@ const MemberSchema = new mongoose_1.Schema({
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'Employee',
         default: null
-    }
+    },
+    history: [
+        {
+            plan: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Plan' },
+            membershipStartDate: Date,
+            membershipEndDate: Date,
+            planAmount: Number,
+            discountAmount: Number,
+            taxAmount: Number,
+            totalAmount: Number,
+            paymentReceived: Number,
+            paymentRemaining: Number,
+            recordedAt: { type: Date, default: Date.now }
+        }
+    ]
 }, {
     timestamps: true
 });

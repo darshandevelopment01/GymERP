@@ -135,7 +135,7 @@ router.get('/', auth_middleware_1.authMiddleware, async (req, res) => {
             .populate('member', 'name memberId mobileNumber')
             .populate('enquiry', 'name mobileNumber email enquiryId')
             .populate('createdBy', 'name')
-            .sort({ followUpDate: 1, createdAt: -1 });
+            .sort({ createdAt: -1 });
         res.json({
             success: true,
             data: followUps

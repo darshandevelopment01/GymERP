@@ -6,8 +6,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const dotenv_1 = __importDefault(require("dotenv"));
-// Load env vars BEFORE local imports
-dotenv_1.default.config();
+const path_1 = __importDefault(require("path"));
+// Load env vars BEFORE local imports with explicit path
+dotenv_1.default.config({ path: path_1.default.resolve(__dirname, '../.env') });
 const db_1 = __importDefault(require("./config/db"));
 const auth_routes_1 = __importDefault(require("./routes/auth.routes"));
 const dashboard_routes_1 = __importDefault(require("./routes/dashboard.routes"));
@@ -50,10 +51,13 @@ app.use(async (req, res, next) => {
         next();
     }
     catch (error) {
-        console.error('DB Connection failed:', error.message);
+        console.error('DB Connection middleware caught error:', error.message);
         res.status(503).json({
             message: 'Database connection failed. Please try again.',
-            error: error.message
+            error: error.message,
+            suggestion: error.message.includes('MONGODB_URI environment variable is not set')
+                ? 'Check your environment variables (Vercel Settings).'
+                : 'Check your MongoDB Atlas IP whitelist (0.0.0.0/0).'
         });
     }
 });

@@ -106,6 +106,7 @@ const createMember = async (req, res) => {
         // 📄 Prepare DOCX Attachment
         let attachments = [];
         let receiptBuffer = null;
+        let receiptErrorMsg = null;
         try {
             const user = await Employee_1.default.findById(req.user?.id);
             receiptBuffer = (0, mailer_1.generateDocxBuffer)({
@@ -116,7 +117,7 @@ const createMember = async (req, res) => {
                 packageDetail: planExists.planName,
                 price: planExists.price,
                 packagePrice: planExists.price,
-                startDate: new Date(trimmedData.membershipStartDate).toLocaleDateString('en-IN'),
+                startDate: startDate.toLocaleDateString('en-IN'),
                 endDate: endDate.toLocaleDateString('en-IN'),
                 memberId: member.memberId,
                 branch: branchExists?.name || 'N/A',
@@ -139,6 +140,7 @@ const createMember = async (req, res) => {
         }
         catch (docxErr) {
             console.error('❌ Failed to generate DOCX attachment:', docxErr);
+            receiptErrorMsg = docxErr?.message || 'Unknown template error';
         }
         const emailSent = await (0, mailer_1.sendEmail)(trimmedData.email, 'Welcome to MuscleTime - Your Membership Credentials', htmlMessage, attachments);
         // ✅ Create activity log
@@ -166,9 +168,10 @@ const createMember = async (req, res) => {
             data: populatedMember,
             receiptBuffer: receiptBuffer ? receiptBuffer.toString('base64') : null,
             receiptFilename: receiptBuffer ? `${trimmedData.name}_MTF_Reseat.docx` : null,
-            message: emailSent
+            message: (emailSent
                 ? 'Member created successfully! Credentials emailed.'
-                : 'Member created successfully! (⚠️ Email failed to send)'
+                : 'Member created successfully! (⚠️ Email failed to send)') +
+                (receiptErrorMsg ? ` \n⚠️ Receipt Error: ${receiptErrorMsg}` : '')
         });
     }
     catch (error) {
@@ -192,6 +195,7 @@ const getAllMembers = async (req, res) => {
             .populate('branch', 'name city')
             .populate('plan', 'planName duration price')
             .populate('convertedBy', 'name')
+            .populate('history.plan', 'planName duration price')
             .sort({ createdAt: -1 });
         res.json({ success: true, data: members });
     }
@@ -207,7 +211,8 @@ const getMemberById = async (req, res) => {
         const member = await Member_1.default.findById(req.params.id)
             .populate('branch', 'name city')
             .populate('plan', 'planName duration price')
-            .populate('convertedBy', 'name');
+            .populate('convertedBy', 'name')
+            .populate('history.plan', 'planName duration price');
         if (!member) {
             res.status(404).json({ success: false, message: 'Member not found' });
             return;
@@ -222,11 +227,44 @@ const getMemberById = async (req, res) => {
 exports.getMemberById = getMemberById;
 const updateMember = async (req, res) => {
     try {
-        // ✅ Fetch old member before update to track changes
         const oldMember = await Member_1.default.findById(req.params.id).lean();
-        const member = await Member_1.default.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true })
+        if (!oldMember) {
+            res.status(404).json({ success: false, message: 'Member not found' });
+            return;
+        }
+        const updateData = { ...req.body };
+        // ✅ ARCHIVE HISTORY ON RENEWAL
+        // Detect renewal: if membershipEndDate is being updated and it's different from old one
+        if (updateData.membershipEndDate && oldMember.membershipEndDate) {
+            const oldEndDate = new Date(oldMember.membershipEndDate).toISOString();
+            const newEndDate = new Date(updateData.membershipEndDate).toISOString();
+            if (oldEndDate !== newEndDate) {
+                console.log(`📦 ARCHIVING HISTORY: Member ${oldMember.memberId} is being renewed.`);
+                // Build history entry from current (old) state
+                const historyEntry = {
+                    plan: oldMember.plan,
+                    membershipStartDate: oldMember.membershipStartDate,
+                    membershipEndDate: oldMember.membershipEndDate,
+                    planAmount: oldMember.planAmount || 0,
+                    discountAmount: oldMember.discountAmount || 0,
+                    taxAmount: oldMember.taxAmount || 0,
+                    totalAmount: oldMember.totalAmount || 0,
+                    paymentReceived: oldMember.paymentReceived || 0,
+                    paymentRemaining: oldMember.paymentRemaining || 0,
+                    recordedAt: new Date()
+                };
+                // Use $push to add to history array during the update
+                // Important: If you use findByIdAndUpdate with req.body, you must ensure 
+                // we don't overwrite the array but append to it.
+                if (!updateData.$push)
+                    updateData.$push = {};
+                updateData.$push.history = historyEntry;
+            }
+        }
+        const member = await Member_1.default.findByIdAndUpdate(req.params.id, updateData, { new: true, runValidators: true })
             .populate('branch', 'name city')
-            .populate('plan', 'planName duration price');
+            .populate('plan', 'planName duration price')
+            .populate('history.plan', 'planName duration price');
         if (!member) {
             res.status(404).json({ success: false, message: 'Member not found' });
             return;
@@ -270,6 +308,7 @@ const updateMember = async (req, res) => {
         const isNewEndDateProvided = !!req.body.membershipEndDate;
         let receiptBuffer = null;
         let receiptFilename = null;
+        let receiptErrorMsg = null;
         if (freshPayment > 0) {
             console.log(`💰 PAYMENT DETECTED for member: ${member.name}. Amount: ₹${freshPayment}`);
             const isRenewal = isNewEndDateProvided;
@@ -342,8 +381,8 @@ const updateMember = async (req, res) => {
                     packageDetail: member.plan?.planName || 'N/A',
                     price: member.plan?.price || 0,
                     packagePrice: member.plan?.price || 0,
-                    startDate: new Date(member.membershipStartDate).toLocaleDateString('en-IN'),
-                    endDate: new Date(member.membershipEndDate).toLocaleDateString('en-IN'),
+                    startDate: member.membershipStartDate ? new Date(member.membershipStartDate).toLocaleDateString('en-IN') : 'N/A',
+                    endDate: member.membershipEndDate ? new Date(member.membershipEndDate).toLocaleDateString('en-IN') : 'N/A',
                     memberId: member.memberId,
                     branch: member.branch?.name || 'N/A',
                     city: member.branch?.city || 'N/A',
@@ -366,6 +405,7 @@ const updateMember = async (req, res) => {
             }
             catch (docxErr) {
                 console.error('❌ Failed to generate DOCX attachment:', docxErr);
+                receiptErrorMsg = docxErr?.message || 'Unknown template error';
             }
             try {
                 await (0, mailer_1.sendEmail)(member.email, emailSubject, receiptHtml, attachments);
@@ -379,7 +419,8 @@ const updateMember = async (req, res) => {
             success: true,
             data: member,
             receiptBuffer: receiptBuffer ? receiptBuffer.toString('base64') : null,
-            receiptFilename: receiptFilename || null
+            receiptFilename: receiptFilename || null,
+            message: receiptErrorMsg ? `Update successful, but Receipt Error: ${receiptErrorMsg}` : undefined
         });
     }
     catch (error) {
