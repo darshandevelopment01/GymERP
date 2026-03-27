@@ -279,7 +279,17 @@ const EnquiryMaster = () => {
 
   const handlePaymentChange = (e) => {
     const val = e.target.value;
-    const received = val === '' ? '' : parseFloat(val) || 0;
+    if (val === '') {
+      setPaymentData(prev => recalcRemaining({ ...prev, paymentReceived: '' }));
+      return;
+    }
+    let received = parseFloat(val) || 0;
+    if (received < 0) received = 0;
+
+    // Clamp to conversion total
+    const billing = getBillingBreakdown();
+    if (received > billing.total) received = billing.total;
+
     setPaymentData(prev => recalcRemaining({ ...prev, paymentReceived: received }));
   };
 

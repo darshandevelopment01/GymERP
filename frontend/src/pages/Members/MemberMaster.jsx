@@ -463,7 +463,17 @@ const MemberMaster = () => {
 
   const handleRenewPaymentChange = (e) => {
     const val = e.target.value;
-    const received = val === '' ? '' : parseFloat(val) || 0;
+    if (val === '') {
+      setRenewData(prev => recalcRenewData({ ...prev, paymentReceived: '' }));
+      return;
+    }
+    let received = parseFloat(val) || 0;
+    if (received < 0) received = 0;
+    
+    // Clamp to renewal total
+    const billing = getRenewBillingBreakdown();
+    if (received > billing.total) received = billing.total;
+    
     setRenewData(prev => recalcRenewData({ ...prev, paymentReceived: received }));
   };
 
@@ -937,7 +947,16 @@ const MemberMaster = () => {
                     value={additionalPayment}
                     onChange={(e) => {
                       const val = e.target.value;
-                      setAdditionalPayment(val === '' ? '' : parseFloat(val) || 0);
+                      if (val === '') {
+                        setAdditionalPayment('');
+                        return;
+                      }
+                      let amount = parseFloat(val) || 0;
+                      if (amount < 0) amount = 0;
+                      if (amount > selectedMember.paymentRemaining) {
+                        amount = selectedMember.paymentRemaining;
+                      }
+                      setAdditionalPayment(amount);
                     }}
                     required
                     max={selectedMember.paymentRemaining}
