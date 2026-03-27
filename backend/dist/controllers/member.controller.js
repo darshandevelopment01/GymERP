@@ -53,12 +53,14 @@ const createMember = async (req, res) => {
             const unit = durationMatch[2].toLowerCase();
             if (unit.includes('month')) {
                 endDate.setMonth(endDate.getMonth() + value);
+                endDate.setDate(endDate.getDate() - 1);
             }
             else if (unit.includes('year')) {
                 endDate.setFullYear(endDate.getFullYear() + value);
+                endDate.setDate(endDate.getDate() - 1);
             }
             else if (unit.includes('day')) {
-                endDate.setDate(endDate.getDate() + value);
+                endDate.setDate(endDate.getDate() + value - 1);
             }
         }
         else {
@@ -119,7 +121,7 @@ const createMember = async (req, res) => {
         let receiptErrorMsg = null;
         try {
             const user = await Employee_1.default.findById(req.user?.id);
-            receiptBuffer = (0, mailer_1.generateDocxBuffer)({
+            receiptBuffer = await (0, mailer_1.generateReceiptPdfBuffer)({
                 name: trimmedData.name,
                 email: trimmedData.email,
                 mobile: trimmedData.mobileNumber,
@@ -144,8 +146,9 @@ const createMember = async (req, res) => {
                 paymentMode: trimmedData.paymentMode || 'UPI'
             });
             attachments.push({
-                filename: `${trimmedData.name}_MTF_Reseat.docx`,
-                content: receiptBuffer
+                filename: `${trimmedData.name}_MTF_Reseat.pdf`,
+                content: receiptBuffer,
+                contentType: 'application/pdf'
             });
         }
         catch (docxErr) {
@@ -177,7 +180,7 @@ const createMember = async (req, res) => {
             success: true,
             data: populatedMember,
             receiptBuffer: receiptBuffer ? receiptBuffer.toString('base64') : null,
-            receiptFilename: receiptBuffer ? `${trimmedData.name}_MTF_Reseat.docx` : null,
+            receiptFilename: receiptBuffer ? `${trimmedData.name}_MTF_Reseat.pdf` : null,
             message: (emailSent
                 ? 'Member created successfully! Credentials emailed.'
                 : 'Member created successfully! (⚠️ Email failed to send)') +
@@ -299,7 +302,7 @@ const updateMember = async (req, res) => {
                 const populatedForEmail = await Member_1.default.findById(member._id)
                     .populate('branch', 'name city')
                     .populate('plan', 'planName duration price');
-                receiptBuffer = (0, mailer_1.generateDocxBuffer)({
+                receiptBuffer = await (0, mailer_1.generateReceiptPdfBuffer)({
                     name: member.name,
                     email: member.email,
                     mobile: member.mobileNumber,
@@ -323,8 +326,8 @@ const updateMember = async (req, res) => {
                     discount: member.discountAmount || 0,
                     paymentMode: req.body.paymentMode || 'UPI'
                 });
-                receiptFilename = `${member.name}_MTF_Reseat.docx`;
-                await (0, mailer_1.sendEmail)(member.email, `Payment Receipt - ${receiptTitle} (${member.memberId})`, `<p>Dear ${member.name}, your payment of ₹${freshPaymentAmount} has been received.</p>`, [{ filename: receiptFilename, content: receiptBuffer }]);
+                receiptFilename = `${member.name}_MTF_Reseat.pdf`;
+                await (0, mailer_1.sendEmail)(member.email, `Payment Receipt - ${receiptTitle} (${member.memberId})`, `<p>Dear ${member.name}, your payment of ₹${freshPaymentAmount} has been received.</p>`, [{ filename: receiptFilename, content: receiptBuffer, contentType: 'application/pdf' }]);
             }
             catch (err) {
                 console.error('❌ Failed to send payment receipt:', err);

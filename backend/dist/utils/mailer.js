@@ -3,12 +3,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generateDocxBuffer = exports.sendEmail = void 0;
+exports.generateReceiptPdfBuffer = exports.generateDocxBuffer = exports.sendEmail = void 0;
+const os_1 = __importDefault(require("os"));
+const fs_1 = __importDefault(require("fs"));
+const path_1 = __importDefault(require("path"));
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const pizzip_1 = __importDefault(require("pizzip"));
 const docxtemplater_1 = __importDefault(require("docxtemplater"));
-const fs_1 = __importDefault(require("fs"));
-const path_1 = __importDefault(require("path"));
+const mammoth_1 = __importDefault(require("mammoth"));
+const chromium_1 = __importDefault(require("@sparticuz/chromium"));
+const puppeteer_core_1 = __importDefault(require("puppeteer-core"));
 const receiptTemplate_1 = require("../assets/receiptTemplate");
 const sendEmail = async (to, subject, htmlContent, attachments = []) => {
     try {
@@ -103,3 +107,63 @@ const generateDocxBuffer = (data, templatePath) => {
     }
 };
 exports.generateDocxBuffer = generateDocxBuffer;
+/**
+ * Generates a PDF buffer from a template data.
+ * Fills a DOCX template then converts to PDF using a serverless-friendly approach.
+ */
+const generateReceiptPdfBuffer = async (data) => {
+    let browser = null;
+    const tempDocxPath = path_1.default.join(os_1.default.tmpdir(), `receipt_${Date.now()}.docx`);
+    try {
+        console.log('📄 Generating PDF Receipt Buffer (Serverless-mode)...');
+        // 1. Generate the filled DOCX
+        const docxBuf = (0, exports.generateDocxBuffer)(data);
+        fs_1.default.writeFileSync(tempDocxPath, docxBuf);
+        // 2. Convert DOCX to HTML using Mammoth
+        const { value: html } = await mammoth_1.default.convertToHtml({ path: tempDocxPath });
+        // 3. Convert HTML to PDF using Puppeteer/Chromium
+        browser = await puppeteer_core_1.default.launch({
+            args: chromium_1.default.args,
+            defaultViewport: chromium_1.default.defaultViewport,
+            executablePath: await chromium_1.default.executablePath(),
+            headless: chromium_1.default.headless,
+        });
+        const page = await browser.newPage();
+        // Add basic styling to make it look decent
+        const styledHtml = `
+            <html>
+                <head>
+                    <style>
+                        body { font-family: 'Arial', sans-serif; padding: 40px; color: #333; line-height: 1.6; }
+                        h1, h2 { color: #2563eb; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+                        th { background-color: #f8fafc; }
+                    </style>
+                </head>
+                <body>
+                    ${html}
+                </body>
+            </html>
+        `;
+        await page.setContent(styledHtml, { waitUntil: 'networkidle0' });
+        const pdfBuf = await page.pdf({
+            format: 'A4',
+            printBackground: true,
+            margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' }
+        });
+        console.log('✅ PDF Receipt Buffer generated successfully');
+        return Buffer.from(pdfBuf);
+    }
+    catch (error) {
+        console.error('❌ Error generating PDF buffer:', error);
+        throw error;
+    }
+    finally {
+        if (browser)
+            await browser.close();
+        if (fs_1.default.existsSync(tempDocxPath))
+            fs_1.default.unlinkSync(tempDocxPath);
+    }
+};
+exports.generateReceiptPdfBuffer = generateReceiptPdfBuffer;
