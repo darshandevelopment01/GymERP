@@ -1,10 +1,12 @@
+import os from 'os';
+import fs from 'fs';
+import path from 'path';
 import nodemailer from 'nodemailer';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
-import fs from 'fs';
-import path from 'path';
-// @ts-ignore
-import { convertDocxToPdf } from 'docx-pdf-converter';
+import mammoth from 'mammoth';
+import chromium from '@sparticuz/chromium';
+import puppeteer from 'puppeteer-core';
 
 import { RECEIPT_TEMPLATE_BASE64 } from '../assets/receiptTemplate';
 
@@ -121,33 +123,66 @@ export const generateDocxBuffer = (data: any, templatePath?: string): Buffer => 
 
 /**
  * Generates a PDF buffer from a template data.
- * Fills a DOCX template then converts to PDF.
+ * Fills a DOCX template then converts to PDF using a serverless-friendly approach.
  */
 export const generateReceiptPdfBuffer = async (data: any): Promise<Buffer> => {
+    let browser = null;
+    const tempDocxPath = path.join(os.tmpdir(), `receipt_${Date.now()}.docx`);
+
     try {
-        console.log('📄 Generating PDF Receipt Buffer...');
+        console.log('📄 Generating PDF Receipt Buffer (Serverless-mode)...');
+        
+        // 1. Generate the filled DOCX
         const docxBuf = generateDocxBuffer(data);
-        
-        // docx-pdf-converter expects a path or buffer
-        // Based on package usage, it might require temporary files
-        const tempDocxPath = path.join(__dirname, `../../temp_${Date.now()}.docx`);
-        const tempPdfPath = path.join(__dirname, `../../temp_${Date.now()}.pdf`);
-        
         fs.writeFileSync(tempDocxPath, docxBuf);
+
+        // 2. Convert DOCX to HTML using Mammoth
+        const { value: html } = await mammoth.convertToHtml({ path: tempDocxPath });
+
+        // 3. Convert HTML to PDF using Puppeteer/Chromium
+        browser = await puppeteer.launch({
+            args: chromium.args,
+            defaultViewport: chromium.defaultViewport,
+            executablePath: await chromium.executablePath(),
+            headless: chromium.headless,
+        });
+
+        const page = await browser.newPage();
         
-        await convertDocxToPdf(tempDocxPath, tempPdfPath);
+        // Add basic styling to make it look decent
+        const styledHtml = `
+            <html>
+                <head>
+                    <style>
+                        body { font-family: 'Arial', sans-serif; padding: 40px; color: #333; line-height: 1.6; }
+                        h1, h2 { color: #2563eb; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+                        th { background-color: #f8fafc; }
+                    </style>
+                </head>
+                <body>
+                    ${html}
+                </body>
+            </html>
+        `;
+
+        await page.setContent(styledHtml, { waitUntil: 'networkidle0' });
         
-        const pdfBuf = fs.readFileSync(tempPdfPath);
-        
-        // Cleanup
-        if (fs.existsSync(tempDocxPath)) fs.unlinkSync(tempDocxPath);
-        if (fs.existsSync(tempPdfPath)) fs.unlinkSync(tempPdfPath);
-        
+        const pdfBuf = await page.pdf({
+            format: 'A4',
+            printBackground: true,
+            margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' }
+        });
+
         console.log('✅ PDF Receipt Buffer generated successfully');
-        return pdfBuf;
+        return Buffer.from(pdfBuf);
     } catch (error: any) {
         console.error('❌ Error generating PDF buffer:', error);
         throw error;
+    } finally {
+        if (browser) await(browser as any).close();
+        if (fs.existsSync(tempDocxPath)) fs.unlinkSync(tempDocxPath);
     }
 };
 
