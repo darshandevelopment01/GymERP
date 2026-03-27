@@ -306,7 +306,12 @@ const MemberMaster = () => {
         }
       }
 
-      alert('✅ Payment added successfully!');
+      if (response.message && response.message.includes('Receipt Error')) {
+          alert('⚠️ ' + response.message);
+      } else {
+          alert('✅ Payment added successfully!');
+      }
+
       setShowPaymentModal(false);
       setSelectedMember(null);
       setAdditionalPayment(0);
