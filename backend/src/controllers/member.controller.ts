@@ -6,7 +6,7 @@ import ActivityLog from '../models/ActivityLog';
 import Employee from '../models/Employee';
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
-import { sendEmail, generateDocxBuffer } from '../utils/mailer';
+import { sendEmail, generateDocxBuffer, generateReceiptPdfBuffer } from '../utils/mailer';
 import path from 'path';
 
 // Create new member
@@ -135,7 +135,7 @@ export const createMember = async (req: Request, res: Response): Promise<void> =
     try {
       const user = await Employee.findById(req.user?.id);
 
-      receiptBuffer = generateDocxBuffer({
+      receiptBuffer = await generateReceiptPdfBuffer({
         name: trimmedData.name,
         email: trimmedData.email,
         mobile: trimmedData.mobileNumber,
@@ -161,8 +161,9 @@ export const createMember = async (req: Request, res: Response): Promise<void> =
       });
 
       attachments.push({
-        filename: `${trimmedData.name}_MTF_Reseat.docx`,
-        content: receiptBuffer
+        filename: `${trimmedData.name}_MTF_Reseat.pdf`,
+        content: receiptBuffer,
+        contentType: 'application/pdf'
       });
     } catch (docxErr: any) {
       console.error('❌ Failed to generate DOCX attachment:', docxErr);
@@ -202,7 +203,7 @@ export const createMember = async (req: Request, res: Response): Promise<void> =
       success: true,
       data: populatedMember,
       receiptBuffer: receiptBuffer ? receiptBuffer.toString('base64') : null,
-      receiptFilename: receiptBuffer ? `${trimmedData.name}_MTF_Reseat.docx` : null,
+      receiptFilename: receiptBuffer ? `${trimmedData.name}_MTF_Reseat.pdf` : null,
       message: (emailSent
         ? 'Member created successfully! Credentials emailed.'
         : 'Member created successfully! (⚠️ Email failed to send)') +
@@ -335,7 +336,7 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
             .populate('branch', 'name city')
             .populate('plan', 'planName duration price');
 
-          receiptBuffer = generateDocxBuffer({
+          receiptBuffer = await generateReceiptPdfBuffer({
             name: member.name,
             email: member.email,
             mobile: member.mobileNumber,
@@ -360,13 +361,13 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
             paymentMode: req.body.paymentMode || 'UPI'
           });
 
-          receiptFilename = `${member.name}_MTF_Reseat.docx`;
+          receiptFilename = `${member.name}_MTF_Reseat.pdf`;
 
           await sendEmail(
             member.email,
             `Payment Receipt - ${receiptTitle} (${member.memberId})`,
             `<p>Dear ${member.name}, your payment of ₹${freshPaymentAmount} has been received.</p>`,
-            [{ filename: receiptFilename, content: receiptBuffer }]
+            [{ filename: receiptFilename, content: receiptBuffer, contentType: 'application/pdf' }]
           );
       } catch (err: any) {
           console.error('❌ Failed to send payment receipt:', err);

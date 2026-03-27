@@ -3,6 +3,8 @@ import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
 import fs from 'fs';
 import path from 'path';
+// @ts-ignore
+import { convertDocxToPdf } from 'docx-pdf-converter';
 
 import { RECEIPT_TEMPLATE_BASE64 } from '../assets/receiptTemplate';
 
@@ -113,6 +115,38 @@ export const generateDocxBuffer = (data: any, templatePath?: string): Buffer => 
             throw new Error('Please close Microsoft Word. The MTF Reseat.docx file is locked and cannot be read.');
         }
         console.error('❌ Error generating DOCX buffer:', error);
+        throw error;
+    }
+};
+
+/**
+ * Generates a PDF buffer from a template data.
+ * Fills a DOCX template then converts to PDF.
+ */
+export const generateReceiptPdfBuffer = async (data: any): Promise<Buffer> => {
+    try {
+        console.log('📄 Generating PDF Receipt Buffer...');
+        const docxBuf = generateDocxBuffer(data);
+        
+        // docx-pdf-converter expects a path or buffer
+        // Based on package usage, it might require temporary files
+        const tempDocxPath = path.join(__dirname, `../../temp_${Date.now()}.docx`);
+        const tempPdfPath = path.join(__dirname, `../../temp_${Date.now()}.pdf`);
+        
+        fs.writeFileSync(tempDocxPath, docxBuf);
+        
+        await convertDocxToPdf(tempDocxPath, tempPdfPath);
+        
+        const pdfBuf = fs.readFileSync(tempPdfPath);
+        
+        // Cleanup
+        if (fs.existsSync(tempDocxPath)) fs.unlinkSync(tempDocxPath);
+        if (fs.existsSync(tempPdfPath)) fs.unlinkSync(tempPdfPath);
+        
+        console.log('✅ PDF Receipt Buffer generated successfully');
+        return pdfBuf;
+    } catch (error: any) {
+        console.error('❌ Error generating PDF buffer:', error);
         throw error;
     }
 };

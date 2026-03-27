@@ -58,6 +58,8 @@ const MemberMaster = () => {
     membershipStartDate: new Date(),
     membershipEndDate: null
   });
+  const [submittingPayment, setSubmittingPayment] = useState(false);
+  const [submittingRenewal, setSubmittingRenewal] = useState(false);
 
   const [showFollowUpModal, setShowFollowUpModal] = useState(false);
   const [selectedMemberForFollowUp, setSelectedMemberForFollowUp] = useState(null);
@@ -268,6 +270,7 @@ const MemberMaster = () => {
     }
 
     try {
+      setSubmittingPayment(true);
       const paymentToSubmit = additionalPayment === '' ? 0 : Number(additionalPayment);
       const updatedPaymentReceived = (selectedMember.paymentReceived || 0) + paymentToSubmit;
       const updatedPaymentRemaining = Math.max(0, (selectedMember.paymentRemaining || 0) - paymentToSubmit);
@@ -288,7 +291,7 @@ const MemberMaster = () => {
             byteNumbers[i] = byteCharacters.charCodeAt(i);
           }
           const byteArray = new Uint8Array(byteNumbers);
-          const blob = new Blob([byteArray], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+          const blob = new Blob([byteArray], { type: 'application/pdf' });
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
@@ -311,6 +314,8 @@ const MemberMaster = () => {
     } catch (error) {
       console.error('Error updating payment:', error);
       alert('❌ Failed to add payment. Please try again.');
+    } finally {
+      setSubmittingPayment(false);
     }
   };
 
@@ -362,6 +367,7 @@ const MemberMaster = () => {
     }
 
     try {
+      setSubmittingRenewal(true);
       const billing = getRenewBillingBreakdown();
       const updateData = {
         plan: renewData.plan,
@@ -392,7 +398,7 @@ const MemberMaster = () => {
             byteNumbers[i] = byteCharacters.charCodeAt(i);
           }
           const byteArray = new Uint8Array(byteNumbers);
-          const blob = new Blob([byteArray], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+          const blob = new Blob([byteArray], { type: 'application/pdf' });
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
@@ -414,6 +420,8 @@ const MemberMaster = () => {
     } catch (error) {
       console.error('Error renewing member:', error);
       alert(`❌ Failed to renew member: ${error.response?.data?.message || error.message}`);
+    } finally {
+      setSubmittingRenewal(false);
     }
   };
 
@@ -992,10 +1000,16 @@ const MemberMaster = () => {
                 <button type="button" className="btn-cancel" onClick={() => setShowPaymentModal(false)}>
                   Cancel
                 </button>
-                <button type="submit" className="btn-save" style={{
-                  background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'
-                }}>
-                  ✅ Add Payment
+                <button 
+                  type="submit" 
+                  className="btn-save" 
+                  disabled={submittingPayment}
+                  style={{
+                    background: submittingPayment ? '#94a3b8' : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                    cursor: submittingPayment ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {submittingPayment ? '⏳ Generating Payment Slip...' : '✅ Add Payment'}
                 </button>
               </div>
             </form>
@@ -1367,10 +1381,16 @@ const MemberMaster = () => {
                 <button type="button" className="btn-cancel" onClick={() => setShowRenewModal(false)}>
                   Cancel
                 </button>
-                <button type="submit" className="btn-save" style={{
-                  background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
-                }}>
-                  ✅ Renew Membership
+                <button 
+                  type="submit" 
+                  className="btn-save" 
+                  disabled={submittingRenewal}
+                  style={{
+                    background: submittingRenewal ? '#94a3b8' : 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                    cursor: submittingRenewal ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {submittingRenewal ? '⏳ Generating Payment Slip...' : '✅ Renew Membership'}
                 </button>
               </div>
             </form>

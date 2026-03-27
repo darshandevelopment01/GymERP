@@ -58,6 +58,7 @@ const EnquiryMaster = () => {
     followUpDate: null,
     followUpTime: ''
   });
+  const [submittingConvert, setSubmittingConvert] = useState(false);
 
   useEffect(() => {
     fetchInitialData();
@@ -320,6 +321,7 @@ const EnquiryMaster = () => {
     }
 
     try {
+      setSubmittingConvert(true);
       const dobDate = typeof paymentData.dateOfBirth === 'string'
         ? new Date(paymentData.dateOfBirth)
         : paymentData.dateOfBirth;
@@ -365,7 +367,7 @@ const EnquiryMaster = () => {
             byteNumbers[i] = byteCharacters.charCodeAt(i);
           }
           const byteArray = new Uint8Array(byteNumbers);
-          const blob = new Blob([byteArray], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+          const blob = new Blob([byteArray], { type: 'application/pdf' });
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
@@ -391,6 +393,8 @@ const EnquiryMaster = () => {
 
       const errorMessage = error.response?.data?.message || error.message || 'Unknown error occurred';
       alert(`❌ Failed to convert to member: ${errorMessage}`);
+    } finally {
+      setSubmittingConvert(false);
     }
   };
 
@@ -866,10 +870,16 @@ const EnquiryMaster = () => {
                 <button type="button" className="btn-cancel" onClick={() => setShowPaymentModal(false)}>
                   Cancel
                 </button>
-                <button type="submit" className="btn-save" style={{
-                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-                }}>
-                  ✅ Convert to Member
+                <button 
+                  type="submit" 
+                  className="btn-save" 
+                  disabled={submittingConvert}
+                  style={{
+                    background: submittingConvert ? '#94a3b8' : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    cursor: submittingConvert ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {submittingConvert ? '⏳ Generating Payment Slip...' : '✅ Convert to Member'}
                 </button>
               </div>
             </form>
