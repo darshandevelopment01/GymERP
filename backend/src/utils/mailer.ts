@@ -5,8 +5,6 @@ import nodemailer from 'nodemailer';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
 import mammoth from 'mammoth';
-import chromium from '@sparticuz/chromium';
-import puppeteer from 'puppeteer-core';
 
 import { RECEIPT_TEMPLATE_BASE64 } from '../assets/receiptTemplate';
 
@@ -142,16 +140,20 @@ export const generateReceiptPdfBuffer = async (data: any): Promise<Buffer> => {
         // 3. Convert HTML to PDF using Puppeteer/Chromium
         let executablePath: string | undefined = undefined;
         try {
+            const chromium = (await import('@sparticuz/chromium')).default;
             executablePath = await chromium.executablePath();
         } catch(e) {
             console.log('⚠️ Failed to load edge chromium executable, falling back to local');
         }
 
+        const puppeteer = (await import('puppeteer-core')).default;
+        const chromiumLib = (await import('@sparticuz/chromium')).default;
+
         browser = await puppeteer.launch({
-            args: [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-            defaultViewport: chromium.defaultViewport,
+            args: [...chromiumLib.args, '--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+            defaultViewport: chromiumLib.defaultViewport,
             executablePath: executablePath || undefined,
-            headless: chromium.headless,
+            headless: chromiumLib.headless,
         });
 
         const page = await browser.newPage();
