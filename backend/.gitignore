@@ -1,1 +1,7 @@
 .vercel
+node_modules/
+dist/
+.env
+*.log
+temp_*.docx
+temp_*.pdf
