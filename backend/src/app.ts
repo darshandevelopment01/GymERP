@@ -22,9 +22,18 @@ const app: Application = express();
 
 // Middleware
 app.use(cors({
-  origin: true,
-  credentials: true
+  origin: [
+    'https://muscletime.net',
+    'https://www.muscletime.net',
+    'http://localhost:5173'
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// Explicit OPTIONS handler for preflight
+app.options('*', cors());
 app.use(express.json());
 
 // Debug middleware
