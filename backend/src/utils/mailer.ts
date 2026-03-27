@@ -140,10 +140,17 @@ export const generateReceiptPdfBuffer = async (data: any): Promise<Buffer> => {
         const { value: html } = await mammoth.convertToHtml({ path: tempDocxPath });
 
         // 3. Convert HTML to PDF using Puppeteer/Chromium
+        let executablePath: string | undefined = undefined;
+        try {
+            executablePath = await chromium.executablePath();
+        } catch(e) {
+            console.log('⚠️ Failed to load edge chromium executable, falling back to local');
+        }
+
         browser = await puppeteer.launch({
-            args: chromium.args,
+            args: [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
             defaultViewport: chromium.defaultViewport,
-            executablePath: await chromium.executablePath(),
+            executablePath: executablePath || undefined,
             headless: chromium.headless,
         });
 
