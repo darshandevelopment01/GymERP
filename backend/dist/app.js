@@ -23,9 +23,17 @@ const activityLog_routes_1 = __importDefault(require("./routes/activityLog.route
 const app = (0, express_1.default)();
 // Middleware
 app.use((0, cors_1.default)({
-    origin: '*',
-    credentials: true
+    origin: [
+        'https://muscletime.net',
+        'https://www.muscletime.net',
+        'http://localhost:5173'
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
+// Explicit OPTIONS handler for preflight
+app.options('*', (0, cors_1.default)());
 app.use(express_1.default.json());
 // Debug middleware
 app.use((req, res, next) => {
