@@ -268,8 +268,9 @@ const MemberMaster = () => {
     }
 
     try {
-      const updatedPaymentReceived = (selectedMember.paymentReceived || 0) + additionalPayment;
-      const updatedPaymentRemaining = Math.max(0, (selectedMember.paymentRemaining || 0) - additionalPayment);
+      const paymentToSubmit = additionalPayment === '' ? 0 : Number(additionalPayment);
+      const updatedPaymentReceived = (selectedMember.paymentReceived || 0) + paymentToSubmit;
+      const updatedPaymentRemaining = Math.max(0, (selectedMember.paymentRemaining || 0) - paymentToSubmit);
 
       const updateData = {
         paymentReceived: updatedPaymentReceived,
@@ -375,7 +376,7 @@ const MemberMaster = () => {
         taxAmount: billing.taxAmt,
         totalAmount: billing.total,
         // Increment lifetime payment and set new pending
-        paymentReceived: (selectedMemberForRenewal.paymentReceived || 0) + renewData.paymentReceived,
+        paymentReceived: (selectedMemberForRenewal.paymentReceived || 0) + (renewData.paymentReceived === '' ? 0 : Number(renewData.paymentReceived)),
         paymentRemaining: renewData.paymentRemaining,
         taxSlab: renewData.taxSlab || null
       };
@@ -461,7 +462,8 @@ const MemberMaster = () => {
   };
 
   const handleRenewPaymentChange = (e) => {
-    const received = parseFloat(e.target.value) || 0;
+    const val = e.target.value;
+    const received = val === '' ? '' : parseFloat(val) || 0;
     setRenewData(prev => recalcRenewData({ ...prev, paymentReceived: received }));
   };
 
@@ -933,9 +935,11 @@ const MemberMaster = () => {
                   <input
                     type="number"
                     value={additionalPayment}
-                    onChange={(e) => setAdditionalPayment(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setAdditionalPayment(val === '' ? '' : parseFloat(val) || 0);
+                    }}
                     required
-                    min="1"
                     max={selectedMember.paymentRemaining}
                     placeholder="Enter payment amount"
                     style={{

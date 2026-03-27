@@ -278,7 +278,8 @@ const EnquiryMaster = () => {
   };
 
   const handlePaymentChange = (e) => {
-    const received = parseFloat(e.target.value) || 0;
+    const val = e.target.value;
+    const received = val === '' ? '' : parseFloat(val) || 0;
     setPaymentData(prev => recalcRemaining({ ...prev, paymentReceived: received }));
   };
 
@@ -303,7 +304,7 @@ const EnquiryMaster = () => {
   const handleSubmitPayment = async (e) => {
     e.preventDefault();
 
-    if (!paymentData.plan || !paymentData.dateOfBirth || paymentData.paymentReceived <= 0) {
+    if (!paymentData.plan || !paymentData.dateOfBirth || (paymentData.paymentReceived === '' || paymentData.paymentReceived <= 0)) {
       alert('Please fill all required fields');
       return;
     }
@@ -331,7 +332,7 @@ const EnquiryMaster = () => {
         taxPercentage: billing.taxPct,
         taxAmount: billing.taxAmt,
         totalAmount: billing.total,
-        paymentReceived: paymentData.paymentReceived,
+        paymentReceived: paymentData.paymentReceived === '' ? 0 : Number(paymentData.paymentReceived),
         paymentRemaining: paymentData.paymentRemaining,
         status: 'active',
         membershipStartDate: paymentData.membershipStartDate.toISOString(),
@@ -793,7 +794,6 @@ const EnquiryMaster = () => {
                     value={paymentData.paymentReceived}
                     onChange={handlePaymentChange}
                     required
-                    min="0"
                     placeholder="Enter amount received"
                   />
                 </div>
