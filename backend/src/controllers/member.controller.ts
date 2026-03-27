@@ -283,6 +283,7 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
     // ✅ RENEWAL ARCHIVING
     if (newEndDate && oldEndDate && oldEndDate !== newEndDate) {
       console.log(`📦 ARCHIVING HISTORY: Member ${member.memberId} is being renewed.`);
+      if (!Array.isArray(member.history)) member.history = [];
       member.history.push({
         plan: member.plan,
         membershipStartDate: member.membershipStartDate,
@@ -303,6 +304,7 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
     // ✅ PAYMENT TRACKING
     if (freshPaymentAmount > 0) {
       console.log(`💰 RECORDING PAYMENT: ₹${freshPaymentAmount} for ${member.name}`);
+      if (!Array.isArray(member.payments)) member.payments = [];
       member.payments.push({
         amount: freshPaymentAmount,
         paymentDate: new Date(),
