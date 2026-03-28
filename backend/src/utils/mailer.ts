@@ -21,13 +21,13 @@ export const sendEmail = async (
     attachments: EmailAttachment[] = []
 ): Promise<boolean> => {
     try {
-        const host = process.env.SMTP_HOST || 'smtp.hostinger.com';
+        const host = process.env.SMTP_HOST;
         const port = parseInt(process.env.SMTP_PORT || '465', 10);
-        const user = process.env.SMTP_USER || 'info@muscletime.co.in';
+        const user = process.env.SMTP_USER;
         const pass = process.env.SMTP_PASS;
 
-        if (!pass) {
-            console.warn('⚠️ SMTP password (SMTP_PASS) not found in environment!');
+        if (!host || !user || !pass) {
+            console.warn('⚠️ SMTP config missing! Check SMTP_HOST, SMTP_USER, SMTP_PASS in environment.');
             return false;
         }
 
