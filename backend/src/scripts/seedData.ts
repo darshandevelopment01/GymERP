@@ -1,12 +1,9 @@
 // @ts-nocheck
 // backend/src/scripts/seedData.ts
 import mongoose from 'mongoose';
-import dotenv from 'dotenv';
 import Member from '../models/Member';
 import Employee from '../models/Employee';
 import Branch from '../models/Branch';
-
-dotenv.config();
 
 const seedData = async () => {
   try {

@@ -2,10 +2,9 @@
 // backend/src/scripts/createAdmin.ts
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
+import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 import Employee from '../models/Employee';
-import dotenv from 'dotenv';
-
-dotenv.config();
 
 const createAdmin = async () => {
   try {

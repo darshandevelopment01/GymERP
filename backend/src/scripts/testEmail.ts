@@ -1,9 +1,4 @@
-import path from 'path';
-import dotenv from 'dotenv';
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
-
-// Use require to ensure it's loaded AFTER dotenv.config()
-const { sendEmail } = require('../utils/mailer');
+import { sendEmail } from '../utils/mailer';
 
 async function testConnection() {
     const configs = [

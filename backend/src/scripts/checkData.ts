@@ -1,6 +1,4 @@
-﻿import mongoose from 'mongoose';
-import dotenv from 'dotenv';
-dotenv.config({ path: '.env.local' });
+import mongoose from 'mongoose';
 
 async function run() {
     await mongoose.connect(process.env.MONGODB_URI as string);

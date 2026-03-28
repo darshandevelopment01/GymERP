@@ -1,17 +1,5 @@
 import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
-import path from 'path';
-import fs from 'fs';
-
-// Load env vars BEFORE local imports with explicit path
-const envPath = path.resolve(__dirname, '../.env');
-if (fs.existsSync(envPath)) {
-  dotenv.config({ path: envPath });
-} else {
-  // On Vercel, variables are injected directly; dotenv handles this automatically if no path is given
-  dotenv.config();
-}
 
 import connectDB from './config/db';
 import authRoutes from './routes/auth.routes';
@@ -40,7 +28,7 @@ app.use(cors({
 }));
 
 // Explicit OPTIONS handler for preflight
-app.options('*', cors());
+app.options('{*path}', cors());
 app.use(express.json());
 
 // Debug middleware
