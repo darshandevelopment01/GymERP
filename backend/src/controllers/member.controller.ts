@@ -284,8 +284,22 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
 
     // 2. Prepare new values
     const newEndDate = req.body.membershipEndDate ? new Date(req.body.membershipEndDate).toISOString() : null;
-    const newPaymentTotal = req.body.paymentReceived || 0;
-    const freshPaymentAmount = newPaymentTotal - oldPaymentTotal;
+    
+    // Support two types of updates:
+    // 1. "additionalPayment" approach (from Add Payment modal) - source of truth delta
+    // 2. "paymentReceived" approach (from Renewal/Full Update) - source of truth total
+    let freshPaymentAmount = 0;
+    
+    if (req.body.additionalPayment !== undefined) {
+      // Add Payment Flow: trust the amount being added
+      freshPaymentAmount = Number(req.body.additionalPayment) || 0;
+      member.paymentReceived = (member.paymentReceived || 0) + freshPaymentAmount;
+      member.paymentRemaining = Math.max(0, (member.paymentRemaining || 0) - freshPaymentAmount);
+    } else if (req.body.paymentReceived !== undefined) {
+      // Renewal/Full Update Flow: trust the total received sent from frontend
+      const newPaymentTotal = Number(req.body.paymentReceived) || 0;
+      freshPaymentAmount = newPaymentTotal - oldPaymentTotal;
+    }
 
     // ✅ RENEWAL ARCHIVING
     if (newEndDate && oldEndDate && oldEndDate !== newEndDate) {
@@ -328,6 +342,13 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
     delete updateFields.payments;
     delete updateFields.paymentMode; // Used for tracking only, not a top-level field
     delete updateFields.paymentNote;
+    delete updateFields.additionalPayment; // Internal helper
+    
+    // If we're in "additionalPayment" flow, don't let stale frontend totals overwrite our computed DB values
+    if (req.body.additionalPayment !== undefined) {
+      delete updateFields.paymentReceived;
+      delete updateFields.paymentRemaining;
+    }
     
     Object.assign(member, updateFields);
     await member.save();

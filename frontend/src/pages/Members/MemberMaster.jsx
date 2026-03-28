@@ -293,12 +293,8 @@ const MemberMaster = () => {
     try {
       setSubmittingPayment(true);
       const paymentToSubmit = additionalPayment === '' ? 0 : Number(additionalPayment);
-      const updatedPaymentReceived = (selectedMember.paymentReceived || 0) + paymentToSubmit;
-      const updatedPaymentRemaining = Math.max(0, (selectedMember.paymentRemaining || 0) - paymentToSubmit);
-
       const updateData = {
-        paymentReceived: updatedPaymentReceived,
-        paymentRemaining: updatedPaymentRemaining,
+        additionalPayment: paymentToSubmit,
         paymentMode: selectedPaymentMode
       };
 
