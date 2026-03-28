@@ -183,11 +183,11 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
   // Centered Thank You Message
   const thanksText = 'THANK YOU FOR YOUR BUSINESS!';
   const thanksWidth = boldFont.widthOfTextAtSize(thanksText, 12);
-  page.drawText(thanksText, { x: (width - thanksWidth) / 2, y: 90, size: 12, font: boldFont, color: brandRed });
+  page.drawText(thanksText, { x: (width - thanksWidth) / 2, y: 55, size: 12, font: boldFont, color: brandRed });
   
   const pText = 'This is a computer generated document. No signature is required.';
   const pWidth = regularFont.widthOfTextAtSize(pText, 8);
-  page.drawText(pText, { x: (width - pWidth) / 2, y: 70, size: 8, font: regularFont, color: mediumGrey });
+  page.drawText(pText, { x: (width - pWidth) / 2, y: 38, size: 8, font: regularFont, color: mediumGrey });
 
   const pdfBytes = await pdfDoc.save();
   return Buffer.from(pdfBytes);
