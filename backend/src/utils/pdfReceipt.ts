@@ -187,7 +187,7 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
   currentY -= 15;
   drawSummaryLine('AMOUNT PAID:', `Rs. ${data.paidPrice}`, boldFont, rgb(0.1, 0.5, 0.1), 13);
   
-  const actualBalance = invoiceTotal - data.paidPrice;
+  const actualBalance = data.balanceAmount;
   if (actualBalance > 0) {
     drawSummaryLine('REMAINING BALANCE:', `Rs. ${actualBalance}`, boldFont, brandRed, 11);
   }
