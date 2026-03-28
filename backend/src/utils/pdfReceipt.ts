@@ -24,6 +24,9 @@ export interface ReceiptData {
   balanceAmount: number;
   totalPayment: number;
   discount: number;
+  discountPercentage?: number;
+  taxPercentage?: number;
+  taxAmount?: number;
   paymentMode: string;
 }
 
@@ -135,11 +138,11 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
   const subtotalWidth = boldFont.widthOfTextAtSize(subtotalStr, 11);
   page.drawText(subtotalStr, { x: width - 50 - subtotalWidth, y: currentY - 10, size: 11, font: boldFont, color: darkGrey });
   
-  currentY -= 45; // More vertical air before footer
+  currentY -= 45; // More vertical air before summary
   page.drawLine({ start: { x: 50, y: currentY }, end: { x: width - 50, y: currentY }, thickness: 1, color: borderColor });
 
   // --- 5. Summary/Payment Section ---
-  currentY -= 50; 
+  currentY -= 40; 
   const summaryX = width - 260; // Pull left to prevent overlap
   const rightBoundary = width - 60;
   
@@ -147,18 +150,37 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
     page.drawText(label, { x: summaryX, y: currentY, size: sizeVal, font: labelFont, color: mediumGrey });
     const valWidth = fontVal.widthOfTextAtSize(value, sizeVal);
     page.drawText(value, { x: rightBoundary - valWidth, y: currentY, size: sizeVal, font: fontVal, color: colorVal });
-    currentY -= 25; // More gap between lines
+    currentY -= 22; // Gap between lines
   };
 
   drawSummaryLine('PACKAGE PRICE:', `Rs. ${data.price}`);
-  // DISCOUNT line removed per user request
+
+  // Dynamic Discount Line
+  if (data.discount > 0) {
+    const dPercent = data.discountPercentage || 0;
+    const dLabel = dPercent > 0 ? `DISCOUNT (${dPercent}%):` : 'DISCOUNT:';
+    drawSummaryLine(dLabel, `- Rs. ${data.discount}`, regularFont, rgb(0.8, 0, 0));
+    
+    // Subtotal after discount
+    const subAfterDiscount = data.price - data.discount;
+    drawSummaryLine('SUBTOTAL:', `Rs. ${subAfterDiscount}`, boldFont, darkGrey, 9);
+    currentY -= 5;
+  }
+
+  // Dynamic Tax Line
+  const taxAmt = data.taxAmount || 0;
+  if (taxAmt > 0) {
+    const tPercent = data.taxPercentage || 0;
+    const tLabel = tPercent > 0 ? `TAX (${tPercent}%):` : 'TAX:';
+    drawSummaryLine(tLabel, `+ Rs. ${taxAmt}`, regularFont, darkGrey);
+  }
+
+  const invoiceTotal = data.price - data.discount + taxAmt;
   
-  const invoiceTotal = data.price - data.discount;
+  currentY -= 5;
+  page.drawLine({ start: { x: summaryX, y: currentY + 15 }, end: { x: width - 50, y: currentY + 15 }, thickness: 1, color: borderColor });
   
-  currentY -= 10;
-  page.drawLine({ start: { x: summaryX, y: currentY + 20 }, end: { x: width - 50, y: currentY + 20 }, thickness: 1, color: borderColor });
-  
-  // Total Highlights box (larger padding)
+  // Total Highlights box
   page.drawRectangle({ x: summaryX - 10, y: currentY - 8, width: 220, height: 35, color: lightGrey });
   drawSummaryLine('TOTAL PAYABLE:', `Rs. ${invoiceTotal}`, boldFont, brandRed, 12, boldFont);
   

@@ -158,6 +158,9 @@ export const createMember = async (req: Request, res: Response): Promise<void> =
         balanceAmount: paymentRemaining,
         totalPayment: trimmedData.totalAmount || planExists.price,
         discount: trimmedData.discountAmount || 0,
+        discountPercentage: trimmedData.discountPercentage || 0,
+        taxPercentage: trimmedData.taxPercentage || 0,
+        taxAmount: trimmedData.taxAmount || 0,
         paymentMode: trimmedData.paymentMode || 'UPI'
       });
 
@@ -368,6 +371,9 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
             balanceAmount: member.paymentRemaining,
             totalPayment: member.totalAmount || (populatedForEmail?.plan as any)?.price || 0,
             discount: member.discountAmount || 0,
+            discountPercentage: member.discountPercentage || 0,
+            taxPercentage: member.taxPercentage || 0,
+            taxAmount: member.taxAmount || 0,
             paymentMode: req.body.paymentMode || 'UPI'
           });
 
