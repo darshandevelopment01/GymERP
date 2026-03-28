@@ -173,17 +173,14 @@ export const createMember = async (req: Request, res: Response): Promise<void> =
       receiptErrorMsg = docxErr?.message || 'Unknown PDF generation error';
     }
 
-    // 📧 Fire-and-forget email sending (non-blocking)
-    sendEmail(
+    // 📧 Send email (awaited to ensure completion on Vercel)
+    const emailSent = await sendEmail(
       trimmedData.email,
       'Welcome to MuscleTime - Your Membership Credentials',
       htmlMessage,
       attachments
-    ).then(sent => {
-        console.log(`📡 Background Email Status: ${sent ? 'Sent' : 'Failed'}`);
-    }).catch(e => {
-        console.error('📡 Background Email CRASHED:', e.message);
-    });
+    );
+    console.log(`📡 Email Status: ${emailSent ? 'Sent' : 'Failed'}`);
 
     // ✅ Create activity log
     try {
@@ -212,7 +209,8 @@ export const createMember = async (req: Request, res: Response): Promise<void> =
       data: populatedMember,
       receiptBuffer: receiptBuffer ? receiptBuffer.toString('base64') : null,
       receiptFilename: receiptBuffer ? `${trimmedData.name}_MTF_Reseat.pdf` : null,
-      message: 'Member created successfully! Credentials emailed.' +
+      message: 'Member created successfully!' + 
+        (emailSent ? ' Credentials emailed.' : ' (⚠️ Email failed to send)') +
         (receiptErrorMsg ? ` \n⚠️ Receipt Error: ${receiptErrorMsg}` : '')
     });
   } catch (error: any) {
@@ -373,17 +371,14 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
           console.log(`✅ PDF Receipt generated (Update): ${receiptBuffer.length} bytes`);
           receiptFilename = `${member.name}_MTF_Reseat.pdf`;
 
-          // 📧 Fire-and-forget email sending
-          sendEmail(
+          // 📧 Send receipt (awaited)
+          const receiptEmailSent = await sendEmail(
             member.email,
             `Payment Receipt - ${receiptTitle} (${member.memberId})`,
             `<p>Dear ${member.name}, your payment of Rs. ${freshPaymentAmount} has been received.</p>`,
             [{ filename: receiptFilename, content: receiptBuffer, contentType: 'application/pdf' }]
-          ).then(sent => {
-            console.log(`📡 Background Receipt Status: ${sent ? 'Sent' : 'Failed'}`);
-          }).catch(e => {
-            console.error('📡 Background Receipt CRASHED:', e.message);
-          });
+          );
+          console.log(`📡 Receipt Email Status: ${receiptEmailSent ? 'Sent' : 'Failed'}`);
       } catch (err: any) {
           console.error('❌ Failed to send payment receipt:', err);
           receiptErrorMsg = err.message;
@@ -417,7 +412,7 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
       data: populatedMember,
       receiptBuffer: receiptBuffer ? receiptBuffer.toString('base64') : null,
       receiptFilename: receiptFilename || null,
-      message: receiptErrorMsg ? `Update successful, but Receipt Error: ${receiptErrorMsg}` : undefined
+      message: receiptErrorMsg ? `Update successful, but Receipt Error: ${receiptErrorMsg}` : 'Update successful!'
     });
 
   } catch (error: any) {
