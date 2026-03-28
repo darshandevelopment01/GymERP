@@ -307,12 +307,13 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
 
     // ✅ PAYMENT TRACKING
     if (freshPaymentAmount > 0) {
-      console.log(`💰 RECORDING PAYMENT: ₹${freshPaymentAmount} for ${member.name}`);
+      const pMode = req.body.paymentMode || 'UPI';
+      console.log(`💰 RECORDING PAYMENT: ₹${freshPaymentAmount} (${pMode}) for ${member.name}`);
       if (!Array.isArray(member.payments)) member.payments = [];
       member.payments.push({
         amount: freshPaymentAmount,
         paymentDate: new Date(),
-        paymentMode: req.body.paymentMode || 'UPI',
+        paymentMode: pMode,
         recordedBy: (req.user?.id as any) || null,
         note: req.body.paymentNote || (newEndDate && oldEndDate !== newEndDate ? 'Renewal payment' : 'Additional payment')
       });
@@ -322,6 +323,8 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
     const updateFields = { ...req.body };
     delete updateFields.history; // Don't let user overwrite history/payments arrays directly
     delete updateFields.payments;
+    delete updateFields.paymentMode; // Used for tracking only, not a top-level field
+    delete updateFields.paymentNote;
     
     Object.assign(member, updateFields);
     await member.save();
