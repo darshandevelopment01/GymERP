@@ -89,7 +89,7 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
   // Table Content
   page.drawText(data.planName, { x: 60, y, size: 10, font: regularFont, color: textColor });
   page.drawText(`${data.startDate} to ${data.endDate}`, { x: 300, y, size: 10, font: regularFont, color: textColor });
-  page.drawText(`₹${data.totalPayment}`, { x: 450, y, size: 10, font: regularFont, color: textColor });
+  page.drawText(`Rs. ${data.totalPayment}`, { x: 450, y, size: 10, font: regularFont, color: textColor });
   y -= 20;
   
   page.drawLine({ start: { x: 50, y }, end: { x: width - 50, y }, thickness: 1, color: borderColor });
@@ -106,21 +106,21 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
     y -= 20;
   };
 
-  drawSummaryLine('Base Amount:', `₹${data.price}`);
-  drawSummaryLine('Discount:', `- ₹${data.discount}`);
+  drawSummaryLine('Base Amount:', `Rs. ${data.price}`);
+  drawSummaryLine('Discount:', `- Rs. ${data.discount}`);
   
   page.drawLine({ start: { x: summaryX, y: y + 5 }, end: { x: width - 50, y: y + 5 }, thickness: 1, color: borderColor });
-  drawSummaryLine('Total Amount:', `₹${data.totalPayment}`, true);
+  drawSummaryLine('Total Amount:', `Rs. ${data.totalPayment}`, true);
   y -= 5;
   
   page.drawRectangle({ x: summaryX - 5, y: y - 5, width: 200, height: 30, color: rgb(0.95, 1, 0.95) });
   page.drawText('PAID AMOUNT:', { x: summaryX, y, size: 12, font: boldFont, color: rgb(0.1, 0.5, 0.1) });
-  page.drawText(`₹${data.paidPrice}`, { x: summaryX + 120, y, size: 12, font: boldFont, color: rgb(0.1, 0.5, 0.1) });
+  page.drawText(`Rs. ${data.paidPrice}`, { x: summaryX + 120, y, size: 12, font: boldFont, color: rgb(0.1, 0.5, 0.1) });
   y -= 30;
   
   if (data.balanceAmount > 0) {
     page.drawText('BALANCE DUE:', { x: summaryX, y, size: 10, font: boldFont, color: rgb(0.8, 0.1, 0.1) });
-    page.drawText(`₹${data.balanceAmount}`, { x: summaryX + 120, y, size: 10, font: boldFont, color: rgb(0.8, 0.1, 0.1) });
+    page.drawText(`Rs. ${data.balanceAmount}`, { x: summaryX + 120, y, size: 10, font: boldFont, color: rgb(0.8, 0.1, 0.1) });
     y -= 20;
   }
 
