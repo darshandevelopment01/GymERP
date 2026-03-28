@@ -4,9 +4,9 @@ import path from 'path';
 import nodemailer from 'nodemailer';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
-import mammoth from 'mammoth';
 
 import { RECEIPT_TEMPLATE_BASE64 } from '../assets/receiptTemplate';
+import { generateReceiptPdfBuffer as generatePdfByPdfLib, ReceiptData } from './pdfReceipt';
 
 export interface EmailAttachment {
     filename: string;
@@ -121,77 +121,22 @@ export const generateDocxBuffer = (data: any, templatePath?: string): Buffer => 
 
 /**
  * Generates a PDF buffer from a template data.
- * Fills a DOCX template then converts to PDF using a serverless-friendly approach.
+ * Uses a pure-JS browser-less approach for Vercel compatibility.
  */
 export const generateReceiptPdfBuffer = async (data: any): Promise<Buffer> => {
-    let browser = null;
-    const tempDocxPath = path.join(os.tmpdir(), `receipt_${Date.now()}.docx`);
-
     try {
-        console.log('📄 Generating PDF Receipt Buffer (Serverless-mode)...');
+        console.log('📄 Generating PDF Receipt Buffer (Serverless-mode: pdf-lib)...');
+        // Map any extra fields or handle defaults if needed
+        const receiptData: ReceiptData = {
+          ...data,
+          branch: data.branch || 'Main Branch',
+          city: data.city || 'Pune',
+        };
         
-        // 1. Generate the filled DOCX
-        const docxBuf = generateDocxBuffer(data);
-        fs.writeFileSync(tempDocxPath, docxBuf);
-
-        // 2. Convert DOCX to HTML using Mammoth
-        const { value: html } = await mammoth.convertToHtml({ path: tempDocxPath });
-
-        // 3. Convert HTML to PDF using Puppeteer/Chromium
-        let executablePath: string | undefined = undefined;
-        try {
-            const chromium = (await import('@sparticuz/chromium')).default;
-            executablePath = await chromium.executablePath();
-        } catch(e) {
-            console.log('⚠️ Failed to load edge chromium executable, falling back to local');
-        }
-
-        const puppeteer = (await import('puppeteer-core')).default;
-        const chromiumLib = (await import('@sparticuz/chromium')).default;
-
-        browser = await puppeteer.launch({
-            args: [...chromiumLib.args, '--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-            defaultViewport: chromiumLib.defaultViewport,
-            executablePath: executablePath || undefined,
-            headless: chromiumLib.headless,
-        });
-
-        const page = await browser.newPage();
-        
-        // Add basic styling to make it look decent
-        const styledHtml = `
-            <html>
-                <head>
-                    <style>
-                        body { font-family: 'Arial', sans-serif; padding: 40px; color: #333; line-height: 1.6; }
-                        h1, h2 { color: #2563eb; }
-                        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-                        th { background-color: #f8fafc; }
-                    </style>
-                </head>
-                <body>
-                    ${html}
-                </body>
-            </html>
-        `;
-
-        await page.setContent(styledHtml, { waitUntil: 'networkidle0' });
-        
-        const pdfBuf = await page.pdf({
-            format: 'A4',
-            printBackground: true,
-            margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' }
-        });
-
-        console.log('✅ PDF Receipt Buffer generated successfully');
-        return Buffer.from(pdfBuf);
+        return await generatePdfByPdfLib(receiptData);
     } catch (error: any) {
         console.error('❌ Error generating PDF buffer:', error);
         throw error;
-    } finally {
-        if (browser) await(browser as any).close();
-        if (fs.existsSync(tempDocxPath)) fs.unlinkSync(tempDocxPath);
     }
 };
 
