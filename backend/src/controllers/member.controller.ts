@@ -128,12 +128,13 @@ export const createMember = async (req: Request, res: Response): Promise<void> =
       </div>
     `;
 
-    // 📄 Prepare DOCX Attachment
+    console.log('📄 Receipt PDF generation starting...');
+    // 📄 Prepare PDF Attachment
     let attachments: any[] = [];
     let receiptBuffer: Buffer | null = null;
     let receiptErrorMsg: string | null = null;
     try {
-      const user = await Employee.findById(req.user?.id);
+      const employee = await Employee.findById(req.user?.id);
 
       receiptBuffer = await generateReceiptPdfBuffer({
         name: trimmedData.name,
@@ -151,7 +152,7 @@ export const createMember = async (req: Request, res: Response): Promise<void> =
         date: new Date().toLocaleDateString('en-IN'),
         dateTime: new Date().toLocaleString('en-IN'),
         dateOfInvoice: new Date().toLocaleDateString('en-IN'),
-        responsibleLog: user?.name || 'Reception',
+        responsibleLog: employee?.name || 'Reception',
         invoiceType: 'New Booking',
         paidPrice: trimmedData.paymentReceived || 0,
         balanceAmount: paymentRemaining,
@@ -160,22 +161,29 @@ export const createMember = async (req: Request, res: Response): Promise<void> =
         paymentMode: trimmedData.paymentMode || 'UPI'
       });
 
+      console.log(`✅ PDF Receipt generated: ${receiptBuffer.length} bytes`);
+
       attachments.push({
         filename: `${trimmedData.name}_MTF_Reseat.pdf`,
         content: receiptBuffer,
         contentType: 'application/pdf'
       });
     } catch (docxErr: any) {
-      console.error('❌ Failed to generate DOCX attachment:', docxErr);
-      receiptErrorMsg = docxErr?.message || 'Unknown template error';
+      console.error('❌ Failed to generate Receipt PDF:', docxErr);
+      receiptErrorMsg = docxErr?.message || 'Unknown PDF generation error';
     }
 
-    const emailSent = await sendEmail(
+    // 📧 Fire-and-forget email sending (non-blocking)
+    sendEmail(
       trimmedData.email,
       'Welcome to MuscleTime - Your Membership Credentials',
       htmlMessage,
       attachments
-    );
+    ).then(sent => {
+        console.log(`📡 Background Email Status: ${sent ? 'Sent' : 'Failed'}`);
+    }).catch(e => {
+        console.error('📡 Background Email CRASHED:', e.message);
+    });
 
     // ✅ Create activity log
     try {
@@ -204,9 +212,7 @@ export const createMember = async (req: Request, res: Response): Promise<void> =
       data: populatedMember,
       receiptBuffer: receiptBuffer ? receiptBuffer.toString('base64') : null,
       receiptFilename: receiptBuffer ? `${trimmedData.name}_MTF_Reseat.pdf` : null,
-      message: (emailSent
-        ? 'Member created successfully! Credentials emailed.'
-        : 'Member created successfully! (⚠️ Email failed to send)') +
+      message: 'Member created successfully! Credentials emailed.' +
         (receiptErrorMsg ? ` \n⚠️ Receipt Error: ${receiptErrorMsg}` : '')
     });
   } catch (error: any) {
@@ -333,7 +339,8 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
       const receiptTitle = isRenewal ? 'Membership Renewal' : 'Partial Payment';
       
       try {
-          const user = await Employee.findById(req.user?.id);
+          console.log('📄 Receipt PDF generation starting (Update/Payment)...');
+          const employee = await Employee.findById(req.user?.id);
           const populatedForEmail = await Member.findById(member._id)
             .populate('branch', 'name city')
             .populate('plan', 'planName duration price');
@@ -354,7 +361,7 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
             date: new Date().toLocaleDateString('en-IN'),
             dateTime: new Date().toLocaleString('en-IN'),
             dateOfInvoice: new Date().toLocaleDateString('en-IN'),
-            responsibleLog: user?.name || 'Reception',
+            responsibleLog: employee?.name || 'Reception',
             invoiceType: isRenewal ? 'Renewal' : 'Partial Payment',
             paidPrice: freshPaymentAmount,
             balanceAmount: member.paymentRemaining,
@@ -363,14 +370,20 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
             paymentMode: req.body.paymentMode || 'UPI'
           });
 
+          console.log(`✅ PDF Receipt generated (Update): ${receiptBuffer.length} bytes`);
           receiptFilename = `${member.name}_MTF_Reseat.pdf`;
 
-          await sendEmail(
+          // 📧 Fire-and-forget email sending
+          sendEmail(
             member.email,
             `Payment Receipt - ${receiptTitle} (${member.memberId})`,
-            `<p>Dear ${member.name}, your payment of ₹${freshPaymentAmount} has been received.</p>`,
+            `<p>Dear ${member.name}, your payment of Rs. ${freshPaymentAmount} has been received.</p>`,
             [{ filename: receiptFilename, content: receiptBuffer, contentType: 'application/pdf' }]
-          );
+          ).then(sent => {
+            console.log(`📡 Background Receipt Status: ${sent ? 'Sent' : 'Failed'}`);
+          }).catch(e => {
+            console.error('📡 Background Receipt CRASHED:', e.message);
+          });
       } catch (err: any) {
           console.error('❌ Failed to send payment receipt:', err);
           receiptErrorMsg = err.message;
