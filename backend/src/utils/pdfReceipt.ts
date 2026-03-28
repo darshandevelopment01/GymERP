@@ -53,8 +53,8 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
   page.drawRectangle({ x: 0, y: height - 10, width: width, height: 10, color: brandRed });
 
   // --- 2. Logo & Brand ---
-  // Adjusted currentY for logo to prevent cutting by the top bar
-  currentY -= 65; 
+  // Lowered significantly (30% more) to prevent any cutting at top of A4
+  currentY -= 90; 
   try {
     const logoPaths = [
       path.join(__dirname, '../assets/muscle_time.jpeg'),
@@ -72,7 +72,7 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
 
     if (logoBuffer) {
       const logoImage = await pdfDoc.embedJpg(logoBuffer);
-      const logoDims = logoImage.scale(0.12); // Reduced scale slightly for better fit
+      const logoDims = logoImage.scale(0.08); // Smaller scale to fit within page margins
       page.drawImage(logoImage, {
         x: 50,
         y: currentY,
@@ -93,7 +93,7 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
   }
 
   // Right Top Info (Date & Type only)
-  let metadataY = height - 55;
+  let metadataY = height - 60;
   page.drawText('DATE:', { x: width - 200, y: metadataY, size: 9, font: boldFont, color: mediumGrey });
   page.drawText(data.date, { x: width - 120, y: metadataY, size: 9, font: regularFont, color: textColor });
   

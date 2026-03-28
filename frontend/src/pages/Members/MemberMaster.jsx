@@ -6,7 +6,7 @@ import planApi from '../../services/planApi';
 import followupApi from '../../services/followupApi';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { taxSlabAPI, planCategoryAPI } from '../../services/mastersApi';
+import { taxSlabAPI, planCategoryAPI, paymentTypeAPI } from '../../services/mastersApi';
 import { usePermissions } from '../../hooks/usePermissions';
 import './MemberMaster.css';
 
@@ -60,6 +60,8 @@ const MemberMaster = () => {
   });
   const [submittingPayment, setSubmittingPayment] = useState(false);
   const [submittingRenewal, setSubmittingRenewal] = useState(false);
+  const [paymentModes, setPaymentModes] = useState([]);
+  const [selectedPaymentMode, setSelectedPaymentMode] = useState('UPI');
 
   const [showFollowUpModal, setShowFollowUpModal] = useState(false);
   const [selectedMemberForFollowUp, setSelectedMemberForFollowUp] = useState(null);
@@ -83,7 +85,8 @@ const MemberMaster = () => {
         fetchStats(),
         fetchTaxSlabs(),
         fetchPlanCategories(),
-        fetchCurrentUserDiscount()
+        fetchCurrentUserDiscount(),
+        fetchPaymentModes()
       ]);
     } catch (err) {
       console.error('Error loading data:', err);
@@ -141,6 +144,21 @@ const MemberMaster = () => {
     }
   };
 
+  const fetchPaymentModes = async () => {
+    try {
+      const response = await paymentTypeAPI.getAll();
+      const modes = response.data || [];
+      const activeModes = modes.filter(m => m.status === 'active');
+      setPaymentModes(activeModes);
+      if (activeModes.length > 0) {
+        const hasUPI = activeModes.find(m => m.paymentType.toUpperCase() === 'UPI');
+        setSelectedPaymentMode(hasUPI ? hasUPI.paymentType : activeModes[0].paymentType);
+      }
+    } catch (error) {
+      console.error('Error fetching payment modes:', error);
+    }
+  };
+
   const fetchCurrentUserDiscount = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -182,6 +200,9 @@ const MemberMaster = () => {
   const handleAddPayment = (member) => {
     setSelectedMember(member);
     setAdditionalPayment(0);
+    // Reset to UPI or first mode
+    const hasUPI = paymentModes.find(m => m.paymentType.toUpperCase() === 'UPI');
+    setSelectedPaymentMode(hasUPI ? hasUPI.paymentType : (paymentModes[0]?.paymentType || 'UPI'));
     setShowPaymentModal(true);
   };
 
@@ -277,7 +298,8 @@ const MemberMaster = () => {
 
       const updateData = {
         paymentReceived: updatedPaymentReceived,
-        paymentRemaining: updatedPaymentRemaining
+        paymentRemaining: updatedPaymentRemaining,
+        paymentMode: selectedPaymentMode
       };
 
       const response = await memberApi.update(selectedMember._id, updateData);
@@ -982,6 +1004,35 @@ const MemberMaster = () => {
                   <small style={{ color: '#64748b', fontSize: '0.85rem', marginTop: '0.5rem', display: 'block' }}>
                     Maximum: ₹{selectedMember.paymentRemaining}
                   </small>
+                </div>
+
+                <div className="form-group" style={{ marginTop: '1rem' }}>
+                  <label>Payment Mode <span className="required">*</span></label>
+                  <select
+                    value={selectedPaymentMode}
+                    onChange={(e) => setSelectedPaymentMode(e.target.value)}
+                    required
+                    style={{
+                      fontSize: '1rem',
+                      fontWeight: '500',
+                      padding: '0.6rem'
+                    }}
+                  >
+                    {paymentModes.length > 0 ? (
+                      paymentModes.map(mode => (
+                        <option key={mode._id} value={mode.paymentType}>
+                          {mode.paymentType}
+                        </option>
+                      ))
+                    ) : (
+                      <>
+                        <option value="UPI">UPI</option>
+                        <option value="Cash">Cash</option>
+                        <option value="Card">Card</option>
+                        <option value="Bank Transfer">Bank Transfer</option>
+                      </>
+                    )}
+                  </select>
                 </div>
 
                 {additionalPayment > 0 && (
