@@ -53,7 +53,8 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
   page.drawRectangle({ x: 0, y: height - 10, width: width, height: 10, color: brandRed });
 
   // --- 2. Logo & Brand ---
-  currentY -= 60;
+  // Adjusted currentY for logo to prevent cutting by the top bar
+  currentY -= 65; 
   try {
     const logoPaths = [
       path.join(__dirname, '../assets/muscle_time.jpeg'),
@@ -71,7 +72,7 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
 
     if (logoBuffer) {
       const logoImage = await pdfDoc.embedJpg(logoBuffer);
-      const logoDims = logoImage.scale(0.18); // Scaled down logo
+      const logoDims = logoImage.scale(0.12); // Reduced scale slightly for better fit
       page.drawImage(logoImage, {
         x: 50,
         y: currentY,
@@ -79,8 +80,8 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
         height: logoDims.height,
       });
       // Move "MUSCLE TIME" text relative to logo
-      page.drawText('MUSCLE TIME', { x: 50 + logoDims.width + 10, y: currentY + logoDims.height / 2 + 5, size: 22, font: boldFont, color: brandRed });
-      page.drawText('PAYMENT RECEIPT', { x: 50 + logoDims.width + 10, y: currentY + logoDims.height / 2 - 15, size: 10, font: boldFont, color: mediumGrey });
+      page.drawText('MUSCLE TIME', { x: 50 + logoDims.width + 15, y: currentY + logoDims.height / 2 + 5, size: 24, font: boldFont, color: brandRed });
+      page.drawText('PAYMENT RECEIPT', { x: 50 + logoDims.width + 15, y: currentY + logoDims.height / 2 - 15, size: 10, font: boldFont, color: mediumGrey });
     } else {
       // Fallback if logo not found
       page.drawText('MUSCLE TIME', { x: 50, y: currentY + 10, size: 28, font: boldFont, color: brandRed });
@@ -91,33 +92,32 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
     page.drawText('MUSCLE TIME', { x: 50, y: currentY + 10, size: 28, font: boldFont, color: brandRed });
   }
 
-  // Right Top Info (Date & Type only - per user request removed Receipt No)
+  // Right Top Info (Date & Type only)
   let metadataY = height - 55;
   page.drawText('DATE:', { x: width - 200, y: metadataY, size: 9, font: boldFont, color: mediumGrey });
   page.drawText(data.date, { x: width - 120, y: metadataY, size: 9, font: regularFont, color: textColor });
   
-  page.drawText('INVOICE TYPE:', { x: width - 200, y: metadataY - 15, size: 9, font: boldFont, color: mediumGrey });
-  page.drawText(data.invoiceType.toUpperCase(), { x: width - 120, y: metadataY - 15, size: 9, font: boldFont, color: brandRed });
+  page.drawText('INVOICE TYPE:', { x: width - 200, y: metadataY - 18, size: 9, font: boldFont, color: mediumGrey });
+  page.drawText(data.invoiceType.toUpperCase(), { x: width - 120, y: metadataY - 18, size: 9, font: boldFont, color: brandRed });
 
   // --- 3. Client & Branch Section ---
-  currentY -= 50;
-  // Increase box height for cleaner spacing
+  currentY -= 60; // More gap from logo area
   page.drawRectangle({ x: 50, y: currentY - 80, width: width - 100, height: 85, color: lightGrey, borderColor: borderColor, borderWidth: 1 });
   
   let boxY = currentY - 15;
   // Client Info
   page.drawText('BILLED TO:', { x: 70, y: boxY, size: 9, font: boldFont, color: brandRed });
-  page.drawText(data.name.toUpperCase(), { x: 70, y: boxY - 18, size: 13, font: boldFont, color: darkGrey });
-  page.drawText(`+91 ${data.mobile}`, { x: 70, y: boxY - 35, size: 10, font: regularFont, color: mediumGrey });
-  page.drawText(data.email, { x: 70, y: boxY - 50, size: 9, font: regularFont, color: mediumGrey });
+  page.drawText(data.name.toUpperCase(), { x: 70, y: boxY - 20, size: 14, font: boldFont, color: darkGrey });
+  page.drawText(`+91 ${data.mobile}`, { x: 70, y: boxY - 38, size: 10, font: regularFont, color: mediumGrey });
+  page.drawText(data.email, { x: 70, y: boxY - 54, size: 9, font: regularFont, color: mediumGrey });
 
   // Branch Info
   page.drawText('BRANCH:', { x: 350, y: boxY, size: 9, font: boldFont, color: brandRed });
-  page.drawText(data.branch || 'MuscleTime Gym', { x: 350, y: boxY - 18, size: 11, font: boldFont, color: darkGrey });
-  page.drawText(data.city || 'Pune Center', { x: 350, y: boxY - 35, size: 10, font: regularFont, color: mediumGrey });
+  page.drawText(data.branch || 'MuscleTime Gym', { x: 350, y: boxY - 20, size: 11, font: boldFont, color: darkGrey });
+  page.drawText(data.city || 'Center', { x: 350, y: boxY - 38, size: 10, font: regularFont, color: mediumGrey });
 
   // --- 4. Main Service Table ---
-  currentY -= 120; // More breathing room
+  currentY -= 130; // Increased spacing
   
   // Table Header
   page.drawRectangle({ x: 50, y: currentY, width: width - 100, height: 30, color: darkGrey });
@@ -127,41 +127,39 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
   page.drawText('SUBTOTAL', { x: 480, y: tableHeaderY, size: 10, font: boldFont, color: rgb(1, 1, 1) });
 
   // Table Data Row
-  currentY -= 30;
+  currentY -= 35;
   page.drawText(data.planName, { x: 70, y: currentY - 10, size: 11, font: boldFont, color: darkGrey });
   page.drawText(`${data.startDate} to ${data.endDate}`, { x: 320, y: currentY - 10, size: 10, font: regularFont, color: textColor });
   
-  // Right-align SUBTOTAL value
   const subtotalStr = `Rs. ${data.price}`;
   const subtotalWidth = boldFont.widthOfTextAtSize(subtotalStr, 11);
   page.drawText(subtotalStr, { x: width - 50 - subtotalWidth, y: currentY - 10, size: 11, font: boldFont, color: darkGrey });
   
-  currentY -= 30;
+  currentY -= 45; // More vertical air before footer
   page.drawLine({ start: { x: 50, y: currentY }, end: { x: width - 50, y: currentY }, thickness: 1, color: borderColor });
 
   // --- 5. Summary/Payment Section ---
-  currentY -= 50;
-  const summaryX = width - 250; // Pull left more to avoid collisions
-  const rightBoundary = width - 50;
+  currentY -= 50; 
+  const summaryX = width - 260; // Pull left to prevent overlap
+  const rightBoundary = width - 60;
   
   const drawSummaryLine = (label: string, value: string, fontVal = regularFont, colorVal = textColor, sizeVal = 10, labelFont = boldFont) => {
     page.drawText(label, { x: summaryX, y: currentY, size: sizeVal, font: labelFont, color: mediumGrey });
     const valWidth = fontVal.widthOfTextAtSize(value, sizeVal);
     page.drawText(value, { x: rightBoundary - valWidth, y: currentY, size: sizeVal, font: fontVal, color: colorVal });
-    currentY -= 22;
+    currentY -= 25; // More gap between lines
   };
 
   drawSummaryLine('PACKAGE PRICE:', `Rs. ${data.price}`);
-  drawSummaryLine('DISCOUNT:', `- Rs. ${data.discount}`, regularFont, rgb(0.8, 0, 0));
+  // DISCOUNT line removed per user request
   
-  // Correct calculation for Total Payable on THIS receipt
   const invoiceTotal = data.price - data.discount;
   
-  currentY -= 5;
-  page.drawLine({ start: { x: summaryX, y: currentY + 15 }, end: { x: width - 50, y: currentY + 15 }, thickness: 1, color: borderColor });
+  currentY -= 10;
+  page.drawLine({ start: { x: summaryX, y: currentY + 20 }, end: { x: width - 50, y: currentY + 20 }, thickness: 1, color: borderColor });
   
-  // Total Highlights box
-  page.drawRectangle({ x: summaryX - 10, y: currentY - 8, width: 210, height: 35, color: lightGrey });
+  // Total Highlights box (larger padding)
+  page.drawRectangle({ x: summaryX - 10, y: currentY - 8, width: 220, height: 35, color: lightGrey });
   drawSummaryLine('TOTAL PAYABLE:', `Rs. ${invoiceTotal}`, boldFont, brandRed, 12, boldFont);
   
   currentY -= 15;
@@ -173,23 +171,23 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
   }
 
   // --- 6. Footer Section ---
-  const footerY = 140;
+  const footerY = 150;
   page.drawLine({ start: { x: 50, y: footerY }, end: { x: width - 50, y: footerY }, thickness: 1, color: borderColor });
   
-  page.drawText('PAYMENT METHOD:', { x: 50, y: footerY - 25, size: 9, font: boldFont, color: mediumGrey });
-  page.drawText(data.paymentMode.toUpperCase(), { x: 150, y: footerY - 25, size: 9, font: boldFont, color: darkGrey });
+  page.drawText('PAYMENT METHOD:', { x: 50, y: footerY - 30, size: 9, font: boldFont, color: mediumGrey });
+  page.drawText(data.paymentMode.toUpperCase(), { x: 160, y: footerY - 30, size: 9, font: boldFont, color: darkGrey });
   
-  page.drawText('PROCESSED BY:', { x: 50, y: footerY - 45, size: 9, font: boldFont, color: mediumGrey });
-  page.drawText(data.responsibleLog.toUpperCase(), { x: 150, y: footerY - 45, size: 9, font: regularFont, color: darkGrey });
+  page.drawText('PROCESSED BY:', { x: 50, y: footerY - 50, size: 9, font: boldFont, color: mediumGrey });
+  page.drawText(data.responsibleLog.toUpperCase(), { x: 160, y: footerY - 50, size: 9, font: regularFont, color: darkGrey });
 
   // Centered Thank You Message
   const thanksText = 'THANK YOU FOR YOUR BUSINESS!';
   const thanksWidth = boldFont.widthOfTextAtSize(thanksText, 12);
-  page.drawText(thanksText, { x: (width - thanksWidth) / 2, y: 80, size: 12, font: boldFont, color: brandRed });
+  page.drawText(thanksText, { x: (width - thanksWidth) / 2, y: 90, size: 12, font: boldFont, color: brandRed });
   
   const pText = 'This is a computer generated document. No signature is required.';
   const pWidth = regularFont.widthOfTextAtSize(pText, 8);
-  page.drawText(pText, { x: (width - pWidth) / 2, y: 60, size: 8, font: regularFont, color: mediumGrey });
+  page.drawText(pText, { x: (width - pWidth) / 2, y: 70, size: 8, font: regularFont, color: mediumGrey });
 
   const pdfBytes = await pdfDoc.save();
   return Buffer.from(pdfBytes);
