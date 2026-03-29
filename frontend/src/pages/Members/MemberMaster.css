@@ -766,3 +766,75 @@
     display: none;
   }
 }
+
+/* ========== PREVIOUS PAYMENTS TABLE IN ADD PAYMENT MODAL ========== */
+.previous-payments-section {
+  margin-bottom: 1.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: white;
+}
+
+.previous-payments-header {
+  background: #f8fafc;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.previous-payments-header h4 {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.previous-payments-container {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.previous-payments-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.previous-payments-table th {
+  position: sticky;
+  top: 0;
+  background: #f1f5f9;
+  padding: 0.6rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: #64748b;
+  border-bottom: 1px solid #e2e8f0;
+  z-index: 1;
+}
+
+.previous-payments-table td {
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+}
+
+.previous-payments-table tr:last-child td {
+  border-bottom: none;
+}
+
+.previous-payments-table tr:nth-child(even) {
+  background: #f8fafc;
+}
+
+.no-payments-msg {
+  padding: 1.5rem;
+  text-align: center;
+  color: #94a3b8;
+  font-style: italic;
+  font-size: 0.9rem;
+}
