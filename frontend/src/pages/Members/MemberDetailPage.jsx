@@ -39,6 +39,10 @@ const MemberDetailPage = () => {
     followUpDate: null,
     followUpTime: ''
   });
+  const [historyData, setHistoryData] = useState(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [activeHistoryTab, setActiveHistoryTab] = useState('plans');
+  const [expandedPlanId, setExpandedPlanId] = useState(null);
 
   useEffect(() => {
     fetchMemberData();
@@ -48,7 +52,24 @@ const MemberDetailPage = () => {
     if (activeTab === 'followups') {
       fetchFollowups();
     }
+    if (activeTab === 'history') {
+      fetchHistoryData();
+    }
   }, [activeTab]);
+
+  const fetchHistoryData = async () => {
+    try {
+      setHistoryLoading(true);
+      const resp = await memberApi.getHistory(id);
+      if (resp.success) {
+        setHistoryData(resp.data);
+      }
+    } catch (err) {
+      console.error('Error fetching history:', err);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
 
   const fetchMemberData = async () => {
     try {
@@ -202,19 +223,6 @@ const MemberDetailPage = () => {
             <span>Renew</span>
           </button>
         )}
-
-        <button 
-          className="action-btn history" 
-          onClick={() => {
-            setActiveTab('history');
-            const target = document.querySelector('.tabs-container');
-            if (target) target.scrollIntoView({ behavior: 'smooth' });
-          }}
-          title="View Activity History"
-        >
-          <History size={20} />
-          <span>History</span>
-        </button>
       </div>
 
       {/* Tabs Menu */}
@@ -347,47 +355,214 @@ const MemberDetailPage = () => {
 
         {activeTab === 'history' && (
           <div className="history-section">
-            <h3 className="section-title">MEMBERSHIP TIMELINE</h3>
-            <div className="history-list">
-              {/* CURRENT PLAN AT TOP */}
-              <div className="history-item current-plan-item" style={{ borderLeftColor: '#10b981' }}>
-                <div className="history-header">
-                  <h4>{member.plan?.planName || 'Active Plan'}</h4>
-                  <span className="status-tag status-active">Active (Current)</span>
-                </div>
-                <p className="duration">Current: {formatDate(member.membershipStartDate)} - {formatDate(member.membershipEndDate)}</p>
-                <div className="price-row">
-                  <p className="paid-amount">Total Paid: ₹{member.paymentReceived}</p>
-                  {member.discountAmount > 0 && (
-                    <span className="discount-tag">₹{member.discountAmount} off</span>
-                  )}
-                </div>
+            {historyLoading ? (
+              <div className="history-loading-inline">
+                <Loader2 size={32} className="spinner" />
+                <p>Loading timeline...</p>
               </div>
+            ) : !historyData ? (
+              <div className="no-data-card">No activity data found.</div>
+            ) : (
+              <>
+                {/* Tab Switcher */}
+                <div className="history-tabs">
+                  <button 
+                    className={`history-tab ${activeHistoryTab === 'plans' ? 'active' : ''}`}
+                    onClick={() => setActiveHistoryTab('plans')}
+                  >
+                    📋 Plan History
+                  </button>
+                  <button 
+                    className={`history-tab ${activeHistoryTab === 'payments' ? 'active' : ''}`}
+                    onClick={() => setActiveHistoryTab('payments')}
+                  >
+                    💰 All Payments
+                  </button>
+                </div>
 
-              {/* PAST HISTORY RECORDS */}
-              {member.history?.length > 0 ? (
-                member.history.map((h, index) => (
-                  <div className="history-item" key={index}>
-                    <div className="history-header">
-                      <h4>{h.plan?.planName || 'Previous Plan'}</h4>
-                      <span className={`status-tag status-${h.status}`}>{h.status}</span>
-                    </div>
-                    <p className="duration">Duration: {formatDate(h.membershipStartDate)} - {formatDate(h.membershipEndDate)}</p>
-                    <div className="price-row">
-                      <p className="paid-amount">Paid: ₹{h.paymentReceived}</p>
-                      {h.discountAmount > 0 && (
-                        <span className="discount-tag">₹{h.discountAmount} off</span>
-                      )}
-                    </div>
+                {activeHistoryTab === 'plans' ? (
+                  <div className="history-plans-view">
+                    <div className="section-label">Membership Plan Journey</div>
+                    
+                    {/* Current active plan at the top */}
+                    {historyData.currentPlan && (
+                      <div className={`plan-history-card current ${expandedPlanId === 'current' ? 'expanded' : ''}`} 
+                           onClick={() => setExpandedPlanId(expandedPlanId === 'current' ? null : 'current')}>
+                        <div className="plan-card-top">
+                          <div className="plan-info-main">
+                            <div className="plan-badge current">ACTIVE</div>
+                            <h4>{historyData.currentPlan?.plan?.planName || 'Current Plan'}</h4>
+                            <p>{formatDate(historyData.currentPlan?.startDate)} → {formatDate(historyData.currentPlan?.endDate)}</p>
+                          </div>
+                          <div className="plan-financials">
+                            <span className="due-amount">₹{historyData.currentPlan?.paymentRemaining} Pending</span>
+                            <span className="expand-indicator">{expandedPlanId === 'current' ? '🔼' : '🔽'}</span>
+                          </div>
+                        </div>
+                        
+                        {expandedPlanId === 'current' && (
+                          <div className="plan-details-expanded" onClick={(e) => e.stopPropagation()}>
+                            <div className="detail-grid">
+                              <div className="detail-box">
+                                <label>Bill Amount</label>
+                                <span>₹{historyData.currentPlan?.totalAmount}</span>
+                              </div>
+                              <div className="detail-box">
+                                <label>Received</label>
+                                <span className="success">₹{historyData.currentPlan?.paymentReceived}</span>
+                              </div>
+                            </div>
+                            
+                            <div className="nested-payments">
+                              <h5>Payments for this cycle</h5>
+                              {(() => {
+                                const planPayments = (historyData.paymentHistory || []).filter(p => {
+                                  const pDate = new Date(p.paymentDate);
+                                  const sDate = new Date(historyData.currentPlan.startDate);
+                                  return pDate >= sDate;
+                                });
+                                
+                                if (planPayments.length === 0) return <p className="no-data-small">No payments recorded for this plan cycle.</p>;
+                                
+                                return (
+                                  <div className="small-payment-list">
+                                    {planPayments.map((p, pIdx) => (
+                                      <div key={pIdx} className="small-payment-item">
+                                        <div className="p-date-mode">
+                                          <span className="p-date">{new Date(p.paymentDate).toLocaleDateString('en-IN')}</span>
+                                          <span className="p-mode">{p.paymentMode}</span>
+                                        </div>
+                                        <span className="p-amount success">+ ₹{p.amount}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                );
+                              })()}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Past plans from history */}
+                    {(historyData.planHistory || []).length > 0 ? (
+                      [...historyData.planHistory].reverse().map((pastPlan, idx) => {
+                        const isExpanded = expandedPlanId === `past-${idx}`;
+                        return (
+                          <div key={idx} className={`plan-history-card past ${isExpanded ? 'expanded' : ''}`}
+                               onClick={() => setExpandedPlanId(isExpanded ? null : `past-${idx}`)}>
+                            <div className="plan-card-top">
+                              <div className="plan-info-main">
+                                <div className="plan-badge past">ARCHIVED</div>
+                                <h4>{pastPlan.plan?.planName || 'Previous Plan'}</h4>
+                                <p>{formatDate(pastPlan.membershipStartDate)} → {formatDate(pastPlan.membershipEndDate)}</p>
+                              </div>
+                              <div className="plan-financials">
+                                <span className="status-label">{pastPlan.status}</span>
+                                <span className="expand-indicator">{isExpanded ? '🔼' : '🔽'}</span>
+                              </div>
+                            </div>
+
+                            {isExpanded && (
+                              <div className="plan-details-expanded" onClick={(e) => e.stopPropagation()}>
+                                <div className="detail-grid">
+                                  <div className="detail-box">
+                                    <label>Billed</label>
+                                    <span>₹{pastPlan.totalAmount}</span>
+                                  </div>
+                                  <div className="detail-box">
+                                    <label>Collected</label>
+                                    <span className="success">₹{pastPlan.paymentReceived}</span>
+                                  </div>
+                                </div>
+                                
+                                <div className="nested-payments">
+                                  <h5>Cycle Payments</h5>
+                                  {(() => {
+                                    const pStart = new Date(pastPlan.membershipStartDate);
+                                    const pEnd = new Date(pastPlan.membershipEndDate);
+                                    const planPayments = (historyData.paymentHistory || []).filter(p => {
+                                      const pDate = new Date(p.paymentDate);
+                                      return pDate >= pStart && pDate <= pEnd;
+                                    });
+                                    
+                                    if (planPayments.length === 0) return <p className="no-data-small">No separate payments recorded for this archive.</p>;
+                                    
+                                    return (
+                                      <div className="small-payment-list">
+                                        {planPayments.map((p, pIdx) => (
+                                          <div key={pIdx} className="small-payment-item">
+                                            <div className="p-date-mode">
+                                              <span className="p-date">{new Date(p.paymentDate).toLocaleDateString('en-IN')}</span>
+                                              <span className="p-mode">{p.paymentMode}</span>
+                                            </div>
+                                            <span className="p-amount success">+ ₹{p.amount}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    );
+                                  })()}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })
+                    ) : (
+                      !historyData.currentPlan && <div className="timeline-empty">No plan history found.</div>
+                    )}
                   </div>
-                ))
-              ) : null}
-              
-              {/* IF ENTIRE HISTORY & CURRENT IS EMPTY */}
-              {!member.plan && (!member.history || member.history.length === 0) && (
-                <div className="no-data-card">No membership history available.</div>
-              )}
-            </div>
+                ) : (
+                  <div className="history-payments-view">
+                    <div className="section-label">All Individual Payments</div>
+                    {(historyData.paymentHistory || []).length > 0 ? (
+                      <div className="payment-history-table-container">
+                        <table className="payment-history-table">
+                          <thead>
+                            <tr>
+                              <th>Date</th>
+                              <th>Amount</th>
+                              <th>Mode</th>
+                              <th>By</th>
+                              <th>Note</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {[...historyData.paymentHistory].reverse().map((p, pIdx) => (
+                              <tr key={pIdx}>
+                                <td className="white-space-nowrap">
+                                  {new Date(p.paymentDate).toLocaleDateString('en-IN', {
+                                    day: '2-digit', month: 'short'
+                                  })}
+                                </td>
+                                <td className="amount-cell success">₹{p.amount}</td>
+                                <td><span className="mode-tag">{p.paymentMode}</span></td>
+                                <td>{p.recordedBy?.name || 'Staff'}</td>
+                                <td className="note-cell">{p.note || '-'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="timeline-empty">No payment records found.</div>
+                    )}
+                  </div>
+                )}
+
+                {/* Lifetime Summary */}
+                <div className="history-summary-bar">
+                  <div className="summary-item">
+                    <label>Lifetime Billing</label>
+                    <span>₹{(historyData.planHistory?.reduce((sum, p) => sum + (p.totalAmount || 0), 0) || 0) + (historyData.currentPlan?.totalAmount || 0)}</span>
+                  </div>
+                  <div className="summary-item">
+                    <label>Total Received</label>
+                    <span className="success">₹{historyData.paymentHistory?.reduce((sum, p) => sum + (p.amount || 0), 0) || 0}</span>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         )}
 

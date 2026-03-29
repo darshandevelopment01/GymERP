@@ -380,52 +380,344 @@
 
 .share-btn:hover { background: #effaf4; }
 
-/* History Section */
-.history-item {
-  background: white;
-  padding: 1.25rem;
-  border-radius: 12px;
-  margin-bottom: 1rem;
-  border-left: 4px solid #cbd5e1;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-  transition: transform 0.2s;
-}
-
-.history-item.current-plan-item {
-  border-left: 5px solid #10b981;
-  background: #f0fdf4;
-}
-
-.history-item:hover {
-  transform: translateX(4px);
-}
-
-.history-header {
+/* History Section - Full Detailed View */
+.history-section {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.history-loading-inline {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 0;
+  color: #64748b;
+}
+
+.history-tabs {
+  display: flex;
+  gap: 0.5rem;
+  background: #e2e8f0;
+  padding: 0.4rem;
+  border-radius: 12px;
   margin-bottom: 0.5rem;
 }
 
-.history-header h4 { margin: 0; color: #1e293b; }
-
-.history-item .duration { margin: 0 0 0.75rem; font-size: 0.85rem; color: #64748b; }
-
-.price-row {
+.history-tab {
+  flex: 1;
+  padding: 0.75rem;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
-  gap: 1rem;
+  justify-content: center;
+  gap: 0.5rem;
 }
 
-.paid-amount { margin: 0; font-weight: 600; color: #1e293b; }
-
-.discount-tag {
-  font-size: 0.75rem;
+.history-tab.active {
+  background: white;
   color: #10b981;
-  background: #effaf4;
-  padding: 0.2rem 0.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.history-tab:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.5);
+  color: #1e293b;
+}
+
+.section-label {
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #94a3b8;
+  letter-spacing: 0.075em;
+  margin-bottom: 1rem;
+  display: block;
+}
+
+/* Plan History Cards */
+.plan-history-card {
+  background: white;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 1rem;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.plan-history-card:hover {
+  border-color: #10b981;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.plan-history-card.current {
+  border-left: 5px solid #10b981;
+  background: #f0fdfa;
+}
+
+.plan-history-card.expanded {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  border-color: #10b981;
+}
+
+.plan-card-top {
+  padding: 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.plan-info-main h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.1rem;
+  color: #1e293b;
+}
+
+.plan-info-main p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.plan-badge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  display: inline-block;
+  padding: 0.15rem 0.45rem;
   border-radius: 4px;
+  margin-bottom: 0.35rem;
+}
+
+.plan-badge.current { background: #10b981; color: white; }
+.plan-badge.past { background: #94a3b8; color: white; }
+
+.plan-financials {
+  text-align: right;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.due-amount {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #ef4444;
+}
+
+.status-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: capitalize;
+}
+
+.expand-indicator {
+  color: #94a3b8;
+  font-size: 0.75rem;
+}
+
+/* Expanded Plan Details */
+.plan-details-expanded {
+  padding: 0 1.25rem 1.25rem 1.25rem;
+  border-top: 1px dashed #e2e8f0;
+  background: white;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  padding-top: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.detail-box {
+  background: #f8fafc;
+  padding: 0.75rem;
+  border-radius: 10px;
+}
+
+.detail-box label {
+  display: block;
+  font-size: 0.7rem;
+  color: #64748b;
+  margin-bottom: 0.25rem;
+}
+
+.detail-box span {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.detail-box span.success { color: #16a34a; }
+
+.nested-payments {
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 1rem;
+}
+
+.nested-payments h5 {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.8rem;
+  color: #475569;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.no-data-small {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  font-style: italic;
+  margin: 0;
+}
+
+.small-payment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.small-payment-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 0.8rem;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #f1f5f9;
+}
+
+.p-date-mode {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.p-date {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.p-mode {
+  font-size: 0.7rem;
+  background: #f1f5f9;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  color: #64748b;
+}
+
+.p-amount {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+/* Payment History Table */
+.payment-history-table-container {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.payment-history-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.payment-history-table th {
+  background: #f8fafc;
+  padding: 1rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid #f1f5f9;
+}
+
+.payment-history-table td {
+  padding: 1rem;
+  font-size: 0.9rem;
+  color: #334155;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.white-space-nowrap { white-space: nowrap; }
+
+.amount-cell {
+  font-weight: 700;
+  font-size: 1rem !important;
+}
+
+.mode-tag {
+  font-size: 0.75rem;
+  background: #f1f5f9;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  color: #334155;
   font-weight: 600;
 }
+
+.note-cell {
+  font-size: 0.85rem;
+  color: #64748b;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Lifetime Summary Bar */
+.history-summary-bar {
+  background: white;
+  padding: 1.25rem 1.5rem;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  gap: 2.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.summary-item label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
+}
+
+.summary-item span {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+.summary-item span.success { color: #166534; }
+
+.timeline-empty {
+  text-align: center;
+  padding: 3rem 0;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.success { color: #166534; }
 
 /* Follow-ups */
 .add-followup-btn {
