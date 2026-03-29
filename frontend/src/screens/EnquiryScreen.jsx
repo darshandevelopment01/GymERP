@@ -30,6 +30,7 @@ export default function EnquiryScreen() {
       'Attendance': '/attendance',
       'Follow Ups': '/followups',
       'Plan Master': '/plan-master',
+      'Offers': '/offers',
     };
     if (routes[menu]) navigate(routes[menu]);
     closeSidebar();

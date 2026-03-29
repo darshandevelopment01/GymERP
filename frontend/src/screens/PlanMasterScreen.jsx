@@ -29,6 +29,7 @@ export default function PlanMasterScreen() {
             'Members': '/members',
             'Attendance': '/attendance',
             'Plan Master': '/plan-master',
+            'Offers': '/offers',
             'Masters': '/masters',
         };
         if (routes[menu]) navigate(routes[menu]);

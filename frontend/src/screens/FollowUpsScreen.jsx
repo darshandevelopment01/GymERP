@@ -29,6 +29,7 @@ export default function FollowUpsScreen() {
       'Attendance': '/attendance',
       'Plan Master': '/plan-master',
       'Masters': '/masters',
+      'Offers': '/offers',
     };
     if (routes[menu]) navigate(routes[menu]);
     closeSidebar();

@@ -155,6 +155,7 @@ export default function DashboardContent() {
       'Attendance': '/attendance',
       'Plan Master': '/plan-master',
       'Masters': '/masters',
+      'Offers': '/offers',
     };
 
     if (routes[menu]) {
