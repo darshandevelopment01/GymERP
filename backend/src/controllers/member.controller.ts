@@ -448,8 +448,73 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
     });
 
   } catch (error: any) {
-    console.error('Error updating member:', error);
+    console.error('Update member error:', error);
     res.status(500).json({ success: false, message: error.message || 'Failed to update member' });
+  }
+};
+
+export const getMemberPaymentReceipt = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id, paymentIndex } = req.params;
+    const index = parseInt(paymentIndex);
+
+    const member = await Member.findById(id)
+      .populate('branch', 'name city')
+      .populate('plan', 'planName duration price')
+      .populate('history.plan', 'planName duration price');
+
+    if (!member) {
+      res.status(404).json({ success: false, message: 'Member not found' });
+      return;
+    }
+
+    const payment = member.payments[index];
+    if (!payment) {
+      res.status(404).json({ success: false, message: 'Payment record not found' });
+      return;
+    }
+
+    // Get the plan info at the time of this payment if possible, or use current
+    // For historical payments, we ideally want the plan it belonged to.
+    // For now, we use the current plan as a fallback.
+    const planInfo = (member.plan as any);
+    const employee = await Employee.findById(payment.recordedBy || req.user?.id);
+
+    const receiptBuffer = await generateReceiptPdfBuffer({
+      name: member.name,
+      email: member.email,
+      mobile: member.mobileNumber,
+      planName: planInfo?.planName || 'Gym Membership',
+      packageDetail: planInfo?.planName || 'Gym Membership',
+      price: planInfo?.price || payment.amount,
+      packagePrice: planInfo?.price || payment.amount,
+      startDate: member.membershipStartDate ? new Date(member.membershipStartDate).toLocaleDateString('en-IN') : 'N/A',
+      endDate: member.membershipEndDate ? new Date(member.membershipEndDate).toLocaleDateString('en-IN') : 'N/A',
+      memberId: member.memberId,
+      branch: (member.branch as any)?.name || 'N/A',
+      city: (member.branch as any)?.city || 'N/A',
+      date: new Date(payment.paymentDate).toLocaleDateString('en-IN'),
+      dateTime: new Date(payment.paymentDate).toLocaleString('en-IN'),
+      dateOfInvoice: new Date(payment.paymentDate).toLocaleDateString('en-IN'),
+      responsibleLog: employee?.name || 'Reception',
+      invoiceType: 'Payment Receipt',
+      paidPrice: payment.amount,
+      previousRemaining: 0, // Simplified for history
+      balanceAmount: 0, // Simplified for history
+      totalPayment: planInfo?.price || payment.amount,
+      discount: 0,
+      paymentMode: payment.paymentMode || 'UPI'
+    });
+
+    res.json({
+      success: true,
+      receiptBuffer: receiptBuffer.toString('base64'),
+      receiptFilename: `${member.name}_Receipt_${index + 1}.pdf`
+    });
+
+  } catch (error: any) {
+    console.error('Error generating historical receipt:', error);
+    res.status(500).json({ success: false, message: 'Failed to generate receipt' });
   }
 };
 

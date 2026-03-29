@@ -82,6 +82,16 @@ const memberApi = {
       throw error;
     }
   },
+  async getPaymentReceipt(memberId, paymentIndex) {
+    try {
+      const response = await fetchWithAuth(`${API_URL}/members/${memberId}/payments/${paymentIndex}/receipt`);
+      if (!response.ok) throw new Error('Failed to fetch receipt');
+      return await response.json();
+    } catch (error) {
+      console.error('Get payment receipt error:', error);
+      throw error;
+    }
+  },
 };
 
 export default memberApi;

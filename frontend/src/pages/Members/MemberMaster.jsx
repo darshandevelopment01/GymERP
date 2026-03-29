@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import GenericMaster from '../../components/Masters/GenericMaster';
 import memberApi from '../../services/memberApi';
 import branchApi from '../../services/branchApi';
@@ -11,6 +12,7 @@ import { usePermissions } from '../../hooks/usePermissions';
 import './MemberMaster.css';
 
 const MemberMaster = () => {
+  const navigate = useNavigate();
   const { can, isAdmin } = usePermissions();
   const cacheKeyBranches = 'cache_global_branches';
   const cacheKeyPlans = 'cache_global_plans';
@@ -819,6 +821,7 @@ const MemberMaster = () => {
         showDeleteButton={can('deleteMember')}
         showExportButton={true}
         exportFileName="members"
+        onRowClick={(item) => navigate(`/members/${item._id}`)}
         onAddFollowUp={can('createMemberFollowUp') ? handleAddFollowUp : null}
         customActions={(item) => {
           const today = new Date();
