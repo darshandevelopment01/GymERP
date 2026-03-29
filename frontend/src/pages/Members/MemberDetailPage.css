@@ -794,6 +794,9 @@
   border-radius: 8px;
   min-height: 100px;
   font-family: inherit;
+  background: #ffffff;
+  color: #1e293b;
+  color-scheme: light;
 }
 
 .date-input {
@@ -801,6 +804,9 @@
   padding: 0.75rem;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
+  background: #ffffff;
+  color: #1e293b;
+  color-scheme: light;
 }
 
 .submit-btn {

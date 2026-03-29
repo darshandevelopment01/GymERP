@@ -90,8 +90,10 @@ const MemberDetailPage = () => {
 
   const fetchFollowups = async () => {
     try {
-      const data = await followupApi.getByMember(id);
-      setFollowups(data || []);
+      const response = await followupApi.getByMember(id);
+      if (response && response.success) {
+        setFollowups(response.data || []);
+      }
     } catch (err) {
       console.error('Error fetching followups:', err);
     }
@@ -131,7 +133,7 @@ const MemberDetailPage = () => {
     if (!followUpData.note) return alert('Please enter a note');
     try {
       const payload = {
-        memberId: id,
+        member: id,
         note: followUpData.note,
         followUpDate: followUpData.followUpDate,
         followUpTime: followUpData.followUpTime,
@@ -582,7 +584,7 @@ const MemberDetailPage = () => {
                       <p>{f.note}</p>
                     </div>
                     <div className="followup-meta">
-                      <span className="timestamp">📅 {formatDate(f.recordedAt)}</span>
+                      <span className="timestamp">📅 {formatDate(f.createdAt)}</span>
                       {f.followUpDate && (
                         <span className="next-date">Next: {formatDate(f.followUpDate)}</span>
                       )}
