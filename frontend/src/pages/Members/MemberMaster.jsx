@@ -583,7 +583,8 @@ const MemberMaster = () => {
     {
       label: 'Plan',
       field: 'plan',
-      render: (item) => item.plan?.planName || '-'
+      render: (item) => item.plan?.planName || '-',
+      mobileHide: true
     },
     {
       label: 'Payment',

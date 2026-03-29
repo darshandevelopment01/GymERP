@@ -751,58 +751,25 @@ const GenericMaster = ({
 
           {/* Pagination Controls */}
           {filteredData.length > itemsPerPage && (
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '1rem',
-              backgroundColor: '#f8fafc',
-              borderTop: '1px solid #e2e8f0',
-              borderBottomLeftRadius: '12px',
-              borderBottomRightRadius: '12px'
-            }}>
-              <div style={{ color: '#64748b', fontSize: '0.875rem' }}>
+            <div className="master-pagination-footer">
+              <div className="pagination-info">
                 Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredData.length)} of {filteredData.length} entries
               </div>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <div className="pagination-controls">
                 <button
                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    border: '1px solid #e2e8f0',
-                    backgroundColor: currentPage === 1 ? '#f1f5f9' : 'white',
-                    color: currentPage === 1 ? '#94a3b8' : '#334155',
-                    borderRadius: '6px',
-                    cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-                    fontWeight: '500',
-                    transition: 'all 0.2s'
-                  }}
+                  className="btn-pagination"
                 >
                   Previous
                 </button>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '0 0.5rem',
-                  fontWeight: '600',
-                  color: '#0f172a'
-                }}>
+                <div className="page-number">
                   Page {currentPage} of {Math.ceil(filteredData.length / itemsPerPage)}
                 </div>
                 <button
                   onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredData.length / itemsPerPage), p + 1))}
                   disabled={currentPage === Math.ceil(filteredData.length / itemsPerPage)}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    border: '1px solid #e2e8f0',
-                    backgroundColor: currentPage === Math.ceil(filteredData.length / itemsPerPage) ? '#f1f5f9' : 'white',
-                    color: currentPage === Math.ceil(filteredData.length / itemsPerPage) ? '#94a3b8' : '#334155',
-                    borderRadius: '6px',
-                    cursor: currentPage === Math.ceil(filteredData.length / itemsPerPage) ? 'not-allowed' : 'pointer',
-                    fontWeight: '500',
-                    transition: 'all 0.2s'
-                  }}
+                  className="btn-pagination"
                 >
                   Next
                 </button>
