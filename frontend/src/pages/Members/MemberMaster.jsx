@@ -943,7 +943,7 @@ const MemberMaster = () => {
                   background: '#f8fafc',
                   padding: '1rem',
                   borderRadius: '8px',
-                  marginBottom: '1rem'
+                  marginBottom: '1.5rem'
                 }}>
                   <h3 style={{ margin: '0 0 0.5rem 0', color: '#1e293b', fontSize: '1rem' }}>Member Details</h3>
                   <p style={{ margin: '0.25rem 0', color: '#64748b', fontSize: '0.9rem' }}>
@@ -955,40 +955,6 @@ const MemberMaster = () => {
                   <p style={{ margin: '0.25rem 0', color: '#64748b', fontSize: '0.9rem' }}>
                     <strong>Plan:</strong> {selectedMember.plan?.planName || '-'}
                   </p>
-                </div>
-
-                {/* Previous Payments History */}
-                <div className="previous-payments-section">
-                  <div className="previous-payments-header">
-                    <span>📋</span>
-                    <h4>Previous Payments</h4>
-                  </div>
-                  <div className="previous-payments-container">
-                    {selectedMember.payments && selectedMember.payments.length > 0 ? (
-                      <table className="previous-payments-table">
-                        <thead>
-                          <tr>
-                            <th>Date</th>
-                            <th>Amount</th>
-                            <th>Mode</th>
-                            <th>Note</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {selectedMember.payments.map((p, idx) => (
-                            <tr key={idx}>
-                              <td>{p.paymentDate ? new Date(p.paymentDate).toLocaleDateString('en-IN') : '-'}</td>
-                              <td><strong>₹{p.amount}</strong></td>
-                              <td>{p.paymentMode}</td>
-                              <td title={p.note}>{p.note || '-'}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    ) : (
-                      <div className="no-payments-msg">No previous payments recorded</div>
-                    )}
-                  </div>
                 </div>
 
                 <div style={{
