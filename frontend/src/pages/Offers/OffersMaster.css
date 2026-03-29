@@ -10,6 +10,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap;
   margin-bottom: 2rem;
   background: white;
   padding: 1.5rem;
@@ -41,6 +43,7 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  flex-shrink: 0;
 }
 
 .create-offer-btn:hover {
