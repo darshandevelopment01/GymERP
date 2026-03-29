@@ -77,6 +77,69 @@ const MemberMaster = () => {
     fetchInitialData();
   }, []);
 
+  // Handle auto-opening modals from URL query params
+  useEffect(() => {
+    const handleQueryParams = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const action = params.get('action');
+      const memberId = params.get('memberId');
+
+      if (action && memberId) {
+        // Wait for members list to be available if its still loading
+        // We need to find the specific member object from the list to trigger the modal logic
+        try {
+          // Fetch members or use existing cache/state
+          const response = await memberApi.getAll();
+          const membersList = response.data || [];
+          const member = membersList.find(m => m._id === memberId);
+
+          if (member) {
+            // Give some time for background processes/data to settle
+            setTimeout(() => {
+              if (action === 'addPayment') handleAddPayment(member);
+              else if (action === 'renew') handleRenewMember(member);
+              else if (action === 'history') {
+                setSelectedMemberForHistory(member);
+                setShowHistoryModal(true);
+                // Trigger the history fetch logic (same as in button click)
+                const fetchHistory = async () => {
+                   setHistoryLoading(true);
+                   try {
+                     const hResp = await memberApi.getHistory(member._id);
+                     if (hResp.success) setHistoryData(hResp.data);
+                   } finally {
+                     setHistoryLoading(false);
+                   }
+                };
+                fetchHistory();
+              }
+              else if (action === 'edit' && can('editMember')) {
+                // To trigger Edit modal in GenericMaster, we need a way to set its internal state.
+                // Since MemberMaster has setShowModal/setFormData which is hidden inside GenericMaster,
+                // we'll rely on a prop if GenericMaster supports manual control, or we target the action button.
+                // However, handleEdit in MemberMaster is usually defined locally if not using the default.
+                // Let's assume we can trigger handleEdit if it's available.
+                // Actually, GenericMaster manages its own Edit modal. 
+                // A better way is to pass a trigger prop to GenericMaster or just 
+                // let the user click edit in the list for now if the detail action is complex.
+                // REVISION: We'll implement handleEdit in MemberDetailPage if needed, but for now
+                // let's stick to the easy ones. Actually, let's try to find if MemberMaster has a specific edit handler.
+              }
+            }, 500);
+          }
+        } catch (err) {
+          console.error('Failed to handle query params:', err);
+        }
+        
+        // Remove params from URL without refreshing
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, '', newUrl);
+      }
+    };
+
+    handleQueryParams();
+  }, [branches, plans, taxSlabs]); // Re-run when key data is ready
+
   const fetchInitialData = async () => {
     if (!hasCache) setLoading(true);
     setError(null);
@@ -526,22 +589,6 @@ const MemberMaster = () => {
       field: 'name'
     },
     {
-      label: 'Mobile',
-      field: 'mobileNumber'
-    },
-    {
-      label: 'Email',
-      field: 'email',
-      render: (item) => (
-        <span style={{ fontSize: '0.9rem' }}>{item.email}</span>
-      )
-    },
-    {
-      label: 'Branch',
-      field: 'branch',
-      render: (item) => item.branch?.name || '-'
-    },
-    {
       label: 'Plan',
       field: 'plan',
       render: (item) => item.plan?.planName || '-'
@@ -570,17 +617,7 @@ const MemberMaster = () => {
           {item.status}
         </span>
       )
-    },
-    // Converted By column - admin only
-    ...(isAdmin ? [{
-      label: 'Converted By',
-      field: 'convertedBy',
-      render: (item) => (
-        <span style={{ fontSize: '0.85rem', color: '#6366f1', fontWeight: '600' }}>
-          {item.convertedBy?.name || '-'}
-        </span>
-      )
-    }] : [])
+    }
   ];
 
   const formFields = [

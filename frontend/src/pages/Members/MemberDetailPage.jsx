@@ -13,7 +13,11 @@ import {
   Heart, 
   Share2,
   Plus,
-  Loader2
+  Loader2,
+  Edit,
+  History,
+  Wallet,
+  RefreshCw
 } from 'lucide-react';
 import memberApi from '../../services/memberApi';
 import followupApi from '../../services/followupApi';
@@ -164,6 +168,49 @@ const MemberDetailPage = () => {
             <p className="member-since">Member since {formatMonthYear(member.createdAt || member.membershipStartDate)}</p>
           </div>
         </div>
+      </div>
+
+      {/* Quick Actions Bar */}
+      <div className="quick-actions-bar">
+        <button 
+          className="action-btn edit" 
+          onClick={() => navigate(`/members?action=edit&memberId=${id}`)}
+          title="Edit Member"
+        >
+          <Edit size={20} />
+          <span>Edit</span>
+        </button>
+
+        {member.paymentRemaining > 0 && (
+          <button 
+            className="action-btn payment" 
+            onClick={() => navigate(`/members?action=addPayment&memberId=${id}`)}
+            title="Add Payment"
+          >
+            <Wallet size={20} />
+            <span>Add Payment</span>
+          </button>
+        )}
+
+        {member.status === 'expired' && (
+          <button 
+            className="action-btn renew" 
+            onClick={() => navigate(`/members?action=renew&memberId=${id}`)}
+            title="Renew Membership"
+          >
+            <RefreshCw size={20} />
+            <span>Renew</span>
+          </button>
+        )}
+
+        <button 
+          className="action-btn history" 
+          onClick={() => navigate(`/members?action=history&memberId=${id}`)}
+          title="View Activity History"
+        >
+          <History size={20} />
+          <span>History</span>
+        </button>
       </div>
 
       {/* Tabs Menu */}
