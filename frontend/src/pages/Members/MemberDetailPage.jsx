@@ -205,7 +205,11 @@ const MemberDetailPage = () => {
 
         <button 
           className="action-btn history" 
-          onClick={() => navigate(`/members?action=history&memberId=${id}`)}
+          onClick={() => {
+            setActiveTab('history');
+            const target = document.querySelector('.tabs-container');
+            if (target) target.scrollIntoView({ behavior: 'smooth' });
+          }}
           title="View Activity History"
         >
           <History size={20} />
@@ -343,8 +347,24 @@ const MemberDetailPage = () => {
 
         {activeTab === 'history' && (
           <div className="history-section">
-            <h3 className="section-title">MEMBERSHIP HISTORY</h3>
+            <h3 className="section-title">MEMBERSHIP TIMELINE</h3>
             <div className="history-list">
+              {/* CURRENT PLAN AT TOP */}
+              <div className="history-item current-plan-item" style={{ borderLeftColor: '#10b981' }}>
+                <div className="history-header">
+                  <h4>{member.plan?.planName || 'Active Plan'}</h4>
+                  <span className="status-tag status-active">Active (Current)</span>
+                </div>
+                <p className="duration">Current: {formatDate(member.membershipStartDate)} - {formatDate(member.membershipEndDate)}</p>
+                <div className="price-row">
+                  <p className="paid-amount">Total Paid: ₹{member.paymentReceived}</p>
+                  {member.discountAmount > 0 && (
+                    <span className="discount-tag">₹{member.discountAmount} off</span>
+                  )}
+                </div>
+              </div>
+
+              {/* PAST HISTORY RECORDS */}
               {member.history?.length > 0 ? (
                 member.history.map((h, index) => (
                   <div className="history-item" key={index}>
@@ -361,8 +381,11 @@ const MemberDetailPage = () => {
                     </div>
                   </div>
                 ))
-              ) : (
-                <div className="no-data-card">No past membership history</div>
+              ) : null}
+              
+              {/* IF ENTIRE HISTORY & CURRENT IS EMPTY */}
+              {!member.plan && (!member.history || member.history.length === 0) && (
+                <div className="no-data-card">No membership history available.</div>
               )}
             </div>
           </div>

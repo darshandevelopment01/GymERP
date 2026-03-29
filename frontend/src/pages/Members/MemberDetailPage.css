@@ -91,31 +91,33 @@
 
 /* Quick Actions Bar Styles */
 .quick-actions-bar {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  display: flex;
+  justify-content: flex-start;
+  flex-wrap: wrap;
   gap: 1rem;
-  padding: 0 1.5rem 1.5rem;
-  margin-top: -1rem;
+  padding: 0 1rem 1.5rem;
+  margin-top: 0.5rem;
   z-index: 10;
   position: relative;
 }
 
 .action-btn {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 0.4rem;
-  padding: 0.8rem 0.5rem;
+  gap: 0.75rem;
+  padding: 0.8rem 1.5rem;
   border: none;
   border-radius: 12px;
   cursor: pointer;
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: white;
-  color: #64748b;
+  color: #475569;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  min-width: 140px;
 }
 
 .action-btn:hover {
@@ -157,10 +159,18 @@
 
 @media (max-width: 600px) {
   .quick-actions-bar {
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: auto auto;
-    padding: 0 1rem 1.5rem;
+    justify-content: center;
+    padding: 0 1rem 1.25rem;
     gap: 0.75rem;
+    margin-top: 0rem;
+  }
+
+  .action-btn {
+    flex: 1;
+    min-width: calc(50% - 0.5rem);
+    padding: 0.75rem 0.5rem;
+    font-size: 0.85rem;
+    gap: 0.5rem;
   }
 }
 
@@ -376,8 +386,18 @@
   padding: 1.25rem;
   border-radius: 12px;
   margin-bottom: 1rem;
-  border-left: 4px solid #10b981;
+  border-left: 4px solid #cbd5e1;
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  transition: transform 0.2s;
+}
+
+.history-item.current-plan-item {
+  border-left: 5px solid #10b981;
+  background: #f0fdf4;
+}
+
+.history-item:hover {
+  transform: translateX(4px);
 }
 
 .history-header {
