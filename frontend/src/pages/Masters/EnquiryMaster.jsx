@@ -28,7 +28,7 @@ const EnquiryMaster = () => {
 
   const [branches, setBranches] = useState(getInitialCache(cacheKeyBranches, []));
   const [plans, setPlans] = useState(getInitialCache(cacheKeyPlans, []));
-  const [stats, setStats] = useState(getInitialCache(cacheKeyStats, { total: 0, pending: 0, thisMonth: 0 }));
+  const [stats, setStats] = useState(getInitialCache(cacheKeyStats, { total: 0, pending: 0, converted: 0, lost: 0, thisMonth: 0 }));
   const [loading, setLoading] = useState(!hasCache);
   const [error, setError] = useState(null);
   const [maxDiscountPercentage, setMaxDiscountPercentage] = useState(0);
@@ -59,6 +59,7 @@ const EnquiryMaster = () => {
     followUpTime: ''
   });
   const [submittingConvert, setSubmittingConvert] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     fetchInitialData();
@@ -430,10 +431,10 @@ const EnquiryMaster = () => {
       label: 'Status',
       field: 'status',
       render: (item) => (
-        <span className={`status-badge status-${item.status}`}>
-          {item.status}
+        <span className={`status-badge status-${(item.status || 'pending').toLowerCase()}`}>
+          {item.status || 'Pending'}
         </span>
-      )
+      ),
     },
     // Created By column - admin only
     ...(isAdmin ? [{
@@ -530,10 +531,10 @@ const EnquiryMaster = () => {
       label: 'Status',
       type: 'select',
       options: [
-        { value: '', label: 'All Status' },
-        { value: 'pending', label: 'Pending' },
-        { value: 'rejected', label: 'Rejected' },
-        { value: 'converted', label: 'Converted' }
+        { label: 'All Status', value: '' },
+        { label: 'Pending', value: 'pending' },
+        { label: 'Converted', value: 'converted' },
+        { label: 'Lost', value: 'lost' },
       ]
     },
     {
@@ -573,6 +574,20 @@ const EnquiryMaster = () => {
     }
   ];
 
+  const handleMarkAsLost = async (item) => {
+    if (window.confirm(`Are you sure you want to mark enquiry for "${item.name}" as LOST? This cannot be undone.`)) {
+      try {
+        await enquiryApi.update(item._id, { status: 'lost' });
+        alert('📉 Enquiry marked as LOST');
+        setRefreshKey(prev => prev + 1);
+        fetchStats();
+      } catch (error) {
+        console.error('Error marking as lost:', error);
+        alert('Failed to mark as lost: ' + (error.response?.data?.message || error.message));
+      }
+    }
+  };
+
   if (error) {
     return (
       <div className="error-container">
@@ -590,25 +605,32 @@ const EnquiryMaster = () => {
   return (
     <div className="enquiry-master-page">
       <div className="stats-container">
-        <div className="stat-card total">
-          <div className="stat-icon">📊</div>
+        <div className="stat-card total" onClick={() => setRefreshKey(prev => prev + 1)} style={{ cursor: 'pointer' }}>
+          <div className="stat-icon">👥</div>
           <div className="stat-content">
-            <h3>{stats.total}</h3>
+            <h3>{stats.total || 0}</h3>
             <p>Total Enquiries</p>
           </div>
         </div>
-        <div className="stat-card confirmed">
+        <div className="stat-card pending">
           <div className="stat-icon">⏳</div>
           <div className="stat-content">
             <h3>{stats.pending || 0}</h3>
             <p>Pending</p>
           </div>
         </div>
-        <div className="stat-card this-month">
-          <div className="stat-icon">📅</div>
+        <div className="stat-card converted">
+          <div className="stat-icon">✅</div>
           <div className="stat-content">
-            <h3>{stats.thisMonth}</h3>
-            <p>This Month</p>
+            <h3>{stats.converted || 0}</h3>
+            <p>Converted</p>
+          </div>
+        </div>
+        <div className="stat-card lost">
+          <div className="stat-icon">📉</div>
+          <div className="stat-content">
+            <h3>{stats.lost || 0}</h3>
+            <p>Lost</p>
           </div>
         </div>
       </div>
@@ -622,34 +644,75 @@ const EnquiryMaster = () => {
         searchPlaceholder="Search by name, mobile, email, or enquiry ID..."
         icon="👥"
         showCreateButton={can('createEnquiry')}
-        showEditButton={can('editEnquiry')}
-        showDeleteButton={can('deleteEnquiry')}
-        showExportButton={true}
+        showEditButton={(item) => item.status === 'pending'}
+        showDeleteButton={true}
+        refreshKey={refreshKey}
         exportFileName="enquiries"
         onAddFollowUp={can('createEnquiryFollowUp') ? handleAddFollowUp : null}
         customActions={(item) => (
-          item.status !== 'converted' && can('convertToMember') && (
-            <button
-              className="btn-convert"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleConvertToMember(item);
-              }}
-              style={{
-                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                color: 'white',
-                border: 'none',
-                padding: '0.5rem 1rem',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '0.85rem',
-                fontWeight: '600',
-                marginLeft: '0.5rem'
-              }}
-            >
-              💳 Convert to Member
-            </button>
-          )
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            {item.status === 'pending' && (
+              <>
+                <button
+                  className="btn-convert"
+                  onClick={() => handleConvertToMember(item)}
+                  title="Convert to Member"
+                  style={{
+                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    color: 'white',
+                    border: 'none',
+                    padding: '6px 10px',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem',
+                    fontWeight: '600',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  🎯 Convert
+                </button>
+                <button
+                  onClick={() => handleMarkAsLost(item)}
+                  title="Mark as Lost"
+                  style={{
+                    background: '#fee2e2',
+                    color: '#dc2626',
+                    border: '1px solid #fecaca',
+                    padding: '6px 10px',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '14px'
+                  }}
+                >
+                  📉 Lost
+                </button>
+              </>
+            )}
+            {item.status !== 'converted' && item.status !== 'lost' && (
+              <button
+                className="btn-followup"
+                onClick={() => {
+                  setSelectedEnquiryForFollowUp(item);
+                  setFollowUpData({ note: '', followUpDate: null, followUpTime: '' });
+                  setShowFollowUpModal(true);
+                }}
+                title="Add Follow-up"
+                style={{
+                  background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '6px 10px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }}
+              >
+                📞
+              </button>
+            )}
+          </div>
         )}
       />
 

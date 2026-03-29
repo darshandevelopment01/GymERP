@@ -16,6 +16,24 @@ export const getAllEnquiries = async (req: Request, res: Response): Promise<void
       filter.createdBy = req.user.id;
     }
 
+    // ✅ MIGRATION: Handle legacy statuses (confirmed/rejected -> pending)
+    await Enquiry.updateMany({
+      status: { $in: ['confirmed', 'rejected'] }
+    }, { status: 'pending' });
+
+    // ✅ AUTO-EXPIRE: Mark pending enquiries as lost if follow-up date has passed
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const autoLostResult = await Enquiry.updateMany({
+      status: 'pending',
+      followUpDate: { $lt: today, $ne: null }
+    }, { status: 'lost' });
+
+    if (autoLostResult.modifiedCount > 0) {
+      console.log(`📉 Auto-marked ${autoLostResult.modifiedCount} enquiries as LOST`);
+    }
+
     const enquiries = await Enquiry.find(filter)
       .populate('branch', 'name city state')
       .populate('plan', 'planName duration price')
@@ -341,8 +359,22 @@ export const updateEnquiry = async (req: Request, res: Response): Promise<void> 
 
     console.log('🧹 Final update data:', JSON.stringify(cleanedData, null, 2));
 
-    // ✅ Fetch old enquiry before update to track changes
+    // ✅ Fetch old enquiry before update to track changes and check status
     const oldEnquiry = await Enquiry.findById(req.params.id).lean();
+
+    if (!oldEnquiry) {
+      res.status(404).json({ success: false, message: 'Enquiry not found' });
+      return;
+    }
+
+    // ✅ READ-ONLY GUARD: Prevent modification if enquiry is already lost or converted
+    if (oldEnquiry.status === 'lost' || oldEnquiry.status === 'converted') {
+      res.status(400).json({ 
+        success: false, 
+        message: `Cannot modify a ${oldEnquiry.status} enquiry. This record is now read-only.` 
+      });
+      return;
+    }
 
     const enquiry = await Enquiry.findByIdAndUpdate(
       req.params.id,
@@ -351,11 +383,6 @@ export const updateEnquiry = async (req: Request, res: Response): Promise<void> 
     )
       .populate('branch', 'name city state')
       .populate('plan', 'planName duration price');
-
-    if (!enquiry) {
-      res.status(404).json({ success: false, message: 'Enquiry not found' });
-      return;
-    }
 
     console.log('✅ Enquiry updated successfully');
 
@@ -441,6 +468,8 @@ export const getEnquiryStats = async (req: Request, res: Response): Promise<void
   try {
     const totalEnquiries = await Enquiry.countDocuments();
     const pending = await Enquiry.countDocuments({ status: 'pending' });
+    const converted = await Enquiry.countDocuments({ status: 'converted' });
+    const lost = await Enquiry.countDocuments({ status: 'lost' });
 
     const thisMonth = await Enquiry.countDocuments({
       createdAt: {
@@ -448,13 +477,15 @@ export const getEnquiryStats = async (req: Request, res: Response): Promise<void
       }
     });
 
-    console.log('📊 Stats:', { total: totalEnquiries, pending, thisMonth });
+    console.log('📊 Stats:', { total: totalEnquiries, pending, converted, lost, thisMonth });
 
     res.json({
       success: true,
       data: {
         total: totalEnquiries,
         pending: pending,
+        converted: converted,
+        lost: lost,
         thisMonth: thisMonth
       }
     });

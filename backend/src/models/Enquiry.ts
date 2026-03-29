@@ -11,7 +11,7 @@ export interface IEnquiry extends Document {
   gender: 'Male' | 'Female' | 'Other';
   plan?: mongoose.Types.ObjectId;
   source: 'Walk-in' | 'Social Media' | 'Referral' | 'Website' | 'Phone Call';
-  status: 'pending' | 'confirmed' | 'rejected' | 'converted';
+  status: 'pending' | 'converted' | 'lost';
   profilePhoto?: string;
   notes?: string;
   followUpDate?: Date;
@@ -85,7 +85,7 @@ const enquirySchema = new Schema<IEnquiry>({
   },
   status: {
     type: String,
-    enum: ['pending', 'confirmed', 'rejected', 'converted'],
+    enum: ['pending', 'converted', 'lost'],
     default: 'pending',
     required: true
   },

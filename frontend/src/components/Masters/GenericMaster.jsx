@@ -711,12 +711,12 @@ const GenericMaster = ({
                         {/* ✅ CONDITIONALLY SHOW EDIT/DELETE BUTTONS */}
                         {showEditDeleteButtons && (
                           <>
-                            {showEditButton && (
+                            {(typeof showEditButton === 'function' ? showEditButton(item) : showEditButton) && (
                               <button className="btn-edit" onClick={() => handleEdit(item)}>
                                 ✏️
                               </button>
                             )}
-                            {showDeleteButton && (
+                            {(typeof showDeleteButton === 'function' ? showDeleteButton(item) : showDeleteButton) && (
                               <button className="btn-delete" onClick={() => handleDelete(item._id)}>
                                 🗑️
                               </button>
