@@ -480,16 +480,42 @@ export const getMemberPaymentReceipt = async (req: Request, res: Response): Prom
     const planInfo = (member.plan as any);
     const employee = await Employee.findById(payment.recordedBy || req.user?.id);
 
-    // Compute actual balance and previous remaining for this historical payment
-    const totalAmount = planInfo?.price || member.totalAmount || 0;
-    
-    // Sum all payments up to this index to find the state AFTER this payment
-    let cumulativePaid = 0;
-    for (let i = 0; i <= index; i++) {
-      cumulativePaid += member.payments[i].amount;
+    // Find which plan cycle this payment belongs to
+    const pTime = new Date(payment.paymentDate).getTime();
+    let targetCycleIdx = -1;
+    if (member.history && member.history.length > 0) {
+      for (let j = 0; j < member.history.length; j++) {
+        if (pTime <= new Date(member.history[j].recordedAt).getTime()) {
+          targetCycleIdx = j;
+          break;
+        }
+      }
     }
 
-    const balanceAfterPayment = Math.max(0, totalAmount - cumulativePaid);
+    // Determine the true total amount for THIS cycle
+    const cycleTotal = targetCycleIdx === -1 
+      ? (member.totalAmount || planInfo?.price || 0)
+      : ((member.history[targetCycleIdx] as any).totalAmount || (member.history[targetCycleIdx] as any).planAmount || 0);
+
+    // Sum ONLY the payments that belong to THIS cycle up to this index
+    let cumulativePaid = 0;
+    for (let i = 0; i <= index; i++) {
+      const iterTime = new Date(member.payments[i].paymentDate).getTime();
+      let iterCycleIdx = -1;
+      if (member.history && member.history.length > 0) {
+        for (let j = 0; j < member.history.length; j++) {
+          if (iterTime <= new Date(member.history[j].recordedAt).getTime()) {
+            iterCycleIdx = j;
+            break;
+          }
+        }
+      }
+      if (iterCycleIdx === targetCycleIdx) {
+        cumulativePaid += (member.payments[i].amount || 0);
+      }
+    }
+
+    const balanceAfterPayment = Math.max(0, cycleTotal - cumulativePaid);
     const previousRemaining = balanceAfterPayment + payment.amount;
 
     const receiptBuffer = await generateReceiptPdfBuffer({
@@ -498,8 +524,8 @@ export const getMemberPaymentReceipt = async (req: Request, res: Response): Prom
       mobile: member.mobileNumber,
       planName: planInfo?.planName || 'Gym Membership',
       packageDetail: planInfo?.planName || 'Gym Membership',
-      price: totalAmount,
-      packagePrice: totalAmount,
+      price: cycleTotal,
+      packagePrice: cycleTotal,
       startDate: member.membershipStartDate ? new Date(member.membershipStartDate).toLocaleDateString('en-IN') : 'N/A',
       endDate: member.membershipEndDate ? new Date(member.membershipEndDate).toLocaleDateString('en-IN') : 'N/A',
       memberId: member.memberId,
@@ -513,7 +539,7 @@ export const getMemberPaymentReceipt = async (req: Request, res: Response): Prom
       paidPrice: payment.amount,
       previousRemaining: previousRemaining,
       balanceAmount: balanceAfterPayment,
-      totalPayment: totalAmount,
+      totalPayment: cycleTotal,
       discount: 0,
       paymentMode: payment.paymentMode || 'UPI'
     });

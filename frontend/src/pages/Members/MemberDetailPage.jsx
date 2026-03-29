@@ -338,17 +338,52 @@ const MemberDetailPage = () => {
                   [...member.payments].reverse().map((payment, revIdx) => {
                     const originalIndex = member.payments.length - 1 - revIdx;
                     
-                    // Calculate remaining balance for this specific payment
-                    const totalAmount = member.totalAmount || member.plan?.price || 0;
-                    const cumulativePaid = member.payments
-                      .slice(0, originalIndex + 1)
-                      .reduce((sum, p) => sum + (p.amount || 0), 0);
-                    const remainingAtThisPoint = Math.max(0, totalAmount - cumulativePaid);
+                    // 1. Find which cycle this payment belongs to
+                    const pTime = new Date(payment.paymentDate).getTime();
+                    let targetCycleIdx = -1;
+                    if (member.history && member.history.length > 0) {
+                      for (let j = 0; j < member.history.length; j++) {
+                        if (pTime <= new Date(member.history[j].recordedAt).getTime()) {
+                          targetCycleIdx = j;
+                          break;
+                        }
+                      }
+                    }
+
+                    // 2. Determine cycle total amount
+                    const cycleTotal = targetCycleIdx === -1 
+                      ? (member.totalAmount || member.plan?.price || 0)
+                      : (member.history[targetCycleIdx].totalAmount || member.history[targetCycleIdx].planAmount || 0);
+
+                    // 3. Sum only payments for THIS cycle up to this index
+                    let cumulativePaid = 0;
+                    for (let i = 0; i <= originalIndex; i++) {
+                      const iterTime = new Date(member.payments[i].paymentDate).getTime();
+                      let iterCycleIdx = -1;
+                      if (member.history && member.history.length > 0) {
+                        for (let j = 0; j < member.history.length; j++) {
+                          if (iterTime <= new Date(member.history[j].recordedAt).getTime()) {
+                            iterCycleIdx = j;
+                            break;
+                          }
+                        }
+                      }
+                      if (iterCycleIdx === targetCycleIdx) {
+                        cumulativePaid += (member.payments[i].amount || 0);
+                      }
+                    }
+
+                    const remainingAtThisPoint = Math.max(0, cycleTotal - cumulativePaid);
 
                     return (
                       <div className="receipt-item" key={originalIndex}>
                         <div className="receipt-details">
-                          <h4>{member.plan?.planName || 'Plan Receipt'}</h4>
+                          <h4>
+                            {targetCycleIdx === -1 
+                              ? (member.plan?.planName || 'Plan Receipt')
+                              : (member.history[targetCycleIdx].plan?.planName || 'Previous Plan Receipt')
+                            }
+                          </h4>
                           <p>Date: {formatDate(payment.paymentDate)}</p>
                           <div className="amount-info">
                             <span className="paid-amount">Amount: ₹{payment.amount}</span>
