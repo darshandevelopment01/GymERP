@@ -577,17 +577,24 @@ const MemberDetailPage = () => {
               {followups.length > 0 ? (
                 followups.map((f, index) => (
                   <div className="followup-item" key={index}>
-                    <div className="followup-bubble">
-                      <div className="msg-icon">
-                        <MessageSquare size={16} />
+                    <div className="followup-card">
+                      <div className="followup-header">
+                        <div className="msg-icon-rounded">
+                          <MessageSquare size={18} />
+                        </div>
+                        <p className="followup-note">{f.note}</p>
                       </div>
-                      <p>{f.note}</p>
-                    </div>
-                    <div className="followup-meta">
-                      <span className="timestamp">📅 {formatDate(f.createdAt)}</span>
-                      {f.followUpDate && (
-                        <span className="next-date">Next: {formatDate(f.followUpDate)}</span>
-                      )}
+                      <div className="followup-footer">
+                        <div className="followup-timestamp">
+                          <Clock size={14} />
+                          <span>{new Date(f.createdAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                        {f.followUpDate && (
+                          <div className="followup-next-badge">
+                            Next: {new Date(f.followUpDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))
