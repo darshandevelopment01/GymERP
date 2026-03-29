@@ -508,12 +508,14 @@
   cursor: pointer;
   transition: all 0.2s;
   background: #f8fafc;
-  color: #000000;
-  font-weight: 500;
+  color: #000000 !important;
+  font-weight: 600;
+  opacity: 1 !important;
 }
 
 .cat-checkbox-item span {
-  color: #000000;
+  color: #000000 !important;
+  opacity: 1 !important;
 }
 
 .cat-checkbox-item:hover {
