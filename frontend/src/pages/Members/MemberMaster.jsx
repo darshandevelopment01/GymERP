@@ -60,6 +60,7 @@ const MemberMaster = () => {
     membershipStartDate: new Date(),
     membershipEndDate: null
   });
+  const [autoEditId, setAutoEditId] = useState(null);
   const [submittingPayment, setSubmittingPayment] = useState(false);
   const [submittingRenewal, setSubmittingRenewal] = useState(false);
   const [paymentModes, setPaymentModes] = useState([]);
@@ -114,16 +115,7 @@ const MemberMaster = () => {
                 fetchHistory();
               }
               else if (action === 'edit' && can('editMember')) {
-                // To trigger Edit modal in GenericMaster, we need a way to set its internal state.
-                // Since MemberMaster has setShowModal/setFormData which is hidden inside GenericMaster,
-                // we'll rely on a prop if GenericMaster supports manual control, or we target the action button.
-                // However, handleEdit in MemberMaster is usually defined locally if not using the default.
-                // Let's assume we can trigger handleEdit if it's available.
-                // Actually, GenericMaster manages its own Edit modal. 
-                // A better way is to pass a trigger prop to GenericMaster or just 
-                // let the user click edit in the list for now if the detail action is complex.
-                // REVISION: We'll implement handleEdit in MemberDetailPage if needed, but for now
-                // let's stick to the easy ones. Actually, let's try to find if MemberMaster has a specific edit handler.
+                setAutoEditId(memberId);
               }
             }, 500);
           }
@@ -138,7 +130,7 @@ const MemberMaster = () => {
     };
 
     handleQueryParams();
-  }, [branches, plans, taxSlabs]); // Re-run when key data is ready
+  }, [branches, plans, taxSlabs, can]); // Re-run when key data is ready
 
   const fetchInitialData = async () => {
     if (!hasCache) setLoading(true);
@@ -854,118 +846,12 @@ const MemberMaster = () => {
         filterConfig={filterConfig}
         searchPlaceholder="Search by name, mobile, email, or member ID..."
         showCreateButton={false}
-        showEditButton={can('editMember')}
-        showDeleteButton={can('deleteMember')}
+        showActionsColumn={false}
+        autoEditItemId={autoEditId}
+        onAutoEditComplete={() => setAutoEditId(null)}
         showExportButton={true}
         exportFileName="members"
         onRowClick={(item) => navigate(`/members/${item._id}`)}
-        onAddFollowUp={can('createMemberFollowUp') ? handleAddFollowUp : null}
-        customActions={(item) => {
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          const end = item.membershipEndDate ? new Date(item.membershipEndDate) : null;
-          if (end) end.setHours(0, 0, 0, 0);
-
-          const isExpired = item.status === 'expired' || (end && end < today);
-          return (
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              {item.paymentRemaining > 0 && can('collectPayment') && (
-                <button
-                  className="btn-add-payment"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleAddPayment(item);
-                  }}
-                  style={{
-                    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                    color: 'white',
-                    border: 'none',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '0.85rem',
-                    fontWeight: '600'
-                  }}
-                >
-                  💰 Add Payment
-                </button>
-              )}
-              {isExpired && can('editMember') && (
-                <button
-                  className="btn-renew"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRenewMember(item);
-                  }}
-                  style={{
-                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                    color: 'white',
-                    border: 'none',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '0.85rem',
-                    fontWeight: '600'
-                  }}
-                >
-                  🔄 Renew
-                </button>
-              )}
-              <button
-                className="btn-history"
-                  onClick={async (e) => {
-                    e.stopPropagation();
-                    setSelectedMemberForHistory(item);
-                    setShowHistoryModal(true);
-                    setHistoryData(null); // Reset stale data
-                    setHistoryLoading(true);
-                    setActiveHistoryTab('plans'); // Always start on Plans tab
-                    setExpandedPlanId(null); // Collapse all by default
-                    try {
-                      const response = await memberApi.getHistory(item._id);
-                      if (response.success) {
-                        setHistoryData(response.data);
-                      } else {
-                        throw new Error('API returned unsuccessful');
-                      }
-                    } catch (err) {
-                      console.error('Failed to fetch history API, falling back to member data:', err);
-                      // Fallback: build historyData from the already-loaded member object
-                      setHistoryData({
-                        memberId: item.memberId,
-                        name: item.name,
-                        currentPlan: {
-                          plan: item.plan,
-                          startDate: item.membershipStartDate,
-                          endDate: item.membershipEndDate,
-                          totalAmount: item.totalAmount,
-                          paymentReceived: item.paymentReceived,
-                          paymentRemaining: item.paymentRemaining,
-                          status: item.status
-                        },
-                        planHistory: item.history || [],
-                        paymentHistory: item.payments || []
-                      });
-                    } finally {
-                      setHistoryLoading(false);
-                    }
-                  }}
-                style={{
-                  background: 'linear-gradient(135deg, #64748b 0%, #475569 100%)',
-                  color: 'white',
-                  border: 'none',
-                  padding: '0.5rem 1rem',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '0.85rem',
-                  fontWeight: '600'
-                }}
-              >
-                📜 History
-              </button>
-            </div>
-          );
-        }}
       />
 
       {/* Add Payment Modal */}

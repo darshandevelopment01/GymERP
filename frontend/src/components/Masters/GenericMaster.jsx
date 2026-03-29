@@ -24,7 +24,10 @@ const GenericMaster = ({
   showDeleteButton = true, // ✅ Independently control delete button
   apiOptions = {}, // ✅ Extra options to pass to apiService.getAll()
   refreshKey, // ✅ Change this to trigger data re-fetch from parent
-  onCreateClick // ✅ New prop for custom create logic
+  onCreateClick, // ✅ New prop for custom create logic
+  showActionsColumn = true, // ✅ Add this to hide the entire actions column
+  autoEditItemId = null, // ✅ Add this to programmatically trigger edit
+  onAutoEditComplete // ✅ Callback when auto-edit is triggered
 }) => {
   // Include apiOptions in cache key so selfOnly-filtered data is cached separately
   const apiOptKey = Object.keys(apiOptions).length > 0 ? `_${JSON.stringify(apiOptions)}` : '';
@@ -78,7 +81,18 @@ const GenericMaster = ({
 
   useEffect(() => {
     applyFiltersAndSearch();
-  }, [searchQuery, data, filters]);
+  }, [data, searchQuery, filters]);
+
+  // Handle programmatic edit triggering
+  useEffect(() => {
+    if (autoEditItemId && data.length > 0) {
+      const itemToEdit = data.find(item => item._id === autoEditItemId);
+      if (itemToEdit) {
+        handleEdit(itemToEdit);
+        if (onAutoEditComplete) onAutoEditComplete();
+      }
+    }
+  }, [autoEditItemId, data]);
 
   const fetchData = async (signal) => {
     try {
@@ -684,13 +698,13 @@ const GenericMaster = ({
                   {columns.map((col, idx) => (
                     <th key={idx} className={col.mobileHide ? 'col-mobile-hide' : ''}>{col.label}</th>
                   ))}
-                  <th>Actions</th>
+                  {showActionsColumn && <th>Actions</th>}
                 </tr>
               </thead>
               <tbody>
                 {filteredData.length === 0 ? (
                   <tr>
-                    <td colSpan={columns.length + 1} style={{ textAlign: 'center' }}>
+                    <td colSpan={columns.length + (showActionsColumn ? 1 : 0)} style={{ textAlign: 'center' }}>
                       No data available
                     </td>
                   </tr>
@@ -708,24 +722,26 @@ const GenericMaster = ({
                           {col.render ? col.render(item) : item[col.field]}
                         </td>
                       ))}
-                      <td className="actions" onClick={(e) => e.stopPropagation()}>
-                        {/* ✅ CONDITIONALLY SHOW EDIT/DELETE BUTTONS */}
-                        {showEditDeleteButtons && (
-                          <>
-                            {(typeof showEditButton === 'function' ? showEditButton(item) : showEditButton) && (
-                              <button className="btn-edit" onClick={() => handleEdit(item)}>
-                                ✏️
-                              </button>
-                            )}
-                            {(typeof showDeleteButton === 'function' ? showDeleteButton(item) : showDeleteButton) && (
-                              <button className="btn-delete" onClick={() => handleDelete(item._id)}>
-                                🗑️
-                              </button>
-                            )}
-                          </>
-                        )}
-                        {customActions && customActions(item)}
-                      </td>
+                      {showActionsColumn && (
+                        <td className="actions" onClick={(e) => e.stopPropagation()}>
+                          {/* ✅ CONDITIONALLY SHOW EDIT/DELETE BUTTONS */}
+                          {showEditDeleteButtons && (
+                            <>
+                              {(typeof showEditButton === 'function' ? showEditButton(item) : showEditButton) && (
+                                <button className="btn-edit" onClick={() => handleEdit(item)}>
+                                  ✏️
+                                </button>
+                              )}
+                              {(typeof showDeleteButton === 'function' ? showDeleteButton(item) : showDeleteButton) && (
+                                <button className="btn-delete" onClick={() => handleDelete(item._id)}>
+                                  🗑️
+                                </button>
+                              )}
+                            </>
+                          )}
+                          {customActions && customActions(item)}
+                        </td>
+                      )}
                     </tr>
                   ))
                 )}
