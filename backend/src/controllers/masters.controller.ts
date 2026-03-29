@@ -7,6 +7,7 @@ import Shift from '../models/Shift';
 import Designation from '../models/Designation';
 import Branch from '../models/Branch';
 import Employee from '../models/Employee';
+import Offer from '../models/Offer';
 import bcrypt from 'bcryptjs';
 import { sendEmail } from '../utils/mailer';
 
@@ -23,6 +24,7 @@ const generateId = async (Model: any, idField: string): Promise<string> => {
   else if (idField === 'designationId') prefix = 'D';
   else if (idField === 'planCategoryId') prefix = 'PC';
   else if (idField === 'employeeCode') prefix = 'EMP';
+  else if (idField === 'offerId') prefix = 'OFF';
 
   let lastNumber = 0;
   if (lastItem && lastItem[idField]) {
@@ -235,6 +237,46 @@ export const updatePlanCategory = (req: Request, res: Response) =>
 
 export const deletePlanCategory = (req: Request, res: Response) =>
   deleteMaster(PlanCategory, String(req.params.id), res);
+
+
+// Offer Controllers
+export const createOffer = (req: Request, res: Response) =>
+  createMaster(Offer, 'offerId', req.body, res);
+
+
+export const getAllOffers = async (req: Request, res: Response) => {
+  try {
+    const { includeExpired } = req.query;
+    let filter: any = { status: 'active' };
+
+    // If not includeExpired, filter by validTo >= today
+    if (includeExpired !== 'true') {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      filter.validTo = { $gte: today };
+    }
+
+    const items = await Offer.find(filter)
+      .populate('planCategories')
+      .sort({ createdAt: -1 });
+
+    res.json({ data: items, count: items.length });
+  } catch (error: any) {
+    res.status(500).json({ message: 'Error fetching offers', error: error.message });
+  }
+};
+
+
+export const getOfferById = (req: Request, res: Response) =>
+  getMasterById(Offer, String(req.params.id), res, 'planCategories');
+
+
+export const updateOffer = (req: Request, res: Response) =>
+  updateMaster(Offer, String(req.params.id), req.body, res, 'planCategories');
+
+
+export const deleteOffer = (req: Request, res: Response) =>
+  deleteMaster(Offer, String(req.params.id), res);
 
 
 // Plan Controllers

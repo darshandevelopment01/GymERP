@@ -8,6 +8,7 @@ import EnquiryScreen from './screens/EnquiryScreen';
 import MemberScreen from './screens/MemberScreen';
 import FollowUpsScreen from './screens/FollowUpsScreen';
 import PlanMasterScreen from './screens/PlanMasterScreen';
+import OffersScreen from './screens/OffersScreen';
 import AccessDenied from './components/AccessDenied';
 import { usePermissions } from './hooks/usePermissions';
 import './App.css';
@@ -126,6 +127,17 @@ function App() {
             <PrivateRoute>
               <PermissionRoute permKey="viewMembersTab">
                 <MemberScreen />
+              </PermissionRoute>
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/offers"
+          element={
+            <PrivateRoute>
+              <PermissionRoute permKey="masters">
+                <OffersScreen />
               </PermissionRoute>
             </PrivateRoute>
           }

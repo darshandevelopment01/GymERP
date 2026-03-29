@@ -17,6 +17,13 @@ router.get('/plan-categories/:id', mastersController.getPlanCategoryById);
 router.put('/plan-categories/:id', mastersController.updatePlanCategory);
 router.delete('/plan-categories/:id', mastersController.deletePlanCategory);
 
+// Offer Routes
+router.post('/offers', mastersController.createOffer);
+router.get('/offers', mastersController.getAllOffers);
+router.get('/offers/:id', mastersController.getOfferById);
+router.put('/offers/:id', mastersController.updateOffer);
+router.delete('/offers/:id', mastersController.deleteOffer);
+
 // Plan Routes
 router.post('/plans', mastersController.createPlan);
 router.get('/plans', mastersController.getAllPlans);

@@ -9,7 +9,8 @@ import {
   Settings,
   LogOut,
   X,
-  CalendarClock
+  CalendarClock,
+  Tag
 } from 'lucide-react';
 import logo from '../assets/logo.png';
 import { usePermissions } from '../hooks/usePermissions';
@@ -21,6 +22,7 @@ const ALL_MENU = [
   { label: 'Enquiry', icon: UserPlus, permKey: 'viewEnquiryTab' },
   { label: 'Follow Ups', icon: CalendarClock, permKey: 'viewFollowUpTab' },
   { label: 'Members', icon: Users, permKey: 'viewMembersTab' },
+  { label: 'Offers', icon: Tag, permKey: 'masters' },
   { label: 'Attendance', icon: ClipboardCheck, permKey: 'viewAttendanceTab' },
   { label: 'Plan Master', icon: ClipboardList, permKey: 'viewPlanMaster' },
   { label: 'Masters', icon: Settings, permKey: 'masters' }, // Admin only

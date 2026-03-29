@@ -75,4 +75,56 @@ router.post(
     }
 );
 
+// Upload offer image
+router.post(
+    '/offer-image',
+    authMiddleware,
+    upload.single('image'),
+    async (req: Request, res: Response) => {
+        try {
+            if (!req.file) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'No file uploaded'
+                });
+            }
+
+            const file = req.file;
+            const timestamp = Date.now();
+            const sanitizedName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+            const key = `offer-images/${timestamp}-${sanitizedName}`;
+
+            // Upload to Cloudflare R2
+            await r2Client.send(
+                new PutObjectCommand({
+                    Bucket: R2_BUCKET_NAME,
+                    Key: key,
+                    Body: file.buffer,
+                    ContentType: file.mimetype,
+                })
+            );
+
+            const publicUrl = `${R2_PUBLIC_URL}/${key}`;
+
+            res.json({
+                success: true,
+                data: {
+                    url: publicUrl,
+                    key: key,
+                    fileName: file.originalname,
+                    size: file.size,
+                },
+                message: 'Offer image uploaded successfully',
+            });
+        } catch (error: any) {
+            console.error('Error uploading offer image:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error uploading offer image',
+                error: error.message,
+            });
+        }
+    }
+);
+
 export default router;
