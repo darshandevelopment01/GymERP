@@ -28,6 +28,7 @@ export interface ReceiptData {
   taxPercentage?: number;
   taxAmount?: number;
   paymentMode: string;
+  previousRemaining?: number;
 }
 
 /**
@@ -177,7 +178,7 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
 
   const invoiceTotal = data.price - data.discount + taxAmt;
   
-  currentY -= 5;
+  currentY -= 15; // Increased gap before separator line
   page.drawLine({ start: { x: summaryX, y: currentY + 15 }, end: { x: width - 50, y: currentY + 15 }, thickness: 1, color: borderColor });
   
   // Total Highlights box
@@ -185,6 +186,12 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
   drawSummaryLine('TOTAL PAYABLE:', `Rs. ${invoiceTotal}`, boldFont, brandRed, 12, boldFont);
   
   currentY -= 15;
+
+  // Previous Remaining (Balance before this payment)
+  if (data.previousRemaining && data.previousRemaining > 0) {
+    drawSummaryLine('PREVIOUS REMAINING:', `Rs. ${data.previousRemaining}`, boldFont, darkGrey, 10);
+  }
+
   drawSummaryLine('AMOUNT PAID:', `Rs. ${data.paidPrice}`, boldFont, rgb(0.1, 0.5, 0.1), 13);
   
   const actualBalance = data.balanceAmount;

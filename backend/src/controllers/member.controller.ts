@@ -281,6 +281,7 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
     const oldState = JSON.parse(JSON.stringify(member));
     const oldEndDate = oldState.membershipEndDate ? new Date(oldState.membershipEndDate).toISOString() : null;
     const oldPaymentTotal = oldState.paymentReceived || 0;
+    const oldPaymentRemaining = oldState.paymentRemaining || 0;
 
     // 2. Prepare new values
     const newEndDate = req.body.membershipEndDate ? new Date(req.body.membershipEndDate).toISOString() : null;
@@ -389,6 +390,7 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
             responsibleLog: employee?.name || 'Reception',
             invoiceType: isRenewal ? 'Renewal' : 'Partial Payment',
             paidPrice: freshPaymentAmount,
+            previousRemaining: oldPaymentRemaining,
             balanceAmount: member.paymentRemaining,
             totalPayment: member.totalAmount || (populatedForEmail?.plan as any)?.price || 0,
             discount: member.discountAmount || 0,
