@@ -480,14 +480,26 @@ export const getMemberPaymentReceipt = async (req: Request, res: Response): Prom
     const planInfo = (member.plan as any);
     const employee = await Employee.findById(payment.recordedBy || req.user?.id);
 
+    // Compute actual balance and previous remaining for this historical payment
+    const totalAmount = planInfo?.price || member.totalAmount || 0;
+    
+    // Sum all payments up to this index to find the state AFTER this payment
+    let cumulativePaid = 0;
+    for (let i = 0; i <= index; i++) {
+      cumulativePaid += member.payments[i].amount;
+    }
+
+    const balanceAfterPayment = Math.max(0, totalAmount - cumulativePaid);
+    const previousRemaining = balanceAfterPayment + payment.amount;
+
     const receiptBuffer = await generateReceiptPdfBuffer({
       name: member.name,
       email: member.email,
       mobile: member.mobileNumber,
       planName: planInfo?.planName || 'Gym Membership',
       packageDetail: planInfo?.planName || 'Gym Membership',
-      price: planInfo?.price || payment.amount,
-      packagePrice: planInfo?.price || payment.amount,
+      price: totalAmount,
+      packagePrice: totalAmount,
       startDate: member.membershipStartDate ? new Date(member.membershipStartDate).toLocaleDateString('en-IN') : 'N/A',
       endDate: member.membershipEndDate ? new Date(member.membershipEndDate).toLocaleDateString('en-IN') : 'N/A',
       memberId: member.memberId,
@@ -499,9 +511,9 @@ export const getMemberPaymentReceipt = async (req: Request, res: Response): Prom
       responsibleLog: employee?.name || 'Reception',
       invoiceType: 'Payment Receipt',
       paidPrice: payment.amount,
-      previousRemaining: 0, // Simplified for history
-      balanceAmount: 0, // Simplified for history
-      totalPayment: planInfo?.price || payment.amount,
+      previousRemaining: previousRemaining,
+      balanceAmount: balanceAfterPayment,
+      totalPayment: totalAmount,
       discount: 0,
       paymentMode: payment.paymentMode || 'UPI'
     });
