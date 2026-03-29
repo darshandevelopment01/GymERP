@@ -17,6 +17,7 @@ const GenericMaster = ({
   showExportButton = false,
   exportFileName = 'data',
   onAddFollowUp, // ✅ For follow-up button
+  showFollowUpButton = true, // ✅ Control follow-up button visibility
   onRowClick, // ✅ Custom row click handler
   showEditDeleteButtons = true, // ✅ Hide edit/delete buttons
   showEditButton = true, // ✅ Independently control edit button
@@ -1173,7 +1174,7 @@ const GenericMaster = ({
             {/* ✅ MODAL FOOTER WITH FOLLOW-UP BUTTON */}
             <div className="modal-footer">
               {/* ✅ Add Follow-up Button (only if onAddFollowUp prop exists) */}
-              {onAddFollowUp && (
+              {onAddFollowUp && (typeof showFollowUpButton === 'function' ? showFollowUpButton(viewingItem) : showFollowUpButton) && (
                 <button
                   type="button"
                   className="btn-followup"
@@ -1208,7 +1209,7 @@ const GenericMaster = ({
               <button type="button" className="btn-cancel" onClick={() => setShowViewModal(false)}>
                 Close
               </button>
-              {showEditButton && (
+              {(typeof showEditButton === 'function' ? showEditButton(viewingItem) : showEditButton) && (
                 <button type="button" className="btn-save" onClick={() => {
                   setShowViewModal(false);
                   handleEdit(viewingItem);

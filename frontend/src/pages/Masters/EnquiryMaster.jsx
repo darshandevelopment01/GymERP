@@ -649,6 +649,7 @@ const EnquiryMaster = () => {
         refreshKey={refreshKey}
         exportFileName="enquiries"
         onAddFollowUp={can('createEnquiryFollowUp') ? handleAddFollowUp : null}
+        showFollowUpButton={(item) => item.status === 'pending'}
         customActions={(item) => (
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             {item.status === 'pending' && (
