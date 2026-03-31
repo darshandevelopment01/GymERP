@@ -25,7 +25,7 @@ import followupApi from '../../services/followupApi';
 import memberApi from '../../services/memberApi';
 import branchApi from '../../services/branchApi';
 import planApi from '../../services/planApi';
-import { taxSlabAPI, planCategoryAPI } from '../../services/mastersApi';
+import { taxSlabAPI, planCategoryAPI, paymentTypeAPI } from '../../services/mastersApi';
 import { usePermissions } from '../../hooks/usePermissions';
 import './EnquiryDetailPage.css';
 
@@ -45,6 +45,7 @@ const EnquiryDetailPage = () => {
   const [plans, setPlans] = useState([]);
   const [taxSlabs, setTaxSlabs] = useState([]);
   const [planCategories, setPlanCategories] = useState([]);
+  const [paymentTypes, setPaymentTypes] = useState([]);
 
   // Modals visibility
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -67,6 +68,7 @@ const EnquiryDetailPage = () => {
     discountPercentage: 0,
     paymentReceived: 0,
     paymentRemaining: 0,
+    paymentMode: '',
     membershipStartDate: new Date(),
     membershipEndDate: null
   });
@@ -74,16 +76,18 @@ const EnquiryDetailPage = () => {
 
   const fetchMetadata = async () => {
     try {
-      const [b, p, t, c] = await Promise.all([
+      const [b, p, t, c, pt] = await Promise.all([
         branchApi.getAll(),
         planApi.getAll(),
         taxSlabAPI.getAll(),
-        planCategoryAPI.getAll()
+        planCategoryAPI.getAll(),
+        paymentTypeAPI.getAll()
       ]);
-      setBranches(b);
-      setPlans(p);
-      setTaxSlabs(t);
-      setPlanCategories(c);
+      setBranches(Array.isArray(b) ? b : (b.data || []));
+      setPlans(p.data || []);
+      setTaxSlabs((t.data || []).filter(s => s.status === 'active'));
+      setPlanCategories((c.data || []).filter(cat => cat.status === 'active'));
+      setPaymentTypes((pt.data || []).filter(type => type.status === 'active'));
     } catch (err) {
       console.error('Error fetching metadata:', err);
     }
@@ -188,6 +192,7 @@ const EnquiryDetailPage = () => {
       discountPercentage: 0,
       paymentReceived: 0,
       paymentRemaining: 0,
+      paymentMode: '',
       membershipStartDate: new Date(),
       membershipEndDate: null
     };
@@ -197,8 +202,8 @@ const EnquiryDetailPage = () => {
 
   const handlePaymentSubmit = async (e) => {
     e.preventDefault();
-    if (!paymentData.plan || !paymentData.dateOfBirth || (paymentData.paymentReceived === '' || paymentData.paymentReceived <= 0)) {
-      alert('Please fill all required fields');
+    if (!paymentData.plan || !paymentData.dateOfBirth || (paymentData.paymentReceived === '' || paymentData.paymentReceived < 0) || !paymentData.paymentMode) {
+      alert('Please fill all required fields, including payment mode');
       return;
     }
 
@@ -222,6 +227,7 @@ const EnquiryDetailPage = () => {
         totalAmount: billing.total,
         paymentReceived: Number(paymentData.paymentReceived),
         paymentRemaining: paymentData.paymentRemaining,
+        paymentMode: paymentData.paymentMode,
         status: 'active',
         membershipStartDate: paymentData.membershipStartDate.toISOString(),
         membershipEndDate: paymentData.membershipEndDate ? paymentData.membershipEndDate.toISOString() : null,
@@ -555,6 +561,21 @@ const EnquiryDetailPage = () => {
                     min="0"
                     required
                   />
+                </div>
+                <div className="form-group">
+                  <label>Payment Mode <span className="required">*</span></label>
+                  <select 
+                    value={paymentData.paymentMode} 
+                    onChange={(e) => setPaymentData(prev => ({...prev, paymentMode: e.target.value}))}
+                    required
+                  >
+                    <option value="">Select Mode</option>
+                    {paymentTypes.map(pt => (
+                      <option key={pt._id} value={pt.paymentType}>
+                        {pt.paymentType}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="form-group">
                   <label>Remaining Amount (₹)</label>
