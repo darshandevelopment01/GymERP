@@ -96,9 +96,9 @@ const EnquiryDetailPage = () => {
         enquiryApi.getById(id),
         followupApi.getByEnquiry(id)
       ]);
-      setEnquiry(enquiryData);
-      setFollowups(followupData);
-      setEditFormData(enquiryData);
+      setEnquiry(enquiryData.data);
+      setFollowups(followupData.data);
+      setEditFormData(enquiryData.data);
       setError(null);
     } catch (err) {
       console.error('Error fetching data:', err);
