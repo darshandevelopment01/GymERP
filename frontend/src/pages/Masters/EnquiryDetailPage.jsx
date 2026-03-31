@@ -47,6 +47,11 @@ const EnquiryDetailPage = () => {
   const [planCategories, setPlanCategories] = useState([]);
   const [paymentTypes, setPaymentTypes] = useState([]);
 
+  // Discount permissions
+  const [maxDiscountPercentage, setMaxDiscountPercentage] = useState(0);
+  const [noDiscountLimit, setNoDiscountLimit] = useState(false);
+  const [discountOptions, setDiscountOptions] = useState([]);
+
   // Modals visibility
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showEditEnquiryModal, setShowEditEnquiryModal] = useState(false);
@@ -81,7 +86,8 @@ const EnquiryDetailPage = () => {
         planApi.getAll(),
         taxSlabAPI.getAll(),
         planCategoryAPI.getAll(),
-        paymentTypeAPI.getAll()
+        paymentTypeAPI.getAll(),
+        fetchCurrentUserDiscount()
       ]);
       setBranches(Array.isArray(b) ? b : (b.data || []));
       setPlans(p.data || []);
@@ -90,6 +96,26 @@ const EnquiryDetailPage = () => {
       setPaymentTypes((pt.data || []).filter(type => type.status === 'active'));
     } catch (err) {
       console.error('Error fetching metadata:', err);
+    }
+  };
+
+  const fetchCurrentUserDiscount = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/me`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const result = await response.json();
+      if (result.success && result.data) {
+        setMaxDiscountPercentage(result.data.maxDiscountPercentage || 0);
+        setNoDiscountLimit(result.data.noDiscountLimit || false);
+        setDiscountOptions(result.data.discountOptions || []);
+      }
+    } catch (error) {
+      console.error('Error fetching user discount:', error);
+      setMaxDiscountPercentage(0);
+      setNoDiscountLimit(false);
+      setDiscountOptions([]);
     }
   };
 
@@ -169,6 +195,43 @@ const EnquiryDetailPage = () => {
     };
   };
 
+  const handlePaymentChange = (e) => {
+    const val = e.target.value;
+    if (val === '') {
+      setPaymentData(prev => recalcRemaining({ ...prev, paymentReceived: '' }));
+      return;
+    }
+    let received = parseFloat(val) || 0;
+    if (received < 0) received = 0;
+
+    // Clamp to conversion total
+    const billing = getBillingBreakdown();
+    if (received > billing.total) received = billing.total;
+
+    setPaymentData(prev => recalcRemaining({ ...prev, paymentReceived: received }));
+  };
+
+  const handleDiscountChange = (e) => {
+    let discount = parseFloat(e.target.value) || 0;
+    // For non-admins without noDiscountLimit, we clamp to their max allowed
+    if (!isAdmin && !noDiscountLimit && discount > maxDiscountPercentage) {
+      discount = maxDiscountPercentage;
+    }
+    if (discount < 0) discount = 0;
+    if (discount > 100) discount = 100;
+    setPaymentData(prev => recalcRemaining({ ...prev, discountPercentage: discount }));
+  };
+
+  const handlePlanChangeInPayment = (e) => {
+    const planId = e.target.value;
+    setPaymentData(prev => recalcRemaining({ ...prev, plan: planId }));
+  };
+
+  const handleTaxSlabChange = (e) => {
+    const slabId = e.target.value;
+    setPaymentData(prev => recalcRemaining({ ...prev, taxSlab: slabId }));
+  };
+
   // --- Handlers ---
   const handleLost = async () => {
     if (window.confirm(`Are you sure you want to mark "${enquiry.name}" as LOST?`)) {
@@ -185,7 +248,7 @@ const EnquiryDetailPage = () => {
 
   const handleConvertClick = () => {
     const initialData = {
-      planCategory: '',
+      planCategory: enquiry.plan?.category?._id || enquiry.plan?.category || '',
       plan: enquiry.plan?._id || '',
       dateOfBirth: enquiry.dateOfBirth ? new Date(enquiry.dateOfBirth) : null,
       taxSlab: '',
@@ -503,37 +566,55 @@ const EnquiryDetailPage = () => {
 
       {/* --- MODALS --- */}
 
-      {/* 1. Payment/Conversion Modal */}
       {showPaymentModal && (
-        <div className="modal-overlay">
-          <div className="modal-content" style={{ maxWidth: '600px' }}>
+        <div className="modal-overlay" onClick={() => setShowPaymentModal(false)}>
+          <div className="modal-content" style={{ maxWidth: '600px' }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>💳 Convert to Member</h2>
+              <h2>💳 Convert to Member - Payment Details</h2>
               <button className="btn-close" onClick={() => setShowPaymentModal(false)}>✕</button>
             </div>
             <form onSubmit={handlePaymentSubmit}>
               <div className="form-content" style={{ gridTemplateColumns: '1fr' }}>
+                <div className="enquiry-info" style={{
+                  background: '#f8fafc',
+                  padding: '1rem',
+                  borderRadius: '8px',
+                  marginBottom: '1rem'
+                }}>
+                  <p style={{ margin: '0.25rem 0', color: '#64748b' }}><strong>Name:</strong> {enquiry?.name}</p>
+                  <p style={{ margin: '0.25rem 0', color: '#64748b' }}><strong>Mobile:</strong> {enquiry?.mobileNumber}</p>
+                </div>
+
                 <div className="form-group">
                   <label>Plan Category <span className="required">*</span></label>
                   <select 
                     value={paymentData.planCategory} 
-                    onChange={(e) => setPaymentData(prev => recalcRemaining({...prev, planCategory: e.target.value}))}
+                    onChange={(e) => {
+                      const catId = e.target.value;
+                      setPaymentData(prev => recalcRemaining({...prev, planCategory: catId, plan: ''}));
+                    }}
+                    required
                   >
                     <option value="">Select Category</option>
                     {planCategories.map(c => <option key={c._id} value={c._id}>{c.categoryName}</option>)}
                   </select>
                 </div>
                 <div className="form-group">
-                  <label>Plan <span className="required">*</span></label>
+                  <label>Membership Plan <span className="required">*</span></label>
                   <select 
                     value={paymentData.plan} 
                     required
-                    onChange={(e) => setPaymentData(prev => recalcRemaining({...prev, plan: e.target.value}))}
+                    onChange={handlePlanChangeInPayment}
+                    disabled={!paymentData.planCategory}
                   >
-                    <option value="">Select Plan</option>
+                    <option value="">{paymentData.planCategory ? 'Select Membership Plan' : 'Select a category first'}</option>
                     {plans
-                      .filter(p => !paymentData.planCategory || p.category?._id === paymentData.planCategory || p.category === paymentData.planCategory)
-                      .map(p => <option key={p._id} value={p._id}>{p.planName} - ₹{p.price}</option>)}
+                      .filter(p => {
+                        if (!paymentData.planCategory) return false;
+                        const catId = typeof p.category === 'object' ? p.category?._id : p.category;
+                        return catId === paymentData.planCategory;
+                      })
+                      .map(p => <option key={p._id} value={p._id}>{p.planName} - ₹{p.price} ({p.duration})</option>)}
                   </select>
                 </div>
                 <div className="form-group">
@@ -551,36 +632,126 @@ const EnquiryDetailPage = () => {
                     required
                   />
                 </div>
-                <div className="form-group">
-                  <label>Payment Received (₹) <span className="required">*</span></label>
-                  <input 
-                    type="number" 
-                    value={paymentData.paymentReceived} 
-                    onChange={(e) => setPaymentData(prev => recalcRemaining({...prev, paymentReceived: e.target.value}))}
-                    placeholder="Enter amount"
-                    min="0"
-                    required
-                  />
+                
+                <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div className="form-group">
+                    <label>Membership Start Date <span className="required">*</span></label>
+                    <DatePicker
+                      selected={paymentData.membershipStartDate}
+                      onChange={(date) => setPaymentData(prev => recalcRemaining({...prev, membershipStartDate: date}))}
+                      dateFormat="dd/MM/yyyy"
+                      placeholderText="Select Start Date"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Membership End Date</label>
+                    <DatePicker
+                      selected={paymentData.membershipEndDate}
+                      onChange={() => {}}
+                      dateFormat="dd/MM/yyyy"
+                      placeholderText="Calculated automatically"
+                      disabled
+                    />
+                  </div>
                 </div>
-                <div className="form-group">
-                  <label>Payment Mode <span className="required">*</span></label>
-                  <select 
-                    value={paymentData.paymentMode} 
-                    onChange={(e) => setPaymentData(prev => ({...prev, paymentMode: e.target.value}))}
-                    required
-                  >
-                    <option value="">Select Mode</option>
-                    {paymentTypes.map(pt => (
-                      <option key={pt._id} value={pt.paymentType}>
-                        {pt.paymentType}
-                      </option>
-                    ))}
-                  </select>
+
+                <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div className="form-group">
+                    <label>Tax Slab (GST)</label>
+                    <select value={paymentData.taxSlab} onChange={handleTaxSlabChange}>
+                      <option value="">No Tax</option>
+                      {taxSlabs.map(slab => (
+                        <option key={slab._id} value={slab._id}>GST {slab.taxPercentage}%</option>
+                      ))}
+                    </select>
+                  </div>
+                  {(isAdmin || can('noDiscountLimit')) && (
+                    <div className="form-group">
+                      <label>Discount % <span style={{ color: '#10b981', fontSize: '0.8rem' }}>({isAdmin ? '100% Admin' : `Max ${maxDiscountPercentage}%`})</span></label>
+                      <select value={paymentData.discountPercentage} onChange={handleDiscountChange}>
+                        <option value={0}>0% (No Discount)</option>
+                        {discountOptions.map(val => <option key={val} value={val}>{val}%</option>)}
+                      </select>
+                    </div>
+                  )}
                 </div>
+
+                <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div className="form-group">
+                    <label>Payment Received (₹) <span className="required">*</span></label>
+                    <input 
+                      type="number" 
+                      value={paymentData.paymentReceived} 
+                      onChange={handlePaymentChange}
+                      placeholder="Enter amount"
+                      min="0"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Payment Mode <span className="required">*</span></label>
+                    <select 
+                      value={paymentData.paymentMode} 
+                      onChange={(e) => setPaymentData(prev => ({...prev, paymentMode: e.target.value}))}
+                      required
+                    >
+                      <option value="">Select Mode</option>
+                      {paymentTypes.map(pt => (
+                        <option key={pt._id} value={pt.paymentType}>
+                          {pt.paymentType}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                
                 <div className="form-group">
                   <label>Remaining Amount (₹)</label>
-                  <input type="text" value={paymentData.paymentRemaining} disabled />
+                  <input 
+                    type="number" 
+                    value={paymentData.paymentRemaining} 
+                    readOnly 
+                    disabled 
+                    style={{ background: '#f1f5f9' }}
+                  />
                 </div>
+
+                {/* Billing Summary Section */}
+                {paymentData.plan && (() => {
+                  const b = getBillingBreakdown();
+                  return (
+                    <div className="billing-summary" style={{
+                      background: '#f8fafc',
+                      border: '1px solid #e2e8f0',
+                      padding: '1rem',
+                      borderRadius: '8px',
+                      marginTop: '0.5rem'
+                    }}>
+                      <h4 style={{ margin: '0 0 0.5rem', color: '#1e293b', fontSize: '0.9rem' }}>💰 Billing Summary</h4>
+                      <div className="summary-row" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.25rem' }}>
+                        <span>Plan Amount</span>
+                        <span>₹{b.planAmount}</span>
+                      </div>
+                      {b.discountPct > 0 && (
+                        <div className="summary-row" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.25rem', color: '#16a34a' }}>
+                          <span>Discount ({b.discountPct}%)</span>
+                          <span>- ₹{b.discountAmt}</span>
+                        </div>
+                      )}
+                      {b.taxPct > 0 && (
+                        <div className="summary-row" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.25rem', color: '#ea580c' }}>
+                          <span>GST ({b.taxPct}%)</span>
+                          <span>+ ₹{b.taxAmt}</span>
+                        </div>
+                      )}
+                      <div className="summary-row" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem', fontWeight: '700', borderTop: '1px solid #cbd5e1', paddingTop: '0.5rem', marginTop: '0.5rem', color: '#10b981' }}>
+                        <span>Total Amount</span>
+                        <span>₹{b.total}</span>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn-cancel" onClick={() => setShowPaymentModal(false)}>Cancel</button>
