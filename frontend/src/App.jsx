@@ -7,6 +7,7 @@ import MastersScreen from './screens/MastersScreen';
 import EnquiryScreen from './screens/EnquiryScreen';
 import MemberScreen from './screens/MemberScreen';
 import MemberDetailScreen from './screens/MemberDetailScreen';
+import EnquiryDetailScreen from './screens/EnquiryDetailScreen';
 import FollowUpsScreen from './screens/FollowUpsScreen';
 import PlanMasterScreen from './screens/PlanMasterScreen';
 import OffersScreen from './screens/OffersScreen';
@@ -117,6 +118,16 @@ function App() {
             <PrivateRoute>
               <PermissionRoute permKey="viewEnquiryTab">
                 <EnquiryScreen />
+              </PermissionRoute>
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/enquiry/:id"
+          element={
+            <PrivateRoute>
+              <PermissionRoute permKey="viewEnquiryTab">
+                <EnquiryDetailScreen />
               </PermissionRoute>
             </PrivateRoute>
           }

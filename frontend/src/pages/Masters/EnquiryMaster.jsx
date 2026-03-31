@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import GenericMaster from '../../components/Masters/GenericMaster';
@@ -12,6 +13,7 @@ import { usePermissions } from '../../hooks/usePermissions';
 import './EnquiryMaster.css';
 
 const EnquiryMaster = () => {
+  const navigate = useNavigate();
   const { can, isAdmin } = usePermissions();
   const cacheKeyBranches = 'cache_global_branches';
   const cacheKeyPlans = 'cache_global_plans';
@@ -638,6 +640,7 @@ const EnquiryMaster = () => {
       <GenericMaster
         title="Enquiry Master"
         apiService={enquiryApi}
+        onRowClick={(item) => navigate(`/enquiry/${item._id}`)}
         columns={columns}
         formFields={formFields}
         filterConfig={filterConfig}
