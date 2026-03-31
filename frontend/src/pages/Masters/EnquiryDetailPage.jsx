@@ -368,6 +368,21 @@ const EnquiryDetailPage = () => {
       <main className="tab-content">
         {activeTab === 'details' ? (
           <div className="details-grid">
+            {/* Actions for Pending */}
+            {isPending && (
+              <div className="detail-actions">
+                <button className="btn-action btn-convert" onClick={handleConvertClick}>
+                  <ArrowRight size={20} /> Convert to Member
+                </button>
+                <button className="btn-action btn-lost" onClick={handleLost}>
+                  <Trash2 size={20} /> Mark as Lost
+                </button>
+                <button className="btn-action btn-edit" onClick={() => setShowEditEnquiryModal(true)}>
+                  <Edit2 size={18} /> Edit Enquiry
+                </button>
+              </div>
+            )}
+
             <div className="detail-card">
               <div className="info-row">
                 <div className="info-icon"><Phone size={18} /></div>
@@ -413,7 +428,7 @@ const EnquiryDetailPage = () => {
                   <span className="value-text">{enquiry.source || 'N/A'}</span>
                 </div>
               </div>
-              <div className="info-row">
+              <div className="info-row" style={{ gridColumn: '1 / -1' }}>
                 <div className="info-icon"><FileText size={18} /></div>
                 <div className="info-label">
                   <span className="label-text">Notes</span>
@@ -430,21 +445,6 @@ const EnquiryDetailPage = () => {
                 ) : (
                   <><AlertCircle size={20} /> This enquiry is marked as lost and cannot be edited.</>
                 )}
-              </div>
-            )}
-
-            {/* Actions for Pending */}
-            {isPending && (
-              <div className="detail-actions">
-                <button className="btn-action btn-convert" onClick={handleConvertClick}>
-                  <ArrowRight size={20} /> Convert to Member
-                </button>
-                <button className="btn-action btn-lost" onClick={handleLost}>
-                  <Trash2 size={20} /> Mark as Lost
-                </button>
-                <button className="btn-action btn-edit" onClick={() => setShowEditEnquiryModal(true)}>
-                  <Edit2 size={18} /> Edit Enquiry
-                </button>
               </div>
             )}
           </div>
