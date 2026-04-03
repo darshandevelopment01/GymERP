@@ -34,14 +34,19 @@ export const sendEmail = async (
         const transporter = nodemailer.createTransport({
             host,
             port,
-            secure: port === 465,
+            secure: port === 465, // SSL for 465, STARTTLS for 587
             auth: {
                 user,
                 pass,
             },
+            // ✅ Additional settings for Gmail (especially via 587) and Serverless (Vercel)
+            ...(port === 587 ? { requireTLS: true } : {}),
+            tls: {
+                rejectUnauthorized: false // Helps avoid SSL/cert issues in some environments
+            },
             debug: true,
             logger: true
-        });
+        } as any);
 
         console.log(`📧 Sending email to ${to} via ${host}:${port} as ${user}`);
 

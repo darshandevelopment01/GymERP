@@ -18,12 +18,17 @@ async function testConnection() {
         console.log('User:', process.env.SMTP_USER);
 
         const transporter = require('nodemailer').createTransport({
-            host: process.env.SMTP_HOST || 'smtp.hostinger.com',
+            host: process.env.SMTP_HOST || 'smtp.gmail.com',
             port: config.port,
             secure: config.secure,
             auth: {
                 user: process.env.SMTP_USER,
                 pass: process.env.SMTP_PASS,
+            },
+            // ✅ STARTTLS requirement for port 587
+            ...(config.port === 587 ? { requireTLS: true } : {}),
+            tls: {
+                rejectUnauthorized: false
             },
             debug: true,
             logger: true
