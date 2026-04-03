@@ -67,6 +67,46 @@ const EnquiryMaster = () => {
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [duplicateData, setDuplicateData] = useState(null);
   const [submittingReopen, setSubmittingReopen] = useState(false);
+  const [liveDuplicate, setLiveDuplicate] = useState(null);
+  const [checkingDuplicate, setCheckingDuplicate] = useState(false);
+
+  // ✅ Debounced Duplicate Check
+  useEffect(() => {
+    const checkTimer = setTimeout(() => {
+      // Logic for debounced duplicate check will be handled in formField callbacks or a separate watcher
+    }, 500);
+    return () => clearTimeout(checkTimer);
+  }, []);
+
+  const handleLiveDuplicateCheck = async (branch, mobile, email) => {
+    if (!branch || (!mobile && !email)) {
+      setLiveDuplicate(null);
+      return;
+    }
+    
+    // Only check if valid formats
+    const isMobileValid = /^[0-9]{10}$/.test(mobile);
+    const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    
+    if (!isMobileValid && !isEmailValid) {
+      setLiveDuplicate(null);
+      return;
+    }
+
+    try {
+      setCheckingDuplicate(true);
+      const result = await enquiryApi.checkDuplicate(branch, mobile, email);
+      if (result.success && result.exists) {
+        setLiveDuplicate(result.enquiry);
+      } else {
+        setLiveDuplicate(null);
+      }
+    } catch (err) {
+      console.error('Live duplicate check failed:', err);
+    } finally {
+      setCheckingDuplicate(false);
+    }
+  };
 
   useEffect(() => {
     fetchInitialData();
@@ -453,7 +493,7 @@ const EnquiryMaster = () => {
     }
   ];
 
-  const formFields = [
+  const formFields = React.useMemo(() => [
     {
       name: 'profilePhoto',
       label: 'Profile Photo',
@@ -471,28 +511,87 @@ const EnquiryMaster = () => {
           value: b._id,
           label: b.name
         }))
-      ]
+      ],
+      onChange: (val, formData, setFormData) => {
+        setFormData({ ...formData, branch: val });
+        handleLiveDuplicateCheck(val, formData.mobileNumber, formData.email);
+      }
     },
     {
       name: 'name',
       label: 'Full Name',
       type: 'text',
       required: true,
-      placeholder: 'Enter full name'
+      placeholder: 'Enter full name',
+      errorText: (formData) => {
+        if (!formData.name) return null;
+        if (formData.name.trim().length < 2) return '❌ Name must be at least 2 characters';
+        if (/[0-9]/.test(formData.name)) return '❌ Name should not contain numbers';
+        return null;
+      }
     },
     {
       name: 'mobileNumber',
       label: 'Mobile Number',
       type: 'tel',
       required: true,
-      placeholder: 'Enter 10-digit mobile number'
+      placeholder: 'Enter 10-digit mobile number',
+      onChange: (val, formData, setFormData) => {
+        const numericVal = val.replace(/[^0-9]/g, '').slice(0, 10);
+        setFormData({ ...formData, mobileNumber: numericVal });
+        if (numericVal.length === 10) {
+          handleLiveDuplicateCheck(formData.branch, numericVal, formData.email);
+        } else {
+          setLiveDuplicate(null);
+        }
+      },
+      errorText: (formData) => {
+        if (!formData.mobileNumber) return null;
+        if (!/^[0-9]{10}$/.test(formData.mobileNumber)) return '❌ Mobile number must be exactly 10 digits';
+        return null;
+      },
+      helperText: (formData) => {
+        if (liveDuplicate && liveDuplicate.mobileNumber === formData.mobileNumber) {
+          return (
+            <span>
+              ⚠️ This number already exists ({liveDuplicate.enquiryId}). 
+              <a href={`/enquiry/${liveDuplicate._id}`} target="_blank" rel="noreferrer">View Enquiry →</a>
+            </span>
+          );
+        }
+        return null;
+      }
     },
     {
       name: 'email',
       label: 'Email Address',
       type: 'email',
       required: true,
-      placeholder: 'Enter email address'
+      placeholder: 'Enter email address',
+      onChange: (val, formData, setFormData) => {
+        setFormData({ ...formData, email: val });
+        if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
+          handleLiveDuplicateCheck(formData.branch, formData.mobileNumber, val);
+        } else {
+          setLiveDuplicate(null);
+        }
+      },
+      errorText: (formData) => {
+        if (!formData.email) return null;
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) return '❌ Invalid email format';
+        return null;
+      },
+      helperText: (formData) => {
+        if (liveDuplicate && liveDuplicate.email?.toLowerCase() === formData.email?.toLowerCase()) {
+          return (
+            <span>
+              ⚠️ This email already exists ({liveDuplicate.enquiryId}). 
+              <a href={`/enquiry/${liveDuplicate._id}`} target="_blank" rel="noreferrer">View Enquiry →</a>
+            </span>
+          );
+        }
+        return null;
+      }
     },
     {
       name: 'gender',
@@ -527,7 +626,7 @@ const EnquiryMaster = () => {
       required: false,
       placeholder: 'Add any additional notes or comments...'
     }
-  ];
+  ], [branches, liveDuplicate]);
 
   const filterConfig = [
     {

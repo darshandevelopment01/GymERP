@@ -70,6 +70,57 @@ export const getEnquiryById = async (req: Request, res: Response): Promise<void>
 };
 
 
+// ✅ CHECK FOR DUPLICATE ENQUIRY (LIGHTWEIGHT)
+export const checkDuplicate = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { branch, mobileNumber, email } = req.body;
+
+    if (!branch) {
+      res.status(400).json({ success: false, message: 'Branch is required' });
+      return;
+    }
+
+    const query: any = { branch, status: { $ne: 'lost' } }; // Only check active/pending ones or converted
+    const orConditions: any[] = [];
+
+    if (mobileNumber && mobileNumber.length === 10) {
+      orConditions.push({ mobileNumber });
+    }
+
+    if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      orConditions.push({ email });
+    }
+
+    if (orConditions.length === 0) {
+      res.json({ success: true, exists: false });
+      return;
+    }
+
+    query.$or = orConditions;
+
+    const existing = await Enquiry.findOne(query)
+      .select('enquiryId name status mobileNumber email')
+      .lean();
+
+    res.json({
+      success: true,
+      exists: !!existing,
+      enquiry: existing ? {
+        _id: existing._id,
+        enquiryId: existing.enquiryId,
+        name: existing.name,
+        status: existing.status,
+        mobileNumber: existing.mobileNumber,
+        email: existing.email
+      } : null
+    });
+  } catch (error) {
+    console.error('Error checking duplicate:', error);
+    res.status(500).json({ success: false, message: 'Failed to check duplicate' });
+  }
+};
+
+
 // ✅ CREATE NEW ENQUIRY - FIXED WITH TRIMMING AND VALIDATION
 export const createEnquiry = async (req: Request, res: Response): Promise<void> => {
   try {

@@ -850,6 +850,7 @@ const GenericMaster = ({
                           onChange={handleInputChange}
                           required={field.required}
                           disabled={field.disabled}
+                          className={field.errorText && field.errorText(formData) ? 'input-error' : ''}
                         >
                           {field.options?.map((opt, i) => (
                             <option key={i} value={opt.value}>{opt.label}</option>
@@ -862,6 +863,7 @@ const GenericMaster = ({
                           onChange={handleInputChange}
                           required={field.required}
                           placeholder={field.placeholder}
+                          className={field.errorText && field.errorText(formData) ? 'input-error' : ''}
                         />
                       ) : field.type === 'date' ? (
                         <div className="date-input-wrapper">
@@ -870,7 +872,7 @@ const GenericMaster = ({
                             onChange={(date) => handleDateChange(date, field.name)}
                             dateFormat="dd-MM-yyyy"
                             placeholderText={field.placeholder || "Select date"}
-                            className="form-input date-input-with-icon"
+                            className={`form-input date-input-with-icon ${field.errorText && field.errorText(formData) ? 'input-error' : ''}`}
                             showYearDropdown
                             showMonthDropdown
                             dropdownMode="select"
@@ -1036,7 +1038,14 @@ const GenericMaster = ({
                           min={field.min}
                           max={field.max}
                           disabled={field.disabled}
+                          className={field.errorText && field.errorText(formData) ? 'input-error' : ''}
                         />
+                      )}
+                      {field.errorText && field.errorText(formData) && (
+                        <span className="field-error">{field.errorText(formData)}</span>
+                      )}
+                      {field.helperText && field.helperText(formData) && (
+                        <span className="field-helper">{field.helperText(formData)}</span>
                       )}
                     </div>
                   );

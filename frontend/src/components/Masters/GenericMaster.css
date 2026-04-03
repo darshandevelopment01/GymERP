@@ -1516,3 +1516,39 @@
   white-space: nowrap !important;
   min-width: max-content;
 }
+
+/* ✅ Inline Validation Styles */
+.field-error {
+  color: #ef4444;
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin-top: 4px;
+  display: block;
+}
+
+.field-helper {
+  color: #b45309;
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin-top: 4px;
+  display: block;
+  background: #fffbeb;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border-left: 3px solid #f59e0b;
+}
+
+.field-helper a {
+  color: #b45309;
+  text-decoration: underline;
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+.input-error {
+  border-color: #ef4444 !important;
+}
+
+.input-error:focus {
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1) !important;
+}

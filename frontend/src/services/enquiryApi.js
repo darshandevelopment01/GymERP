@@ -114,6 +114,21 @@ const enquiryApi = {
       throw error;
     }
   },
+  
+  async checkDuplicate(branchId, mobileNumber, email) {
+    try {
+      const response = await fetchWithAuth(`${API_URL}/enquiries/check-duplicate`, {
+        method: 'POST',
+        body: JSON.stringify({ branch: branchId, mobileNumber, email }),
+      });
+
+      if (!response.ok) throw new Error('Failed to check duplicates');
+      return await response.json();
+    } catch (error) {
+      console.error('Check duplicate error:', error);
+      throw error;
+    }
+  },
 };
 
 export default enquiryApi;

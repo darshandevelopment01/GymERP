@@ -6,7 +6,8 @@ import {
   updateEnquiry,
   deleteEnquiry,
   getEnquiryStats,
-  reopenEnquiry
+  reopenEnquiry,
+  checkDuplicate
 } from '../controllers/enquiry.controller';
 import { authMiddleware } from '../middleware/auth.middleware';
 
@@ -14,6 +15,7 @@ const router: Router = express.Router();
 
 // Stats route should come BEFORE /:id route
 router.get('/stats/summary', getEnquiryStats);
+router.post('/check-duplicate', authMiddleware, checkDuplicate);
 router.get('/', authMiddleware, getAllEnquiries);
 router.get('/:id', getEnquiryById);
 router.post('/', authMiddleware, createEnquiry);
