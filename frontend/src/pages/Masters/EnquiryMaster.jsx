@@ -553,10 +553,18 @@ const EnquiryMaster = () => {
       helperText: (formData) => {
         if (liveDuplicate && liveDuplicate.mobileNumber === formData.mobileNumber) {
           return (
-            <span>
-              ⚠️ This number already exists ({liveDuplicate.enquiryId}). 
-              <a href={`/enquiry/${liveDuplicate._id}`} target="_blank" rel="noreferrer">View Enquiry →</a>
-            </span>
+            <div className="field-helper">
+              <div className="field-helper-text">
+                <span>⚠️ This mobile number is already registered in our system ({liveDuplicate.enquiryId}).</span>
+              </div>
+              <a href={`/enquiry/${liveDuplicate._id}`} target="_blank" rel="noreferrer" className="field-helper-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                View Existing Enquiry
+              </a>
+            </div>
           );
         }
         return null;
@@ -584,10 +592,18 @@ const EnquiryMaster = () => {
       helperText: (formData) => {
         if (liveDuplicate && liveDuplicate.email?.toLowerCase() === formData.email?.toLowerCase()) {
           return (
-            <span>
-              ⚠️ This email already exists ({liveDuplicate.enquiryId}). 
-              <a href={`/enquiry/${liveDuplicate._id}`} target="_blank" rel="noreferrer">View Enquiry →</a>
-            </span>
+            <div className="field-helper">
+              <div className="field-helper-text">
+                <span>⚠️ This email address is already registered in our system ({liveDuplicate.enquiryId}).</span>
+              </div>
+              <a href={`/enquiry/${liveDuplicate._id}`} target="_blank" rel="noreferrer" className="field-helper-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                View Existing Enquiry
+              </a>
+            </div>
           );
         }
         return null;
