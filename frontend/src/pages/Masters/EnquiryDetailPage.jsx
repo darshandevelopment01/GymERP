@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import SkeletonLoader from '../../components/SkeletonLoader';
 import { 
   ChevronLeft, 
   Phone, 
@@ -32,12 +33,15 @@ import './EnquiryDetailPage.css';
 const EnquiryDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { can, isAdmin } = usePermissions();
 
   const [activeTab, setActiveTab] = useState('details');
-  const [enquiry, setEnquiry] = useState(null);
+  // Instant render: try to get enquiry data from router state (passed from GenericMaster)
+  const [enquiry, setEnquiry] = useState(location.state?.item || null);
   const [followups, setFollowups] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // If we already have enquiry data from state, we don't need a full-page loading block
+  const [loading, setLoading] = useState(!enquiry);
   const [error, setError] = useState(null);
 
   // Metadata for modals
@@ -411,7 +415,7 @@ const EnquiryDetailPage = () => {
     }
   };
 
-  if (loading) return <div className="loading-state">Loading enquiry details...</div>;
+  if (loading && !enquiry) return <SkeletonLoader variant="enquiry-detail" />;
   if (error) return <div className="error-state">{error} <button onClick={fetchData}>Retry</button></div>;
   if (!enquiry) return <div className="error-state">Enquiry not found</div>;
 

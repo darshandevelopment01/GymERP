@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import SkeletonLoader from '../../components/SkeletonLoader';
 import { 
   User, 
   CreditCard, 
@@ -28,10 +29,14 @@ import './MemberDetailPage.css';
 const MemberDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [member, setMember] = useState(null);
+  const location = useLocation();
+
+  // Instant render: try to get member data from router state (passed from GenericMaster)
+  const [member, setMember] = useState(location.state?.item || null);
   const [followups, setFollowups] = useState([]);
   const [activeTab, setActiveTab] = useState('contact'); // 'contact', 'plan', 'history', 'followups'
-  const [loading, setLoading] = useState(true);
+  // If we already have member data from state, we don't need a full-page loading block
+  const [loading, setLoading] = useState(!member);
   const [error, setError] = useState(null);
   const [showFollowUpModal, setShowFollowUpModal] = useState(false);
   const [followUpData, setFollowUpData] = useState({
@@ -148,11 +153,8 @@ const MemberDetailPage = () => {
     }
   };
 
-  if (loading) return (
-    <div className="member-detail-loading">
-      <Loader2 size={40} className="spinner" />
-      <p>Fetching member profile...</p>
-    </div>
+  if (loading && !member) return (
+    <SkeletonLoader variant="member-detail" />
   );
   if (error) return <div className="member-detail-error"><h3>⚠️ Error</h3><p>{error}</p><button onClick={() => navigate('/members')}>Go Back</button></div>;
   if (!member) return null;

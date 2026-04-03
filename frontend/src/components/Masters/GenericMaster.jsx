@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './GenericMaster.css';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import * as XLSX from 'xlsx';
+import SkeletonLoader from '../SkeletonLoader';
 
 const GenericMaster = ({
   title,
@@ -30,6 +32,7 @@ const GenericMaster = ({
   onAutoEditComplete, // ✅ Callback when auto-edit is triggered
   onDuplicateFound // ✅ New prop for handling 409 Conflict
 }) => {
+  const navigate = useNavigate();
   // Include apiOptions in cache key so selfOnly-filtered data is cached separately
   const apiOptKey = Object.keys(apiOptions).length > 0 ? `_${JSON.stringify(apiOptions)}` : '';
   const cacheKey = `cache_${title.replace(/\s+/g, '_')}${apiOptKey}`;
@@ -538,7 +541,9 @@ const GenericMaster = ({
     if (onRowClick) {
       onRowClick(item);
     } else {
-      handleView(item);
+      // Default behavior: navigate to detail page with item data in state
+      const detailPath = `/${title.toLowerCase().replace(/\s+/g, '')}/${item._id}`;
+      navigate(detailPath, { state: { item } });
     }
   };
 
@@ -696,7 +701,7 @@ const GenericMaster = ({
       )}
 
       {loading ? (
-        <div className="loading">Loading...</div>
+        <SkeletonLoader variant="list" />
       ) : (
         <>
           <div className="master-table-container">
