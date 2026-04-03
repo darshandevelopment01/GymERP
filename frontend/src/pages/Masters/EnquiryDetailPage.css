@@ -18,6 +18,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  width: 100%;
 }
 
 .back-btn {
@@ -28,12 +29,15 @@
   border: none;
   color: #6b7280;
   cursor: pointer;
-  font-weight: 500;
-  transition: color 0.2s;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+  padding: 0.5rem 0;
 }
 
 .back-btn:hover {
-  color: rgb(23, 171, 136);
+  color: #10b981;
+  transform: translateX(-2px);
 }
 
 .enquiry-title-section {

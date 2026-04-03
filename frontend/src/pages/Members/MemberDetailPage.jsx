@@ -167,7 +167,8 @@ const MemberDetailPage = () => {
       {/* Header Bar */}
       <div className="detail-header">
         <button className="back-btn" onClick={() => navigate('/members')}>
-          <ArrowLeft size={24} />
+          <ArrowLeft size={20} />
+          <span>Back</span>
         </button>
         <h1>Member Details</h1>
       </div>
