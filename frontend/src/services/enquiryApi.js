@@ -39,8 +39,16 @@ const enquiryApi = {
         method: 'POST',
         body: JSON.stringify(data),
       });
-      if (!response.ok) throw new Error('Failed to create enquiry');
-      return await response.json();
+
+      const result = await response.json();
+      if (!response.ok) {
+        // Attach the status and full result to the error so caller can handle conflicts
+        const error = new Error(result.message || 'Failed to create enquiry');
+        error.status = response.status;
+        error.data = result;
+        throw error;
+      }
+      return result;
     } catch (error) {
       console.error('Create enquiry error:', error);
       throw error;
@@ -53,10 +61,34 @@ const enquiryApi = {
         method: 'PUT',
         body: JSON.stringify(data),
       });
-      if (!response.ok) throw new Error('Failed to update enquiry');
-      return await response.json();
+
+      const result = await response.json();
+      if (!response.ok) {
+        const error = new Error(result.message || 'Failed to update enquiry');
+        error.status = response.status;
+        error.data = result;
+        throw error;
+      }
+      return result;
     } catch (error) {
       console.error('Update enquiry error:', error);
+      throw error;
+    }
+  },
+
+  async reopen(id) {
+    try {
+      const response = await fetchWithAuth(`${API_URL}/enquiries/${id}/reopen`, {
+        method: 'PUT',
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.message || 'Failed to reopen enquiry');
+      }
+      return result;
+    } catch (error) {
+      console.error('Reopen enquiry error:', error);
       throw error;
     }
   },

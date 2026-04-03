@@ -27,7 +27,8 @@ const GenericMaster = ({
   onCreateClick, // ✅ New prop for custom create logic
   showActionsColumn = true, // ✅ Add this to hide the entire actions column
   autoEditItemId = null, // ✅ Add this to programmatically trigger edit
-  onAutoEditComplete // ✅ Callback when auto-edit is triggered
+  onAutoEditComplete, // ✅ Callback when auto-edit is triggered
+  onDuplicateFound // ✅ New prop for handling 409 Conflict
 }) => {
   // Include apiOptions in cache key so selfOnly-filtered data is cached separately
   const apiOptKey = Object.keys(apiOptions).length > 0 ? `_${JSON.stringify(apiOptions)}` : '';
@@ -401,10 +402,17 @@ const GenericMaster = ({
       setShowModal(false);
       fetchData();
     } catch (error) {
-      console.error('❌ Error:', error);
-      console.error('❌ Response:', error.response?.data);
+      console.error('❌ Error in GenericMaster handleSubmit:', error);
 
-      const errorMsg = error.response?.data?.message || error.message || 'Failed to save';
+      // ✅ HANDLE DUPLICATE (409 CONFLICT)
+      if (error.status === 409 && error.data?.duplicate && onDuplicateFound) {
+        console.log('🔄 Duplicate detected, calling onDuplicateFound');
+        setShowModal(false); // Close the entry modal
+        onDuplicateFound(error.data.existingEnquiry);
+        return;
+      }
+
+      const errorMsg = error.data?.message || error.message || 'Failed to save';
       alert(`Failed to save: ${errorMsg}`);
     }
   };

@@ -63,6 +63,11 @@ const EnquiryMaster = () => {
   const [submittingConvert, setSubmittingConvert] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
+  // ✅ DUPLICATE ENQUIRY STATES
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [duplicateData, setDuplicateData] = useState(null);
+  const [submittingReopen, setSubmittingReopen] = useState(false);
+
   useEffect(() => {
     fetchInitialData();
   }, []);
@@ -401,6 +406,27 @@ const EnquiryMaster = () => {
     }
   };
 
+  const handleDuplicateFound = (existingEnquiry) => {
+    console.log('⚠️ Duplicate found in EnquiryMaster:', existingEnquiry);
+    setDuplicateData(existingEnquiry);
+    setShowDuplicateModal(true);
+  };
+
+  const handleReopenFromDuplicate = async () => {
+    if (!duplicateData) return;
+    try {
+      setSubmittingReopen(true);
+      await enquiryApi.reopen(duplicateData._id);
+      alert('✅ Enquiry reopened successfully! Redirecting to details...');
+      setShowDuplicateModal(false);
+      navigate(`/enquiry/${duplicateData._id}`);
+    } catch (err) {
+      alert('Failed to reopen: ' + err.message);
+    } finally {
+      setSubmittingReopen(false);
+    }
+  };
+
   const columns = [
     {
       label: 'Name',
@@ -626,7 +652,91 @@ const EnquiryMaster = () => {
         showActionsColumn={false}
         refreshKey={refreshKey}
         exportFileName="enquiries"
+        onDuplicateFound={handleDuplicateFound}
       />
+
+      {/* ✅ DUPLICATE ENQUIRY DIALOG */}
+      {showDuplicateModal && duplicateData && (
+        <div className="modal-overlay" onClick={() => setShowDuplicateModal(false)}>
+          <div className="modal-content duplicate-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+            <div className="modal-header" style={{ background: '#f59e0b' }}>
+              <h2 style={{ color: 'white' }}>⚠️ Entry Already Exists</h2>
+              <button className="btn-close" onClick={() => setShowDuplicateModal(false)}>✕</button>
+            </div>
+            <div className="modal-body" style={{ padding: '1.5rem' }}>
+              <div className="duplicate-alert" style={{ 
+                background: '#fffbeb', 
+                border: '1px solid #fde68a', 
+                padding: '1rem', 
+                borderRadius: '8px', 
+                marginBottom: '1.5rem',
+                color: '#92400e'
+              }}>
+                <p style={{ margin: 0, fontWeight: '600' }}>
+                  An enquiry with this mobile number or email already exists in this branch.
+                </p>
+              </div>
+
+              <div className="existing-enquiry-info" style={{ 
+                padding: '1rem', 
+                background: '#f8fafc', 
+                borderRadius: '10px',
+                border: '1px solid #e2e8f0'
+              }}>
+                <h3 style={{ margin: '0 0 1rem 0', fontSize: '1rem', color: '#1e293b' }}>Existing Record Details:</h3>
+                <div style={{ display: 'grid', gap: '0.5rem', fontSize: '0.9rem' }}>
+                  <p style={{ margin: 0 }}><strong>Name:</strong> {duplicateData.name}</p>
+                  <p style={{ margin: 0 }}><strong>ID:</strong> {duplicateData.enquiryId}</p>
+                  <p style={{ margin: 0 }}><strong>Plan:</strong> {duplicateData.plan?.planName || 'Not Selected'}</p>
+                  <p style={{ margin: 0 }}>
+                    <strong>Status:</strong> 
+                    <span className={`status-badge status-${duplicateData.status}`} style={{ marginLeft: '8px' }}>
+                      {duplicateData.status.toUpperCase()}
+                    </span>
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer" style={{ borderTop: '1px solid #e2e8f0', padding: '1rem', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <button className="btn-secondary" onClick={() => setShowDuplicateModal(false)} style={{ border: '1px solid #cbd5e1', padding: '0.6rem 1rem', borderRadius: '6px' }}>
+                Cancel
+              </button>
+              
+              <button 
+                className="btn-view" 
+                onClick={() => navigate(`/enquiry/${duplicateData._id}`)}
+                style={{ background: '#3b82f6', color: 'white', border: 'none', padding: '0.6rem 1rem', borderRadius: '6px', fontWeight: '600' }}
+              >
+                👁️ View Enquiry
+              </button>
+
+              {duplicateData.status === 'pending' && (
+                <button 
+                  className="btn-convert" 
+                  onClick={() => {
+                    handleConvertToMember(duplicateData);
+                    setShowDuplicateModal(false);
+                  }}
+                  style={{ background: '#10b981', color: 'white', border: 'none', padding: '0.6rem 1rem', borderRadius: '6px', fontWeight: '600' }}
+                >
+                  ✅ Convert to Member
+                </button>
+              )}
+
+              {duplicateData.status === 'lost' && (
+                <button 
+                  className="btn-reopen" 
+                  onClick={handleReopenFromDuplicate}
+                  disabled={submittingReopen}
+                  style={{ background: '#8b5cf6', color: 'white', border: 'none', padding: '0.6rem 1rem', borderRadius: '6px', fontWeight: '600' }}
+                >
+                  {submittingReopen ? '⏳ Reopening...' : '🔄 Reopen Enquiry'}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       {/* Payment Modal */}
       {showPaymentModal && (
         <div className="modal-overlay" onClick={() => setShowPaymentModal(false)}>

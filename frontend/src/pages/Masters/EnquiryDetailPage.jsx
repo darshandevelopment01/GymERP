@@ -246,6 +246,22 @@ const EnquiryDetailPage = () => {
     }
   };
 
+  const handleReopen = async () => {
+    if (window.confirm(`Are you sure you want to REOPEN "${enquiry.name}"? It will be moved back to PENDING status.`)) {
+      try {
+        setLoading(true);
+        await enquiryApi.reopen(id);
+        alert('✅ Enquiry reopened successfully!');
+        fetchData();
+      } catch (err) {
+        console.error(err);
+        alert('Failed to reopen enquiry: ' + err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
   const handleConvertClick = () => {
     const initialData = {
       planCategory: enquiry.plan?.category?._id || enquiry.plan?.category || '',
@@ -452,6 +468,18 @@ const EnquiryDetailPage = () => {
               </div>
             )}
 
+            {/* Actions for Lost */}
+            {enquiry.status === 'lost' && (
+              <div className="detail-actions">
+                <button className="btn-action btn-reopen" onClick={handleReopen}>
+                  <Clock size={20} /> Reopen Enquiry
+                </button>
+                <button className="btn-action btn-edit" onClick={() => setShowEditEnquiryModal(true)}>
+                  <Edit2 size={18} /> Edit Enquiry
+                </button>
+              </div>
+            )}
+
             <div className="detail-card">
               <div className="info-row">
                 <div className="info-icon"><Phone size={18} /></div>
@@ -512,7 +540,25 @@ const EnquiryDetailPage = () => {
                 {enquiry.status === 'converted' ? (
                   <><CheckCircle size={20} /> This enquiry has been converted to a member.</>
                 ) : (
-                  <><AlertCircle size={20} /> This enquiry is marked as lost and cannot be edited.</>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <AlertCircle size={20} /> This enquiry is marked as lost.
+                    </div>
+                    <button className="reopen-inline-btn" onClick={handleReopen} style={{
+                      background: 'white',
+                      color: '#6b7280',
+                      border: '1px solid #d1d5db',
+                      padding: '4px 12px',
+                      borderRadius: '4px',
+                      fontSize: '0.85rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px'
+                    }}>
+                      <Clock size={14} /> Reopen
+                    </button>
+                  </div>
                 )}
               </div>
             )}

@@ -5,7 +5,8 @@ import {
   createEnquiry,
   updateEnquiry,
   deleteEnquiry,
-  getEnquiryStats
+  getEnquiryStats,
+  reopenEnquiry
 } from '../controllers/enquiry.controller';
 import { authMiddleware } from '../middleware/auth.middleware';
 
@@ -17,6 +18,7 @@ router.get('/', authMiddleware, getAllEnquiries);
 router.get('/:id', getEnquiryById);
 router.post('/', authMiddleware, createEnquiry);
 router.put('/:id', authMiddleware, updateEnquiry);
+router.put('/:id/reopen', authMiddleware, reopenEnquiry);
 router.delete('/:id', deleteEnquiry);
 
 export default router;

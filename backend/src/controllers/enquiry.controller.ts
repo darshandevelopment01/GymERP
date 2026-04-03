@@ -210,6 +210,39 @@ export const createEnquiry = async (req: Request, res: Response): Promise<void> 
     console.log('✅ Source validated');
 
     console.log('✅ All validations passed');
+    console.log('📝 Checking for duplicates in branch:', cleanedData.branch);
+
+    // ✅ NEW STEP: CHECK FOR DUPLICATES WITHIN THE SAME BRANCH
+    const existingEnquiry = await Enquiry.findOne({
+      branch: cleanedData.branch,
+      $or: [
+        { mobileNumber: cleanedData.mobileNumber },
+        { email: cleanedData.email }
+      ]
+    }).populate('branch', 'name').populate('plan', 'planName');
+
+    if (existingEnquiry) {
+      const matchedField = existingEnquiry.mobileNumber === cleanedData.mobileNumber ? 'mobile number' : 'email';
+      console.warn(`⚠️ Duplicate enquiry found: ${matchedField} "${matchedField === 'mobile number' ? cleanedData.mobileNumber : cleanedData.email}" already exists in this branch.`);
+      
+      res.status(409).json({
+        success: false,
+        duplicate: true,
+        message: `An entry with this ${matchedField} already exists in this branch.`,
+        existingEnquiry: {
+          _id: existingEnquiry._id,
+          enquiryId: existingEnquiry.enquiryId,
+          name: existingEnquiry.name,
+          mobileNumber: existingEnquiry.mobileNumber,
+          email: existingEnquiry.email,
+          status: existingEnquiry.status,
+          branch: existingEnquiry.branch,
+          plan: existingEnquiry.plan
+        }
+      });
+      return;
+    }
+
     console.log('📝 Final data to save:', JSON.stringify(cleanedData, null, 2));
 
     // ✅ STEP 10: Create and save enquiry
@@ -440,6 +473,70 @@ export const updateEnquiry = async (req: Request, res: Response): Promise<void> 
     res.status(500).json({
       success: false,
       message: error.message || 'Failed to update enquiry'
+    });
+  }
+};
+
+
+// ✅ REOPEN ENQUIRY
+export const reopenEnquiry = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    console.log(`🔄 Reopening enquiry: ${id}`);
+
+    const enquiry = await Enquiry.findById(id);
+
+    if (!enquiry) {
+      res.status(404).json({ success: false, message: 'Enquiry not found' });
+      return;
+    }
+
+    if (enquiry.status !== 'lost') {
+      res.status(400).json({ 
+        success: false, 
+        message: `Only lost enquiries can be reopened. Current status: ${enquiry.status}` 
+      });
+      return;
+    }
+
+    // Set back to pending
+    enquiry.status = 'pending';
+    // We don't clear followUpDate here because the user might want to keep the history 
+    // but they will likely set a new one when they edit it after reopen.
+    
+    await enquiry.save();
+
+    // Log the action
+    try {
+      const user = await Employee.findById(req.user?.id);
+      await ActivityLog.create({
+        action: 'enquiry_reopened',
+        performedBy: req.user?.id,
+        performedByName: user?.name || 'Unknown',
+        targetType: 'Enquiry',
+        targetId: enquiry._id,
+        targetName: enquiry.name,
+        details: `Enquiry ${enquiry.enquiryId} reopened by ${user?.name || 'Unknown'}`
+      });
+    } catch (logError) {
+      console.error('Failed to create activity log:', logError);
+    }
+
+    const populatedEnquiry = await Enquiry.findById(enquiry._id)
+      .populate('branch', 'name city state')
+      .populate('plan', 'planName duration price');
+
+    res.json({
+      success: true,
+      data: populatedEnquiry,
+      message: 'Enquiry reopened successfully. It is now active again.'
+    });
+
+  } catch (error: any) {
+    console.error('Error reopening enquiry:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: error.message || 'Failed to reopen enquiry' 
     });
   }
 };

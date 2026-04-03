@@ -196,6 +196,17 @@
   background-color: #e5e7eb;
 }
 
+.btn-reopen {
+  background-color: #f5f3ff;
+  color: #7c3aed;
+  border: 1px solid #ddd6fe;
+}
+
+.btn-reopen:hover {
+  background-color: #ede9fe;
+  transform: translateY(-2px);
+}
+
 /* Follow-ups Styling */
 .followups-container {
   display: flex;
