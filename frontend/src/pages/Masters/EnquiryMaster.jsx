@@ -555,7 +555,7 @@ const EnquiryMaster = () => {
           return (
             <div className="field-helper">
               <div className="field-helper-text">
-                <span>⚠️ This mobile number is already registered in our system ({liveDuplicate.enquiryId}).</span>
+                <span>⚠️ This mobile number is already registered in our system.</span>
               </div>
               <a href={`/enquiry/${liveDuplicate._id}`} target="_blank" rel="noreferrer" className="field-helper-btn">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -594,7 +594,7 @@ const EnquiryMaster = () => {
           return (
             <div className="field-helper">
               <div className="field-helper-text">
-                <span>⚠️ This email address is already registered in our system ({liveDuplicate.enquiryId}).</span>
+                <span>⚠️ This email address is already registered in our system.</span>
               </div>
               <a href={`/enquiry/${liveDuplicate._id}`} target="_blank" rel="noreferrer" className="field-helper-btn">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
