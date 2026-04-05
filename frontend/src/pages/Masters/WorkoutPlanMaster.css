@@ -1,0 +1,112 @@
+/* src/pages/Masters/WorkoutPlanMaster.css */
+
+.workout-plan-master {
+  padding: 1rem;
+}
+
+.workout-plans-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.difficulty-badge {
+  padding: 0.2rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.difficulty-beginner {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.difficulty-intermediate {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.difficulty-advanced {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.workout-info-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.workout-info-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+}
+
+.exercise-mini-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.exercise-mini-table th {
+  text-align: left;
+  color: #94a3b8;
+  font-weight: 600;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.exercise-mini-table td {
+  padding: 0.5rem 0;
+  color: #334155;
+  border-bottom: 1px solid #f8fafc;
+}
+
+.exercise-mini-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Modal Table Styles */
+.exercise-form-table {
+  width: 100%;
+  margin-top: 1rem;
+  border-collapse: collapse;
+}
+
+.exercise-form-table th {
+  text-align: left;
+  padding: 0.5rem;
+  background: #f8fafc;
+  font-size: 0.9rem;
+  color: #475569;
+}
+
+.exercise-form-table td {
+  padding: 0.5rem;
+  vertical-align: top;
+}
+
+.sets-input {
+  width: 70px !important;
+}
+
+.reps-input {
+  width: 90px !important;
+}
+
+@media (max-width: 640px) {
+  .workout-plans-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -8,6 +8,8 @@ import Designation from '../models/Designation';
 import Branch from '../models/Branch';
 import Employee from '../models/Employee';
 import Offer from '../models/Offer';
+import DietPlan from '../models/DietPlan';
+import WorkoutPlan from '../models/WorkoutPlan';
 import bcrypt from 'bcryptjs';
 import { sendEmail } from '../utils/mailer';
 
@@ -25,6 +27,8 @@ const generateId = async (Model: any, idField: string): Promise<string> => {
   else if (idField === 'planCategoryId') prefix = 'PC';
   else if (idField === 'employeeCode') prefix = 'EMP';
   else if (idField === 'offerId') prefix = 'OFF';
+  else if (idField === 'dietPlanId') prefix = 'DP';
+  else if (idField === 'workoutPlanId') prefix = 'WP';
 
   let lastNumber = 0;
   if (lastItem && lastItem[idField]) {
@@ -615,3 +619,45 @@ export const searchEmployees = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Error searching employees', error: error.message });
   }
 };
+
+
+// Diet Plan Controllers
+export const createDietPlan = (req: Request, res: Response) =>
+  createMaster(DietPlan, 'dietPlanId', req.body, res);
+
+
+export const getAllDietPlans = (req: Request, res: Response) =>
+  getAllMaster(DietPlan, res);
+
+
+export const getDietPlanById = (req: Request, res: Response) =>
+  getMasterById(DietPlan, String(req.params.id), res);
+
+
+export const updateDietPlan = (req: Request, res: Response) =>
+  updateMaster(DietPlan, String(req.params.id), req.body, res);
+
+
+export const deleteDietPlan = (req: Request, res: Response) =>
+  deleteMaster(DietPlan, String(req.params.id), res);
+
+
+// Workout Plan Controllers
+export const createWorkoutPlan = (req: Request, res: Response) =>
+  createMaster(WorkoutPlan, 'workoutPlanId', req.body, res);
+
+
+export const getAllWorkoutPlans = (req: Request, res: Response) =>
+  getAllMaster(WorkoutPlan, res);
+
+
+export const getWorkoutPlanById = (req: Request, res: Response) =>
+  getMasterById(WorkoutPlan, String(req.params.id), res);
+
+
+export const updateWorkoutPlan = (req: Request, res: Response) =>
+  updateMaster(WorkoutPlan, String(req.params.id), req.body, res);
+
+
+export const deleteWorkoutPlan = (req: Request, res: Response) =>
+  deleteMaster(WorkoutPlan, String(req.params.id), res);

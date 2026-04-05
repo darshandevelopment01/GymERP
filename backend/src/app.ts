@@ -12,6 +12,7 @@ import enquiryRoutes from './routes/enquiry.routes';
 import followupRoutes from './routes/followup.routes';
 import uploadRoutes from './routes/upload.routes';
 import activityLogRoutes from './routes/activityLog.routes';
+import memberPlansRoutes from './routes/memberPlans.routes';
 
 const app: Application = express();
 
@@ -79,5 +80,6 @@ app.use('/api/enquiries', enquiryRoutes);
 app.use('/api/followups', followupRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/activity-logs', activityLogRoutes);
+app.use('/api/member-plans', memberPlansRoutes);
 
 export default app;

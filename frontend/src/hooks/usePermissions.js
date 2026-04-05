@@ -89,7 +89,15 @@ export function usePermissions() {
                     !!panelAccess.deletePlanCategory ||
                     !!panelAccess.createMembershipPlan ||
                     !!panelAccess.editMembershipPlan ||
-                    !!panelAccess.deleteMembershipPlan
+                    !!panelAccess.deleteMembershipPlan ||
+                    !!panelAccess.viewDietPlan ||
+                    !!panelAccess.createDietPlan ||
+                    !!panelAccess.editDietPlan ||
+                    !!panelAccess.deleteDietPlan ||
+                    !!panelAccess.viewWorkoutPlan ||
+                    !!panelAccess.createWorkoutPlan ||
+                    !!panelAccess.editWorkoutPlan ||
+                    !!panelAccess.deleteWorkoutPlan
                 );
             }
         }

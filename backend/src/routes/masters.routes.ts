@@ -67,4 +67,18 @@ router.get('/employees/:id', mastersController.getEmployeeById);
 router.put('/employees/:id', mastersController.updateEmployee);
 router.delete('/employees/:id', mastersController.deleteEmployee);
 
+// Diet Plan Routes
+router.post('/diet-plans', mastersController.createDietPlan);
+router.get('/diet-plans', mastersController.getAllDietPlans);
+router.get('/diet-plans/:id', mastersController.getDietPlanById);
+router.put('/diet-plans/:id', mastersController.updateDietPlan);
+router.delete('/diet-plans/:id', mastersController.deleteDietPlan);
+
+// Workout Plan Routes
+router.post('/workout-plans', mastersController.createWorkoutPlan);
+router.get('/workout-plans', mastersController.getAllWorkoutPlans);
+router.get('/workout-plans/:id', mastersController.getWorkoutPlanById);
+router.put('/workout-plans/:id', mastersController.updateWorkoutPlan);
+router.delete('/workout-plans/:id', mastersController.deleteWorkoutPlan);
+
 export default router;

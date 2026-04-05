@@ -244,6 +244,64 @@ class MastersAPI {
     if (!response.ok) throw new Error('Failed to search employees');
     return response.json();
   }
+
+  // Diet Plans
+  async createDietPlan(data) {
+    const response = await fetchWithAuth(`${BASE}/diet-plans`, {
+      method: 'POST', body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to create diet plan');
+    return response.json();
+  }
+
+  async getAllDietPlans(options = {}) {
+    const response = await fetchWithAuth(`${BASE}/diet-plans`, { signal: options.signal });
+    if (!response.ok) throw new Error('Failed to fetch diet plans');
+    return response.json();
+  }
+
+  async updateDietPlan(id, data) {
+    const response = await fetchWithAuth(`${BASE}/diet-plans/${id}`, {
+      method: 'PUT', body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to update diet plan');
+    return response.json();
+  }
+
+  async deleteDietPlan(id) {
+    const response = await fetchWithAuth(`${BASE}/diet-plans/${id}`, { method: 'DELETE' });
+    if (!response.ok) throw new Error('Failed to delete diet plan');
+    return response.json();
+  }
+
+  // Workout Plans
+  async createWorkoutPlan(data) {
+    const response = await fetchWithAuth(`${BASE}/workout-plans`, {
+      method: 'POST', body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to create workout plan');
+    return response.json();
+  }
+
+  async getAllWorkoutPlans(options = {}) {
+    const response = await fetchWithAuth(`${BASE}/workout-plans`, { signal: options.signal });
+    if (!response.ok) throw new Error('Failed to fetch workout plans');
+    return response.json();
+  }
+
+  async updateWorkoutPlan(id, data) {
+    const response = await fetchWithAuth(`${BASE}/workout-plans/${id}`, {
+      method: 'PUT', body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to update workout plan');
+    return response.json();
+  }
+
+  async deleteWorkoutPlan(id) {
+    const response = await fetchWithAuth(`${BASE}/workout-plans/${id}`, { method: 'DELETE' });
+    if (!response.ok) throw new Error('Failed to delete workout plan');
+    return response.json();
+  }
 }
 
 const mastersAPI = new MastersAPI();
@@ -302,6 +360,36 @@ export const employeeAPI = {
   getAll: (options) => mastersAPI.getAllEmployees(options),
   update: (id, data) => mastersAPI.updateEmployee(id, data),
   delete: (id) => mastersAPI.deleteEmployee(id),
+};
+
+export const dietPlanAPI = {
+  create: (data) => mastersAPI.createDietPlan(data),
+  getAll: (options) => mastersAPI.getAllDietPlans(options),
+  update: (id, data) => mastersAPI.updateDietPlan(id, data),
+  delete: (id) => mastersAPI.deleteDietPlan(id),
+};
+
+export const workoutPlanAPI = {
+  create: (data) => mastersAPI.createWorkoutPlan(data),
+  getAll: (options) => mastersAPI.getAllWorkoutPlans(options),
+  update: (id, data) => mastersAPI.updateWorkoutPlan(id, data),
+  delete: (id) => mastersAPI.deleteWorkoutPlan(id),
+};
+
+// Member-facing API (accessible by members and staff)
+const MEMBER_BASE = `${import.meta.env.VITE_API_URL}/member-plans`;
+
+export const memberPlansAPI = {
+  getDietPlans: async (options = {}) => {
+    const response = await fetchWithAuth(`${MEMBER_BASE}/diet-plans`, { signal: options.signal });
+    if (!response.ok) throw new Error('Failed to fetch diet plans');
+    return response.json();
+  },
+  getWorkoutPlans: async (options = {}) => {
+    const response = await fetchWithAuth(`${MEMBER_BASE}/workout-plans`, { signal: options.signal });
+    if (!response.ok) throw new Error('Failed to fetch workout plans');
+    return response.json();
+  }
 };
 
 export default mastersAPI;

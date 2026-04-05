@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import GenericMaster from '../../components/Masters/GenericMaster';
 import { planAPI, planCategoryAPI } from '../../services/mastersApi';
 import { usePermissions } from '../../hooks/usePermissions';
+import DietPlanMaster from './DietPlanMaster';
+import WorkoutPlanMaster from './WorkoutPlanMaster';
 
 const PlanMaster = () => {
   const { can } = usePermissions();
@@ -11,8 +13,14 @@ const PlanMaster = () => {
 
   // Set initial active sub-tab based on permissions
   useEffect(() => {
-    if (!can('viewPlanCategory') && can('viewMembershipPlan')) {
+    if (can('viewPlanCategory')) {
+      setActiveSubTab('categories');
+    } else if (can('viewMembershipPlan')) {
       setActiveSubTab('plans');
+    } else if (can('viewDietPlan')) {
+      setActiveSubTab('diet');
+    } else if (can('viewWorkoutPlan')) {
+      setActiveSubTab('workout');
     }
   }, []);
 
@@ -119,12 +127,14 @@ const PlanMaster = () => {
 
   const showCategoriesTab = can('viewPlanCategory');
   const showPlansTab = can('viewMembershipPlan');
+  const showDietTab = can('viewDietPlan');
+  const showWorkoutTab = can('viewWorkoutPlan');
 
-  if (!showCategoriesTab && !showPlansTab) {
+  if (!showCategoriesTab && !showPlansTab && !showDietTab && !showWorkoutTab) {
     return (
       <div style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>
         <h3>Access Denied</h3>
-        <p>You do not have permission to view Plan Categories or Membership Plans.</p>
+        <p>You do not have permission to view Plan Master content.</p>
       </div>
     );
   }
@@ -182,6 +192,48 @@ const PlanMaster = () => {
             📋 Membership Plan
           </button>
         )}
+        {showDietTab && (
+          <button
+            onClick={() => setActiveSubTab('diet')}
+            style={{
+              padding: '0.7rem 1.5rem',
+              borderRadius: '8px 8px 0 0',
+              border: 'none',
+              cursor: 'pointer',
+              fontWeight: '600',
+              fontSize: '0.95rem',
+              transition: 'all 0.2s ease',
+              background: activeSubTab === 'diet'
+                ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+                : '#f1f5f9',
+              color: activeSubTab === 'diet' ? 'white' : '#64748b',
+              boxShadow: activeSubTab === 'diet' ? '0 2px 8px rgba(16, 185, 129, 0.3)' : 'none',
+            }}
+          >
+            🥗 Diet Plan
+          </button>
+        )}
+        {showWorkoutTab && (
+          <button
+            onClick={() => setActiveSubTab('workout')}
+            style={{
+              padding: '0.7rem 1.5rem',
+              borderRadius: '8px 8px 0 0',
+              border: 'none',
+              cursor: 'pointer',
+              fontWeight: '600',
+              fontSize: '0.95rem',
+              transition: 'all 0.2s ease',
+              background: activeSubTab === 'workout'
+                ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+                : '#f1f5f9',
+              color: activeSubTab === 'workout' ? 'white' : '#64748b',
+              boxShadow: activeSubTab === 'workout' ? '0 2px 8px rgba(16, 185, 129, 0.3)' : 'none',
+            }}
+          >
+            💪 Workout Plan
+          </button>
+        )}
       </div>
 
       {/* Render the active sub-tab */}
@@ -199,7 +251,7 @@ const PlanMaster = () => {
           showEditButton={can('editMembershipPlan')}
           showDeleteButton={can('deleteMembershipPlan')}
         />
-      ) : showCategoriesTab ? (
+      ) : activeSubTab === 'categories' && showCategoriesTab ? (
         <GenericMaster
           key="plan-category-master"
           title="Plan Category Master"
@@ -212,6 +264,10 @@ const PlanMaster = () => {
           showEditButton={can('editPlanCategory')}
           showDeleteButton={can('deletePlanCategory')}
         />
+      ) : activeSubTab === 'diet' && showDietTab ? (
+        <DietPlanMaster />
+      ) : activeSubTab === 'workout' && showWorkoutTab ? (
+        <WorkoutPlanMaster />
       ) : (
         <div style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>
           <p>Please select a tab or contact administrator for access.</p>
