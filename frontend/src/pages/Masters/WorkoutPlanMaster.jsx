@@ -199,114 +199,100 @@ const WorkoutPlanMaster = () => {
                             <button className="btn-close" onClick={() => setShowModal(false)}>✕</button>
                         </div>
                         <form onSubmit={handleSubmit}>
-                            <div className="modal-body">
-                                <div className="form-grid">
-                                    <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                                        <label className="label">Plan Name</label>
-                                        <input
-                                            className="input"
-                                            value={formData.planName}
-                                            onChange={(e) => setFormData({ ...formData, planName: e.target.value })}
-                                            placeholder="e.g., Beginner Full Body"
-                                            required
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label className="label">Difficulty</label>
-                                        <select
-                                            className="input"
-                                            value={formData.difficulty}
-                                            onChange={(e) => setFormData({ ...formData, difficulty: e.target.value })}
-                                            required
-                                        >
-                                            <option value="Beginner">Beginner</option>
-                                            <option value="Intermediate">Intermediate</option>
-                                            <option value="Advanced">Advanced</option>
-                                        </select>
-                                    </div>
-                                    <div className="form-group">
-                                        <label className="label">Days Per Week</label>
-                                        <input
-                                            className="input"
-                                            type="number"
-                                            max="7"
-                                            min="1"
-                                            value={formData.daysPerWeek}
-                                            onChange={(e) => setFormData({ ...formData, daysPerWeek: e.target.value })}
-                                            placeholder="e.g., 3"
-                                            required
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label className="label">Duration</label>
-                                        <input
-                                            className="input"
-                                            value={formData.duration}
-                                            onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                                            placeholder="e.g., 8 weeks"
-                                            required
-                                        />
-                                    </div>
+                            <div className="form-content">
+                                <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                                    <label>Plan Name</label>
+                                    <input
+                                        value={formData.planName}
+                                        onChange={(e) => setFormData({ ...formData, planName: e.target.value })}
+                                        placeholder="e.g., Beginner Full Body"
+                                        required
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Difficulty</label>
+                                    <select
+                                        value={formData.difficulty}
+                                        onChange={(e) => setFormData({ ...formData, difficulty: e.target.value })}
+                                        required
+                                    >
+                                        <option value="Beginner">Beginner</option>
+                                        <option value="Intermediate">Intermediate</option>
+                                        <option value="Advanced">Advanced</option>
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label>Days Per Week</label>
+                                    <input
+                                        type="number"
+                                        max="7"
+                                        min="1"
+                                        value={formData.daysPerWeek}
+                                        onChange={(e) => setFormData({ ...formData, daysPerWeek: e.target.value })}
+                                        placeholder="e.g., 3"
+                                        required
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Duration</label>
+                                    <input
+                                        value={formData.duration}
+                                        onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                                        placeholder="e.g., 8 weeks"
+                                        required
+                                    />
                                 </div>
 
-                                <div className="meals-form-header">
-                                    <h3>Exercise Schedule</h3>
-                                </div>
+                                <div className="exercise-section" style={{ gridColumn: 'span 2' }}>
+                                    <div className="exercise-form-header">
+                                        <h3>Exercise Schedule</h3>
+                                        <button type="button" className="btn-add-mini" onClick={addExerciseRow}>
+                                            + Add Exercise
+                                        </button>
+                                    </div>
 
-                                <div className="exercise-table-container" style={{ maxHeight: '350px', overflowY: 'auto' }}>
-                                    <table className="exercise-form-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Exercise Name</th>
-                                                <th>Sets</th>
-                                                <th>Reps/Time</th>
-                                                <th></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {formData.exercises.map((ex, index) => (
-                                                <tr key={index}>
-                                                    <td>
+                                    <div className="exercise-items-container">
+                                        {formData.exercises.map((ex, index) => (
+                                            <div key={index} className="dynamic-row-card">
+                                                <div className="row-inputs">
+                                                    <div className="mini-group exercise-name-group">
+                                                        <label>Exercise</label>
                                                         <input
-                                                            className="input"
                                                             value={ex.exercise}
                                                             onChange={(e) => handleExerciseChange(index, 'exercise', e.target.value)}
                                                             placeholder="e.g., Bench Press"
                                                             required
                                                         />
-                                                    </td>
-                                                    <td>
+                                                    </div>
+                                                    <div className="mini-group">
+                                                        <label>Sets</label>
                                                         <input
-                                                            className="input sets-input"
                                                             type="number"
                                                             value={ex.sets}
                                                             onChange={(e) => handleExerciseChange(index, 'sets', e.target.value)}
                                                             placeholder="3"
+                                                            className="small-num-input"
                                                             required
                                                         />
-                                                    </td>
-                                                    <td>
+                                                    </div>
+                                                    <div className="mini-group">
+                                                        <label>Reps/Time</label>
                                                         <input
-                                                            className="input reps-input"
                                                             value={ex.reps}
                                                             onChange={(e) => handleExerciseChange(index, 'reps', e.target.value)}
                                                             placeholder="12"
+                                                            className="small-num-input"
                                                             required
                                                         />
-                                                    </td>
-                                                    <td>
-                                                        {formData.exercises.length > 1 && (
-                                                            <button type="button" className="btn-remove-row" onClick={() => removeExerciseRow(index)}>✕</button>
-                                                        )}
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
+                                                    </div>
+                                                </div>
+                                                {formData.exercises.length > 1 && (
+                                                    <button type="button" className="btn-remove-mini" onClick={() => removeExerciseRow(index)}>✕</button>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
-                                <button type="button" className="btn-add-row" onClick={addExerciseRow} style={{ marginTop: '1rem' }}>
-                                    + Add Another Exercise
-                                </button>
                             </div>
                             <div className="modal-footer">
                                 <button type="button" className="btn-cancel" onClick={() => setShowModal(false)}>Cancel</button>

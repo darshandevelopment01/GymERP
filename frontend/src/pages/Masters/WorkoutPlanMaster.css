@@ -77,36 +77,135 @@
   border-bottom: none;
 }
 
-/* Modal Table Styles */
-.exercise-form-table {
-  width: 100%;
+/* Modal Form Styles Refinement */
+.exercise-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
   margin-top: 1rem;
-  border-collapse: collapse;
 }
 
-.exercise-form-table th {
-  text-align: left;
-  padding: 0.5rem;
+.exercise-form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #f1f5f9;
+}
+
+.exercise-form-header h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.btn-add-mini {
+  background: #f0fdf9;
+  color: #10b981;
+  border: 1px solid #10b981;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-add-mini:hover {
+  background: #10b981;
+  color: white;
+}
+
+.dynamic-row-card {
   background: #f8fafc;
-  font-size: 0.9rem;
-  color: #475569;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  position: relative;
+  animation: fadeIn 0.3s ease;
 }
 
-.exercise-form-table td {
-  padding: 0.5rem;
-  vertical-align: top;
+.row-inputs {
+  display: flex;
+  gap: 1rem;
+  flex: 1;
 }
 
-.sets-input {
-  width: 70px !important;
+.mini-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
 }
 
-.reps-input {
-  width: 90px !important;
+.mini-group label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
 }
 
-@media (max-width: 640px) {
-  .workout-plans-grid {
-    grid-template-columns: 1fr;
+.mini-group input {
+  padding: 8px 12px !important;
+  font-size: 14px !important;
+}
+
+.small-num-input {
+  width: 80px !important;
+}
+
+.exercise-name-group {
+  flex: 1;
+}
+
+.exercise-name-group input {
+  width: 100% !important;
+}
+
+.btn-remove-mini {
+  background: #fee2e2;
+  color: #ef4444;
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.btn-remove-mini:hover {
+  background: #ef4444;
+  color: white;
+  transform: scale(1.1);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsiveness for form */
+@media (max-width: 768px) {
+  .form-content {
+    grid-template-columns: 1fr !important;
+  }
+  .form-group {
+    grid-column: span 1 !important;
+  }
+  .row-inputs {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .mini-group input {
+    width: 100% !important;
   }
 }

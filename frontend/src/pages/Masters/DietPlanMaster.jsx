@@ -171,81 +171,83 @@ const DietPlanMaster = () => {
                             <button className="btn-close" onClick={() => setShowModal(false)}>✕</button>
                         </div>
                         <form onSubmit={handleSubmit}>
-                            <div className="modal-body">
-                                <div className="form-grid">
-                                    <div className="form-group">
-                                        <label className="label">Plan Name</label>
-                                        <input
-                                            className="input"
-                                            value={formData.planName}
-                                            onChange={(e) => setFormData({ ...formData, planName: e.target.value })}
-                                            placeholder="e.g., Weight Loss Diet"
-                                            required
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label className="label">Calories (kcal)</label>
-                                        <input
-                                            className="input"
-                                            type="number"
-                                            value={formData.calories}
-                                            onChange={(e) => setFormData({ ...formData, calories: e.target.value })}
-                                            placeholder="e.g., 1800"
-                                            required
-                                        />
-                                    </div>
-                                    <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                                        <label className="label">Subtitle</label>
-                                        <input
-                                            className="input"
-                                            value={formData.subtitle}
-                                            onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
-                                            placeholder="e.g., Fat Loss & Lean Muscle"
-                                            required
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label className="label">Duration</label>
-                                        <input
-                                            className="input"
-                                            value={formData.duration}
-                                            onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                                            placeholder="e.g., 12 weeks"
-                                            required
-                                        />
-                                    </div>
+                            <div className="form-content">
+                                <div className="form-group">
+                                    <label>Plan Name</label>
+                                    <input
+                                        value={formData.planName}
+                                        onChange={(e) => setFormData({ ...formData, planName: e.target.value })}
+                                        placeholder="e.g., Weight Loss Diet"
+                                        required
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Calories (kcal)</label>
+                                    <input
+                                        type="number"
+                                        value={formData.calories}
+                                        onChange={(e) => setFormData({ ...formData, calories: e.target.value })}
+                                        placeholder="e.g., 1800"
+                                        required
+                                    />
+                                </div>
+                                <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                                    <label>Subtitle</label>
+                                    <input
+                                        value={formData.subtitle}
+                                        onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
+                                        placeholder="e.g., Fat Loss & Lean Muscle"
+                                        required
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Duration</label>
+                                    <input
+                                        value={formData.duration}
+                                        onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                                        placeholder="e.g., 12 weeks"
+                                        required
+                                    />
                                 </div>
 
-                                <div className="meals-form-header">
-                                    <h3>Meals Schedule</h3>
-                                </div>
+                                <div className="meals-section" style={{ gridColumn: 'span 2' }}>
+                                    <div className="meals-form-header">
+                                        <h3>Meals Schedule</h3>
+                                        <button type="button" className="btn-add-mini" onClick={addMealRow}>
+                                            + Add Meal
+                                        </button>
+                                    </div>
 
-                                <div className="meals-items-container" style={{ maxHeight: '300px', overflowY: 'auto', paddingRight: '0.5rem' }}>
-                                    {formData.meals.map((meal, index) => (
-                                        <div key={index} className="dynamic-row">
-                                            <input
-                                                className="input time-input"
-                                                value={meal.time}
-                                                onChange={(e) => handleMealChange(index, 'time', e.target.value)}
-                                                placeholder="7:00 AM"
-                                                required
-                                            />
-                                            <input
-                                                className="input desc-input"
-                                                value={meal.description}
-                                                onChange={(e) => handleMealChange(index, 'description', e.target.value)}
-                                                placeholder="Oats with fruits..."
-                                                required
-                                            />
-                                            {formData.meals.length > 1 && (
-                                                <button type="button" className="btn-remove-row" onClick={() => removeMealRow(index)}>✕</button>
-                                            )}
-                                        </div>
-                                    ))}
+                                    <div className="meals-items-container">
+                                        {formData.meals.map((meal, index) => (
+                                            <div key={index} className="dynamic-row-card">
+                                                <div className="row-inputs">
+                                                    <div className="mini-group">
+                                                        <label>Time</label>
+                                                        <input
+                                                            value={meal.time}
+                                                            onChange={(e) => handleMealChange(index, 'time', e.target.value)}
+                                                            placeholder="7:00 AM"
+                                                            required
+                                                        />
+                                                    </div>
+                                                    <div className="mini-group desc-group">
+                                                        <label>Description</label>
+                                                        <input
+                                                            value={meal.description}
+                                                            onChange={(e) => handleMealChange(index, 'description', e.target.value)}
+                                                            placeholder="Oats with fruits..."
+                                                            required
+                                                        />
+                                                    </div>
+                                                </div>
+                                                {formData.meals.length > 1 && (
+                                                    <button type="button" className="btn-remove-mini" onClick={() => removeMealRow(index)}>✕</button>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
-                                <button type="button" className="btn-add-row" onClick={addMealRow}>
-                                    + Add Another Meal
-                                </button>
                             </div>
                             <div className="modal-footer">
                                 <button type="button" className="btn-cancel" onClick={() => setShowModal(false)}>Cancel</button>
