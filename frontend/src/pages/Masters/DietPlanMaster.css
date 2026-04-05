@@ -109,6 +109,22 @@
 }
 
 /* Modal Form Styles Refinement */
+.duration-input-group {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.duration-input-group input {
+  flex: 1;
+}
+
+.duration-input-group select {
+  width: 140px !important;
+  background-position: right 12px center !important;
+  padding-right: 35px !important;
+}
+
 .meals-section {
   display: flex;
   flex-direction: column;

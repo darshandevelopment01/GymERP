@@ -15,7 +15,8 @@ const WorkoutPlanMaster = () => {
         planName: '',
         difficulty: 'Beginner',
         daysPerWeek: '',
-        duration: '',
+        durationValue: '1',
+        durationUnit: 'weeks',
         exercises: [{ exercise: '', sets: '', reps: '' }]
     });
 
@@ -41,7 +42,8 @@ const WorkoutPlanMaster = () => {
             planName: '',
             difficulty: 'Beginner',
             daysPerWeek: '',
-            duration: '',
+            durationValue: '1',
+            durationUnit: 'weeks',
             exercises: [{ exercise: '', sets: '', reps: '' }]
         });
         setShowModal(true);
@@ -49,11 +51,13 @@ const WorkoutPlanMaster = () => {
 
     const handleEdit = (plan) => {
         setEditingItem(plan);
+        const [val, unit] = plan.duration.split(' ');
         setFormData({
             planName: plan.planName,
             difficulty: plan.difficulty,
             daysPerWeek: plan.daysPerWeek,
-            duration: plan.duration,
+            durationValue: val || '1',
+            durationUnit: unit || 'weeks',
             exercises: plan.exercises.length > 0 ? plan.exercises : [{ exercise: '', sets: '', reps: '' }]
         });
         setShowModal(true);
@@ -91,12 +95,16 @@ const WorkoutPlanMaster = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        const payload = {
+            ...formData,
+            duration: `${formData.durationValue} ${formData.durationUnit}`
+        };
         try {
             if (editingItem) {
-                await workoutPlanAPI.update(editingItem._id, formData);
+                await workoutPlanAPI.update(editingItem._id, payload);
                 alert('Updated successfully');
             } else {
-                await workoutPlanAPI.create(formData);
+                await workoutPlanAPI.create(payload);
                 alert('Created successfully');
             }
             setShowModal(false);
@@ -235,12 +243,23 @@ const WorkoutPlanMaster = () => {
                                 </div>
                                 <div className="form-group">
                                     <label>Duration</label>
-                                    <input
-                                        value={formData.duration}
-                                        onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                                        placeholder="e.g., 8 weeks"
-                                        required
-                                    />
+                                    <div className="duration-input-group">
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            value={formData.durationValue}
+                                            onChange={(e) => setFormData({ ...formData, durationValue: e.target.value })}
+                                            required
+                                        />
+                                        <select
+                                            value={formData.durationUnit}
+                                            onChange={(e) => setFormData({ ...formData, durationUnit: e.target.value })}
+                                            required
+                                        >
+                                            <option value="weeks">Weeks</option>
+                                            <option value="months">Months</option>
+                                        </select>
+                                    </div>
                                 </div>
 
                                 <div className="exercise-section" style={{ gridColumn: 'span 2' }}>

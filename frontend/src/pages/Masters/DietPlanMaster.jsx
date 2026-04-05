@@ -15,9 +15,23 @@ const DietPlanMaster = () => {
         planName: '',
         subtitle: '',
         calories: '',
-        duration: '',
-        meals: [{ time: '', description: '' }]
+        durationValue: '1',
+        durationUnit: 'weeks',
+        meals: [{ time: '08:00', description: '' }]
     });
+
+    const formatTime = (timeStr) => {
+        if (!timeStr) return '';
+        try {
+            const [hours, minutes] = timeStr.split(':');
+            const h = parseInt(hours);
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            const displayHours = h % 12 || 12;
+            return `${displayHours}:${minutes} ${ampm}`;
+        } catch (e) {
+            return timeStr;
+        }
+    };
 
     const fetchData = async () => {
         try {
@@ -41,20 +55,23 @@ const DietPlanMaster = () => {
             planName: '',
             subtitle: '',
             calories: '',
-            duration: '',
-            meals: [{ time: '', description: '' }]
+            durationValue: '1',
+            durationUnit: 'weeks',
+            meals: [{ time: '08:00', description: '' }]
         });
         setShowModal(true);
     };
 
     const handleEdit = (plan) => {
         setEditingItem(plan);
+        const [val, unit] = plan.duration.split(' ');
         setFormData({
             planName: plan.planName,
             subtitle: plan.subtitle,
             calories: plan.calories,
-            duration: plan.duration,
-            meals: plan.meals.length > 0 ? plan.meals : [{ time: '', description: '' }]
+            durationValue: val || '1',
+            durationUnit: unit || 'weeks',
+            meals: plan.meals.length > 0 ? plan.meals : [{ time: '08:00', description: '' }]
         });
         setShowModal(true);
     };
@@ -80,7 +97,7 @@ const DietPlanMaster = () => {
     const addMealRow = () => {
         setFormData({
             ...formData,
-            meals: [...formData.meals, { time: '', description: '' }]
+            meals: [...formData.meals, { time: '08:00', description: '' }]
         });
     };
 
@@ -91,12 +108,16 @@ const DietPlanMaster = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        const payload = {
+            ...formData,
+            duration: `${formData.durationValue} ${formData.durationUnit}`
+        };
         try {
             if (editingItem) {
-                await dietPlanAPI.update(editingItem._id, formData);
+                await dietPlanAPI.update(editingItem._id, payload);
                 alert('Updated successfully');
             } else {
-                await dietPlanAPI.create(formData);
+                await dietPlanAPI.create(payload);
                 alert('Created successfully');
             }
             setShowModal(false);
@@ -139,7 +160,7 @@ const DietPlanMaster = () => {
                             <div className="meals-list">
                                 {plan.meals.slice(0, 3).map((meal, idx) => (
                                     <div key={idx} className="meal-item">
-                                        <span className="meal-time">{meal.time}</span>
+                                        <span className="meal-time">{formatTime(meal.time)}</span>
                                         <span className="meal-description">{meal.description}</span>
                                     </div>
                                 ))}
@@ -202,12 +223,23 @@ const DietPlanMaster = () => {
                                 </div>
                                 <div className="form-group">
                                     <label>Duration</label>
-                                    <input
-                                        value={formData.duration}
-                                        onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                                        placeholder="e.g., 12 weeks"
-                                        required
-                                    />
+                                    <div className="duration-input-group">
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            value={formData.durationValue}
+                                            onChange={(e) => setFormData({ ...formData, durationValue: e.target.value })}
+                                            required
+                                        />
+                                        <select
+                                            value={formData.durationUnit}
+                                            onChange={(e) => setFormData({ ...formData, durationUnit: e.target.value })}
+                                            required
+                                        >
+                                            <option value="weeks">Weeks</option>
+                                            <option value="months">Months</option>
+                                        </select>
+                                    </div>
                                 </div>
 
                                 <div className="meals-section" style={{ gridColumn: 'span 2' }}>
@@ -225,9 +257,9 @@ const DietPlanMaster = () => {
                                                     <div className="mini-group">
                                                         <label>Time</label>
                                                         <input
+                                                            type="time"
                                                             value={meal.time}
                                                             onChange={(e) => handleMealChange(index, 'time', e.target.value)}
-                                                            placeholder="7:00 AM"
                                                             required
                                                         />
                                                     </div>
