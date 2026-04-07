@@ -20,41 +20,43 @@ export const sendEmail = async (
     htmlContent: string,
     attachments: EmailAttachment[] = []
 ): Promise<boolean> => {
+    const startTime = Date.now();
+    let transporter: any = null;
+
     try {
         const host = process.env.SMTP_HOST;
-        const port = parseInt(process.env.SMTP_PORT || '465', 10);
+        const port = parseInt(process.env.SMTP_PORT || '587', 10);
         const user = process.env.SMTP_USER;
         const pass = process.env.SMTP_PASS;
 
         if (!host || !user || !pass) {
-            console.warn('⚠️ SMTP config missing! Check SMTP_HOST, SMTP_USER, SMTP_PASS in environment.');
+            console.warn('⚠️ [MAILER] SMTP config missing! Check SMTP_HOST, SMTP_USER, SMTP_PASS.');
             return false;
         }
 
-        const transporter = nodemailer.createTransport({
+        console.log(`📧 [MAILER] Starting email to ${to} via ${host}:${port}`);
+
+        transporter = nodemailer.createTransport({
             host,
             port,
-            secure: port === 465, // SSL for 465, STARTTLS for 587
-            auth: {
-                user,
-                pass,
-            },
-            // ✅ Optimized settings for Gmail and Serverless (Vercel)
-            pool: false, // Disabling pooling for Vercel to ensure socket is flushed and closed before response ends
-            maxMessages: 100,
-            connectionTimeout: 10000, // 10s
-            greetingTimeout: 10000, // 10s
-            socketTimeout: 30000, // 30s
+            secure: port === 465,
+            auth: { user, pass },
+            pool: false, // Ensure full flush before closing
+            connectionTimeout: 15000, // 15s
+            greetingTimeout: 15000,
+            socketTimeout: 30000,
             ...(port === 587 ? { requireTLS: true } : {}),
-            tls: {
-                rejectUnauthorized: false // Helps avoid SSL/cert issues in some environments
-            },
-            debug: true,
-            logger: true
+            tls: { rejectUnauthorized: false },
+            debug: false, // ❌ DISABLE: Prevents log flooding with PDF base64
+            logger: false // ❌ DISABLE: Prevents log flooding
         } as any);
 
-        console.log(`📧 Sending email to ${to} via ${host}:${port} as ${user}`);
+        // 1. Verify Connection
+        await transporter.verify();
+        const verifyTime = Date.now() - startTime;
+        console.log(`✅ [MAILER] SMTP Verified (${verifyTime}ms)`);
 
+        // 2. Send Mail
         const info = await transporter.sendMail({
             from: `"MuscleTime ERP" <${user}>`,
             to,
@@ -67,11 +69,19 @@ export const sendEmail = async (
             }))
         });
 
-        console.log(`✅ Email sent. MessageId: ${info.messageId}`);
+        const totalTime = Date.now() - startTime;
+        console.log(`✅ [MAILER] Email sent in ${totalTime}ms. Response: ${info.response}`);
+        
         return true;
     } catch (error: any) {
-        console.error('❌ SMTP Error:', error.message);
+        const errorTime = Date.now() - startTime;
+        console.error(`❌ [MAILER] Failed after ${errorTime}ms:`, error.message);
+        if (error.response) console.error(`   SMTP Response: ${error.response}`);
         return false;
+    } finally {
+        if (transporter) {
+            try { transporter.close(); } catch (e) {}
+        }
     }
 };
 
