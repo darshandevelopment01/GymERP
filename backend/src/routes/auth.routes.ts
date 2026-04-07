@@ -6,8 +6,12 @@ import Employee from '../models/Employee';
 import Designation from '../models/Designation';
 import { authMiddleware } from '../middleware/auth.middleware';
 import { sendEmail } from '../utils/mailer';
+import { sendTestEmail } from '../controllers/authController';
 
 const router = Router();
+
+// Test Email
+router.post('/test-email', authMiddleware, sendTestEmail);
 
 // Login
 router.post('/login', async (req: Request, res: Response) => {

@@ -223,3 +223,61 @@ export const getMe = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Failed to fetch profile' });
   }
 };
+
+// Test Email Trigger
+export const sendTestEmail = async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+    const targetEmail = email || process.env.SMTP_USER;
+
+    if (!targetEmail) {
+      return res.status(400).json({ error: 'No recipient email provided and SMTP_USER not set.' });
+    }
+
+    const { sendEmail } = require('../utils/mailer');
+    
+    console.log(`🧪 Testing email trigger to: ${targetEmail}`);
+    const start = Date.now();
+    
+    const success = await sendEmail(
+      targetEmail,
+      'MuscleTime ERP - SMTP Test',
+      `
+      <div style="font-family: sans-serif; padding: 20px;">
+        <h2 style="color: #6366f1;">SMTP Test Successful!</h2>
+        <p>This is a test email from your MuscleTime ERP system.</p>
+        <hr/>
+        <p><strong>Sent at:</strong> ${new Date().toLocaleString()}</p>
+        <p><strong>Host:</strong> ${process.env.SMTP_HOST}</p>
+        <p><strong>Port:</strong> ${process.env.SMTP_PORT}</p>
+      </div>
+      `
+    );
+
+    const duration = Date.now() - start;
+
+    if (success) {
+      res.json({ 
+        success: true, 
+        message: `Test email sent successfully to ${targetEmail}`,
+        details: {
+          duration: `${duration}ms`,
+          host: process.env.SMTP_HOST,
+          port: process.env.SMTP_PORT
+        }
+      });
+    } else {
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to send test email. Check server logs for details.',
+        details: {
+          duration: `${duration}ms`
+        }
+      });
+    }
+  } catch (error: any) {
+    console.error('Test email error:', error);
+    res.status(500).json({ error: 'Internal server error during email test', details: error.message });
+  }
+};
+

@@ -39,7 +39,12 @@ export const sendEmail = async (
                 user,
                 pass,
             },
-            // ✅ Additional settings for Gmail (especially via 587) and Serverless (Vercel)
+            // ✅ Optimized settings for Gmail and Serverless (Vercel)
+            pool: true, // Reuse connections
+            maxMessages: 100,
+            connectionTimeout: 10000, // 10s
+            greetingTimeout: 10000, // 10s
+            socketTimeout: 30000, // 30s
             ...(port === 587 ? { requireTLS: true } : {}),
             tls: {
                 rejectUnauthorized: false // Helps avoid SSL/cert issues in some environments
