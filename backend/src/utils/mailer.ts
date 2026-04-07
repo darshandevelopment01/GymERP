@@ -40,7 +40,7 @@ export const sendEmail = async (
                 pass,
             },
             // ✅ Optimized settings for Gmail and Serverless (Vercel)
-            pool: true, // Reuse connections
+            pool: false, // Disabling pooling for Vercel to ensure socket is flushed and closed before response ends
             maxMessages: 100,
             connectionTimeout: 10000, // 10s
             greetingTimeout: 10000, // 10s
