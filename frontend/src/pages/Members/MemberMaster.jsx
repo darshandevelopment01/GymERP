@@ -37,6 +37,9 @@ const MemberMaster = () => {
   const [maxDiscountPercentage, setMaxDiscountPercentage] = useState(0);
   const [noDiscountLimit, setNoDiscountLimit] = useState(false);
   const [discountOptions, setDiscountOptions] = useState([]);
+  const [discountType, setDiscountType] = useState('percentage'); // 'percentage' | 'value'
+  const [discountWarning, setDiscountWarning] = useState('');
+  const [discountInputValue, setDiscountInputValue] = useState(0);
 
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
@@ -275,6 +278,9 @@ const MemberMaster = () => {
       membershipStartDate: new Date(),
       membershipEndDate: null
     };
+    setDiscountType('percentage');
+    setDiscountWarning('');
+    setDiscountInputValue(0);
     setRenewData(recalcRenewData(initialRenewData));
     setShowRenewModal(true);
   };
@@ -505,17 +511,92 @@ const MemberMaster = () => {
     }
   };
 
-  const handleRenewPlanChange = (e) => {
-    const planId = e.target.value;
-    setRenewData(prev => recalcRenewData({ ...prev, plan: planId }));
+  const handleRenewDiscountTypeChange = (e) => {
+    const type = e.target.value;
+    setDiscountType(type);
+    setDiscountWarning('');
+    setDiscountInputValue(0);
+    setRenewData(prev => recalcRenewData({ ...prev, discountPercentage: 0 }));
   };
 
   const handleRenewDiscountChange = (e) => {
-    let discount = parseFloat(e.target.value) || 0;
-    if (!noDiscountLimit && discount > maxDiscountPercentage) discount = maxDiscountPercentage;
-    if (discount < 0) discount = 0;
-    if (discount > 100) discount = 100;
-    setRenewData(prev => recalcRenewData({ ...prev, discountPercentage: discount }));
+    const val = e.target.value;
+    if (val === '') {
+      setDiscountInputValue('');
+      setDiscountWarning('');
+      setRenewData(prev => recalcRenewData({ ...prev, discountPercentage: 0 }));
+      return;
+    }
+
+    let inputVal = parseFloat(val) || 0;
+    if (inputVal < 0) inputVal = 0;
+
+    const selectedPlan = plans.find(p => p._id === renewData.plan);
+    const planAmount = selectedPlan ? selectedPlan.price : 0;
+
+    let finalDiscountPct = 0;
+    let warning = '';
+
+    if (discountType === 'percentage') {
+      if (inputVal > 100) inputVal = 100;
+      
+      if (!noDiscountLimit && inputVal > maxDiscountPercentage) {
+        warning = `⚠️ You can only apply up to ${maxDiscountPercentage}% discount (per your designation)`;
+        finalDiscountPct = maxDiscountPercentage;
+      } else {
+        finalDiscountPct = inputVal;
+      }
+      setDiscountInputValue(inputVal);
+    } else {
+      // Flat Value mode
+      if (renewData.plan) {
+        const maxAllowedAmt = Math.round((planAmount * maxDiscountPercentage) / 100);
+        
+        if (!noDiscountLimit && inputVal > maxAllowedAmt) {
+          warning = `⚠️ You can only apply up to ₹${maxAllowedAmt} discount (${maxDiscountPercentage}% of plan price)`;
+          inputVal = maxAllowedAmt;
+        } else if (inputVal > planAmount) {
+          inputVal = planAmount;
+        }
+        
+        finalDiscountPct = planAmount > 0 ? (inputVal / planAmount) * 100 : 0;
+      } else {
+        // No plan yet, we'll validate when plan is chosen
+        finalDiscountPct = 0;
+      }
+      setDiscountInputValue(inputVal);
+    }
+
+    setDiscountWarning(warning);
+    setRenewData(prev => recalcRenewData({ ...prev, discountPercentage: finalDiscountPct }));
+  };
+
+  const handleRenewPlanChange = (e) => {
+    const planId = e.target.value;
+    const selectedPlan = plans.find(p => p._id === planId);
+    const planAmount = selectedPlan ? selectedPlan.price : 0;
+
+    let updatedData = { ...renewData, plan: planId };
+    
+    // Re-validate flat discount if plan changes
+    if (discountType === 'value' && discountInputValue > 0) {
+      let inputVal = discountInputValue;
+      let warning = '';
+      const maxAllowedAmt = Math.round((planAmount * maxDiscountPercentage) / 100);
+
+      if (!noDiscountLimit && inputVal > maxAllowedAmt) {
+        warning = `⚠️ Discount adjusted to ₹${maxAllowedAmt} (max ${maxDiscountPercentage}% for this plan)`;
+        inputVal = maxAllowedAmt;
+      } else if (inputVal > planAmount) {
+        inputVal = planAmount;
+      }
+
+      setDiscountInputValue(inputVal);
+      setDiscountWarning(warning);
+      updatedData.discountPercentage = planAmount > 0 ? (inputVal / planAmount) * 100 : 0;
+    }
+
+    setRenewData(prev => recalcRenewData(updatedData));
   };
 
   const handleRenewTaxSlabChange = (e) => {
@@ -1283,19 +1364,58 @@ const MemberMaster = () => {
                   </select>
                 </div>
 
-                {/* Discount */}
-                {can('noDiscountLimit') && (
-                  <div className="form-group">
-                    <label>Discount %</label>
-                    <select
-                      value={renewData.discountPercentage}
-                      onChange={handleRenewDiscountChange}
-                    >
-                      <option value={0}>0% (No Discount)</option>
-                      {discountOptions.map(val => (
-                        <option key={val} value={val}>{val}%</option>
-                      ))}
-                    </select>
+                {/* Discount Section */}
+                {(isAdmin || noDiscountLimit || maxDiscountPercentage > 0) && (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div className="form-group">
+                      <label>Discount Type</label>
+                      <select value={discountType} onChange={handleRenewDiscountTypeChange}>
+                        <option value="percentage">Percentage (%)</option>
+                        <option value="value">Flat Value (₹)</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>
+                        Discount {discountType === 'percentage' ? '%' : '(₹)'}
+                        {noDiscountLimit && (
+                          <span style={{ color: '#10b981', fontWeight: '400', fontSize: '0.8rem', marginLeft: '5px' }}>
+                            (No Limit)
+                          </span>
+                        )}
+                      </label>
+                      <div style={{ position: 'relative' }}>
+                        <input
+                          type="number"
+                          value={discountInputValue}
+                          onChange={handleRenewDiscountChange}
+                          placeholder={discountType === 'percentage' ? '0-100' : 'Enter amount'}
+                          min="0"
+                        />
+                        <span style={{
+                          position: 'absolute',
+                          right: '12px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          color: '#64748b',
+                          fontSize: '0.9rem',
+                          pointerEvents: 'none'
+                        }}>
+                          {discountType === 'percentage' ? '%' : '₹'}
+                        </span>
+                      </div>
+                      {!noDiscountLimit && (
+                        <p style={{ margin: '4px 0 0', fontSize: '0.75rem', color: '#64748b' }}>
+                          Max allowed: {discountType === 'percentage' 
+                            ? `${maxDiscountPercentage}%` 
+                            : `₹${Math.round((plans.find(p => p._id === renewData.plan)?.price || 0) * maxDiscountPercentage / 100)}`}
+                        </p>
+                      )}
+                      {discountWarning && (
+                        <p style={{ margin: '4px 0 0', fontSize: '0.75rem', color: '#f59e0b', fontWeight: '500' }}>
+                          {discountWarning}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 )}
 

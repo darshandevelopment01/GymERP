@@ -55,6 +55,9 @@ const EnquiryDetailPage = () => {
   const [maxDiscountPercentage, setMaxDiscountPercentage] = useState(0);
   const [noDiscountLimit, setNoDiscountLimit] = useState(false);
   const [discountOptions, setDiscountOptions] = useState([]);
+  const [discountType, setDiscountType] = useState('percentage'); // 'percentage' | 'value'
+  const [discountWarning, setDiscountWarning] = useState('');
+  const [discountInputValue, setDiscountInputValue] = useState(0);
 
   // Modals visibility
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -215,20 +218,92 @@ const EnquiryDetailPage = () => {
     setPaymentData(prev => recalcRemaining({ ...prev, paymentReceived: received }));
   };
 
+  const handleDiscountTypeChange = (e) => {
+    const type = e.target.value;
+    setDiscountType(type);
+    setDiscountWarning('');
+    setDiscountInputValue(0);
+    setPaymentData(prev => recalcRemaining({ ...prev, discountPercentage: 0 }));
+  };
+
   const handleDiscountChange = (e) => {
-    let discount = parseFloat(e.target.value) || 0;
-    // For non-admins without noDiscountLimit, we clamp to their max allowed
-    if (!isAdmin && !noDiscountLimit && discount > maxDiscountPercentage) {
-      discount = maxDiscountPercentage;
+    const val = e.target.value;
+    if (val === '') {
+      setDiscountInputValue('');
+      setDiscountWarning('');
+      setPaymentData(prev => recalcRemaining({ ...prev, discountPercentage: 0 }));
+      return;
     }
-    if (discount < 0) discount = 0;
-    if (discount > 100) discount = 100;
-    setPaymentData(prev => recalcRemaining({ ...prev, discountPercentage: discount }));
+
+    let inputVal = parseFloat(val) || 0;
+    if (inputVal < 0) inputVal = 0;
+
+    const selectedPlan = plans.find(p => p._id === paymentData.plan);
+    const planAmount = selectedPlan ? selectedPlan.price : 0;
+
+    let finalDiscountPct = 0;
+    let warning = '';
+
+    if (discountType === 'percentage') {
+      if (inputVal > 100) inputVal = 100;
+      
+      if (!noDiscountLimit && inputVal > maxDiscountPercentage) {
+        warning = `⚠️ You can only apply up to ${maxDiscountPercentage}% discount (per your designation)`;
+        finalDiscountPct = maxDiscountPercentage;
+      } else {
+        finalDiscountPct = inputVal;
+      }
+      setDiscountInputValue(inputVal);
+    } else {
+      // Flat Value mode
+      if (paymentData.plan) {
+        const maxAllowedAmt = Math.round((planAmount * maxDiscountPercentage) / 100);
+        
+        if (!noDiscountLimit && inputVal > maxAllowedAmt) {
+          warning = `⚠️ You can only apply up to ₹${maxAllowedAmt} discount (${maxDiscountPercentage}% of plan price)`;
+          inputVal = maxAllowedAmt;
+        } else if (inputVal > planAmount) {
+          inputVal = planAmount;
+        }
+        
+        finalDiscountPct = planAmount > 0 ? (inputVal / planAmount) * 100 : 0;
+      } else {
+        // No plan yet, we'll validate when plan is chosen
+        finalDiscountPct = 0;
+      }
+      setDiscountInputValue(inputVal);
+    }
+
+    setDiscountWarning(warning);
+    setPaymentData(prev => recalcRemaining({ ...prev, discountPercentage: finalDiscountPct }));
   };
 
   const handlePlanChangeInPayment = (e) => {
     const planId = e.target.value;
-    setPaymentData(prev => recalcRemaining({ ...prev, plan: planId }));
+    const selectedPlan = plans.find(p => p._id === planId);
+    const planAmount = selectedPlan ? selectedPlan.price : 0;
+
+    let updatedData = { ...paymentData, plan: planId };
+    
+    // Re-validate flat discount if plan changes
+    if (discountType === 'value' && discountInputValue > 0) {
+      let inputVal = discountInputValue;
+      let warning = '';
+      const maxAllowedAmt = Math.round((planAmount * maxDiscountPercentage) / 100);
+
+      if (!noDiscountLimit && inputVal > maxAllowedAmt) {
+        warning = `⚠️ Discount adjusted to ₹${maxAllowedAmt} (max ${maxDiscountPercentage}% for this plan)`;
+        inputVal = maxAllowedAmt;
+      } else if (inputVal > planAmount) {
+        inputVal = planAmount;
+      }
+
+      setDiscountInputValue(inputVal);
+      setDiscountWarning(warning);
+      updatedData.discountPercentage = planAmount > 0 ? (inputVal / planAmount) * 100 : 0;
+    }
+
+    setPaymentData(prev => recalcRemaining(updatedData));
   };
 
   const handleTaxSlabChange = (e) => {
@@ -279,6 +354,9 @@ const EnquiryDetailPage = () => {
       membershipStartDate: new Date(),
       membershipEndDate: null
     };
+    setDiscountType('percentage');
+    setDiscountWarning('');
+    setDiscountInputValue(0);
     setPaymentData(recalcRemaining(initialData));
     setShowPaymentModal(true);
   };
@@ -716,13 +794,57 @@ const EnquiryDetailPage = () => {
                       ))}
                     </select>
                   </div>
-                  {(isAdmin || can('noDiscountLimit')) && (
-                    <div className="form-group">
-                      <label>Discount % <span style={{ color: '#10b981', fontSize: '0.8rem' }}>({isAdmin ? '100% Admin' : `Max ${maxDiscountPercentage}%`})</span></label>
-                      <select value={paymentData.discountPercentage} onChange={handleDiscountChange}>
-                        <option value={0}>0% (No Discount)</option>
-                        {discountOptions.map(val => <option key={val} value={val}>{val}%</option>)}
-                      </select>
+                  {(isAdmin || noDiscountLimit || maxDiscountPercentage > 0) && (
+                    <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                      <div className="form-group">
+                        <label>Discount Type</label>
+                        <select value={discountType} onChange={handleDiscountTypeChange}>
+                          <option value="percentage">Percentage (%)</option>
+                          <option value="value">Flat Value (₹)</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>
+                          Discount {discountType === 'percentage' ? '%' : '(₹)'}
+                          {noDiscountLimit && (
+                            <span style={{ color: '#10b981', fontSize: '0.8rem', marginLeft: '5px' }}>
+                              (No Limit)
+                            </span>
+                          )}
+                        </label>
+                        <div style={{ position: 'relative' }}>
+                          <input
+                            type="number"
+                            value={discountInputValue}
+                            onChange={handleDiscountChange}
+                            placeholder={discountType === 'percentage' ? '0-100' : 'Enter amount'}
+                            min="0"
+                          />
+                          <span style={{
+                            position: 'absolute',
+                            right: '35px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            color: '#64748b',
+                            fontSize: '0.9rem',
+                            pointerEvents: 'none'
+                          }}>
+                            {discountType === 'percentage' ? '%' : '₹'}
+                          </span>
+                        </div>
+                        {!noDiscountLimit && (
+                          <p style={{ margin: '4px 0 0', fontSize: '0.75rem', color: '#64748b' }}>
+                            Max allowed: {discountType === 'percentage' 
+                              ? `${maxDiscountPercentage}%` 
+                              : `₹${Math.round((plans.find(p => p._id === paymentData.plan)?.price || 0) * maxDiscountPercentage / 100)}`}
+                          </p>
+                        )}
+                        {discountWarning && (
+                          <p style={{ margin: '4px 0 0', fontSize: '0.75rem', color: '#f59e0b', fontWeight: '500' }}>
+                            {discountWarning}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
