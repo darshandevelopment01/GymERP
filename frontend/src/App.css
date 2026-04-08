@@ -1016,16 +1016,7 @@ body {
   }
 }
 
-/* Dashboard Main Area */
-.dashboard-main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  height: 100dvh;
-  height: 100vh;
-  overflow: hidden;
-  min-width: 0; /* Prevents overflow-x in flex items */
-}
+
 
 /* Mobile Overlay */
 .sidebar-overlay {
