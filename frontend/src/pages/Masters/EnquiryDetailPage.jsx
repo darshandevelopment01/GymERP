@@ -75,7 +75,6 @@ const EnquiryDetailPage = () => {
   const [paymentData, setPaymentData] = useState({
     planCategory: '',
     plan: '',
-    dateOfBirth: null,
     taxSlab: '',
     discountPercentage: 0,
     paymentReceived: 0,
@@ -345,7 +344,6 @@ const EnquiryDetailPage = () => {
     const initialData = {
       planCategory: enquiry.plan?.category?._id || enquiry.plan?.category || '',
       plan: enquiry.plan?._id || '',
-      dateOfBirth: enquiry.dateOfBirth ? new Date(enquiry.dateOfBirth) : null,
       taxSlab: '',
       discountPercentage: 0,
       paymentReceived: 0,
@@ -363,7 +361,7 @@ const EnquiryDetailPage = () => {
 
   const handlePaymentSubmit = async (e) => {
     e.preventDefault();
-    if (!paymentData.plan || !paymentData.dateOfBirth || (paymentData.paymentReceived === '' || paymentData.paymentReceived < 0) || !paymentData.paymentMode) {
+    if (!paymentData.plan || (paymentData.paymentReceived === '' || paymentData.paymentReceived < 0) || !paymentData.paymentMode) {
       alert('Please fill all required fields, including payment mode');
       return;
     }
@@ -375,7 +373,6 @@ const EnquiryDetailPage = () => {
         name: enquiry.name,
         email: enquiry.email,
         mobileNumber: enquiry.mobileNumber,
-        dateOfBirth: paymentData.dateOfBirth.toISOString(),
         gender: enquiry.gender,
         branch: enquiry.branch._id || enquiry.branch,
         plan: paymentData.plan,
@@ -745,22 +742,6 @@ const EnquiryDetailPage = () => {
                       .map(p => <option key={p._id} value={p._id}>{p.planName} - ₹{p.price} ({p.duration})</option>)}
                   </select>
                 </div>
-                <div className="form-group">
-                  <label>Date of Birth <span className="required">*</span></label>
-                  <DatePicker
-                    selected={paymentData.dateOfBirth}
-                    onChange={(date) => setPaymentData(prev => ({...prev, dateOfBirth: date}))}
-                    peekNextMonth
-                    showMonthDropdown
-                    showYearDropdown
-                    dropdownMode="select"
-                    dateFormat="dd/MM/yyyy"
-                    placeholderText="Select Date of Birth"
-                    maxDate={new Date()}
-                    required
-                  />
-                </div>
-                
                 <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   <div className="form-group">
                     <label>Membership Start Date <span className="required">*</span></label>

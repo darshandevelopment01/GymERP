@@ -289,13 +289,7 @@ const MemberDetailPage = () => {
                   <p>{member.address || 'NA'}</p>
                 </div>
               </div>
-              <div className="info-item">
-                <div className="info-icon"><Calendar size={22} /></div>
-                <div className="info-text">
-                  <label>Date of Birth</label>
-                  <p>{formatDate(member.dateOfBirth)}</p>
-                </div>
-              </div>
+
               <div className="info-item">
                 <div className="info-icon"><Heart size={22} /></div>
                 <div className="info-text">

@@ -141,7 +141,7 @@ export const createEnquiry = async (req: Request, res: Response): Promise<void> 
     // ✅ STEP 2: Clean the data - remove empty optional fields
     const cleanedData: any = { ...trimmedData };
 
-    const optionalFields = ['plan', 'dateOfBirth', 'followUpDate', 'notes', 'status', 'profilePhoto'];
+    const optionalFields = ['plan', 'followUpDate', 'notes', 'status', 'profilePhoto'];
     optionalFields.forEach(field => {
       if (
         cleanedData[field] === '' ||
@@ -386,7 +386,7 @@ export const updateEnquiry = async (req: Request, res: Response): Promise<void> 
     // ✅ Clean the data
     const cleanedData: any = { ...trimmedData };
 
-    const optionalFields = ['plan', 'dateOfBirth', 'followUpDate', 'notes', 'profilePhoto'];
+    const optionalFields = ['plan', 'followUpDate', 'notes', 'profilePhoto'];
     optionalFields.forEach(field => {
       if (
         cleanedData[field] === '' ||

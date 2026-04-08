@@ -47,7 +47,6 @@ const EnquiryMaster = () => {
   const [paymentData, setPaymentData] = useState({
     planCategory: '',
     plan: '',
-    dateOfBirth: null,
     taxSlab: '',
     discountPercentage: 0,
     paymentReceived: 0,
@@ -218,7 +217,6 @@ const EnquiryMaster = () => {
     const initialData = {
       planCategory: enquiry.plan?.category?._id || enquiry.plan?.category || '',
       plan: enquiry.plan?._id || '',
-      dateOfBirth: enquiry.dateOfBirth ? new Date(enquiry.dateOfBirth) : null,
       taxSlab: '',
       discountPercentage: 0,
       paymentReceived: 0,
@@ -444,16 +442,13 @@ const EnquiryMaster = () => {
   const handleSubmitPayment = async (e) => {
     e.preventDefault();
 
-    if (!paymentData.plan || !paymentData.dateOfBirth || (paymentData.paymentReceived === '' || paymentData.paymentReceived <= 0)) {
+    if (!paymentData.plan || (paymentData.paymentReceived === '' || paymentData.paymentReceived <= 0)) {
       alert('Please fill all required fields');
       return;
     }
 
     try {
       setSubmittingConvert(true);
-      const dobDate = typeof paymentData.dateOfBirth === 'string'
-        ? new Date(paymentData.dateOfBirth)
-        : paymentData.dateOfBirth;
 
       const billing = getBillingBreakdown();
 
@@ -461,7 +456,6 @@ const EnquiryMaster = () => {
         name: selectedEnquiry.name,
         email: selectedEnquiry.email,
         mobileNumber: selectedEnquiry.mobileNumber,
-        dateOfBirth: dobDate.toISOString(),
         gender: selectedEnquiry.gender,
         branch: selectedEnquiry.branch._id || selectedEnquiry.branch,
         plan: paymentData.plan,
@@ -996,25 +990,6 @@ const EnquiryMaster = () => {
                         </option>
                       ))}
                   </select>
-                </div>
-
-                <div className="form-group">
-                  <label>Date of Birth <span className="required">*</span></label>
-                  <DatePicker
-                    selected={paymentData.dateOfBirth}
-                    onChange={(date) => setPaymentData({ ...paymentData, dateOfBirth: date })}
-                    dateFormat="dd/MM/yyyy"
-                    showYearDropdown
-                    showMonthDropdown
-                    dropdownMode="select"
-                    maxDate={new Date()}
-                    yearDropdownItemNumber={100}
-                    scrollableYearDropdown
-                    placeholderText="Select date of birth"
-                    required
-                    className="custom-datepicker"
-                    wrapperClassName="datepicker-wrapper"
-                  />
                 </div>
 
                 <div className="form-group">

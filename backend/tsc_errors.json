@@ -1,0 +1,1 @@
+{"errs":"﻿src/controllers/member.controller.ts(459,28): error TS2345: Argument of type 'string | string[]' is not assignable to parameter of type 'string'.\r\n  Type 'string[]' is not assignable to type 'string'.\r\n"}

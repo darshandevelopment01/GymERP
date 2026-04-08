@@ -5,7 +5,6 @@ export interface IMember extends Document {
   name: string;
   email: string;
   mobileNumber: string;
-  dateOfBirth: Date;
   gender: 'Male' | 'Female' | 'Other';
   address?: string;
   branch: mongoose.Types.ObjectId;
@@ -75,10 +74,6 @@ const MemberSchema = new Schema<IMember>(
       type: String,
       required: true,
       trim: true
-    },
-    dateOfBirth: {
-      type: Date,
-      required: true
     },
     gender: {
       type: String,

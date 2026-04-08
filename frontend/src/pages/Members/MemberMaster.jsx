@@ -736,12 +736,6 @@ const MemberMaster = () => {
       placeholder: 'Enter email address'
     },
     {
-      name: 'dateOfBirth',
-      label: 'Date of Birth',
-      type: 'date',
-      required: true
-    },
-    {
       name: 'gender',
       label: 'Gender',
       type: 'select',

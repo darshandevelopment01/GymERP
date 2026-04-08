@@ -456,7 +456,7 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
 export const getMemberPaymentReceipt = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id, paymentIndex } = req.params;
-    const index = parseInt(paymentIndex);
+    const index = parseInt(paymentIndex as string, 10);
 
     const member = await Member.findById(id)
       .populate('branch', 'name city')

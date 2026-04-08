@@ -7,7 +7,6 @@ export interface IEnquiry extends Document {
   name: string;
   mobileNumber: string;
   email: string;
-  dateOfBirth?: Date;
   gender: 'Male' | 'Female' | 'Other';
   plan?: mongoose.Types.ObjectId;
   source: 'Walk-in' | 'Social Media' | 'Referral' | 'Website' | 'Phone Call';
@@ -61,11 +60,6 @@ const enquirySchema = new Schema<IEnquiry>({
       },
       message: 'Invalid email format'
     }
-  },
-  dateOfBirth: {
-    type: Date,
-    required: false,
-    default: null
   },
   gender: {
     type: String,
