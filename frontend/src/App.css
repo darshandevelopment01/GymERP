@@ -99,6 +99,43 @@ body {
   color: #64748b;
 }
 
+.password-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  transition: color 0.2s;
+  z-index: 10;
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+.password-toggle-btn:focus,
+.password-toggle-btn:focus-visible,
+.password-toggle-btn:active {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+.password-toggle-btn:hover {
+  color: #3b82f6;
+}
+
 .sign-in-button {
   width: 100%;
   margin-top: 1rem;
