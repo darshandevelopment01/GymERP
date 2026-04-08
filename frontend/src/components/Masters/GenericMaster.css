@@ -42,6 +42,27 @@
   gap: 1rem;
 }
 
+@media (max-width: 768px) {
+  .master-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .master-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .search-box {
+    max-width: none;
+  }
+  
+  .control-buttons {
+    justify-content: space-between;
+  }
+}
+
 /* Search Box - Modern Clean Design */
 .search-box {
   display: flex;
@@ -665,6 +686,14 @@
   gap: 1.5rem;
   background: #ffffff !important;
   align-content: start;
+}
+
+@media (max-width: 640px) {
+  .form-content {
+    grid-template-columns: 1fr;
+    padding: 1.5rem;
+    gap: 1.25rem;
+  }
 }
 
 .form-content::-webkit-scrollbar {

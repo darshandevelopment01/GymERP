@@ -41,12 +41,10 @@ export default function Sidebar({ activeMenu, onChange, onLogout, isOpen, onClos
   return (
     <>
       {/* Mobile Overlay */}
-      {isOpen && (
-        <div className="sidebar-overlay" onClick={onClose} />
-      )}
+      <div className={`sidebar-overlay ${isOpen ? 'open' : ''}`} onClick={onClose} />
 
       {/* Sidebar */}
-      <div className={`sidebar ${isOpen ? 'sidebar-open' : ''}`}>
+      <div className={`sidebar ${isOpen ? 'open' : ''}`}>
         {/* Mobile Close Button */}
         <button className="sidebar-close-btn" onClick={onClose}>
           <X size={24} />

@@ -11,6 +11,7 @@ import EnquiryDetailScreen from './screens/EnquiryDetailScreen';
 import FollowUpsScreen from './screens/FollowUpsScreen';
 import PlanMasterScreen from './screens/PlanMasterScreen';
 import OffersScreen from './screens/OffersScreen';
+import AttendanceScreen from './pages/AttendanceScreen';
 import AccessDenied from './components/AccessDenied';
 import { usePermissions } from './hooks/usePermissions';
 import './App.css';
