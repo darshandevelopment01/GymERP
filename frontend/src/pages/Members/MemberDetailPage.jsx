@@ -282,21 +282,7 @@ const MemberDetailPage = () => {
                   <p>{member.mobileNumber}</p>
                 </div>
               </div>
-              <div className="info-item">
-                <div className="info-icon"><MapPin size={22} /></div>
-                <div className="info-text">
-                  <label>Address</label>
-                  <p>{member.address || 'NA'}</p>
-                </div>
-              </div>
 
-              <div className="info-item">
-                <div className="info-icon"><Heart size={22} /></div>
-                <div className="info-text">
-                  <label>Emergency Contact</label>
-                  <p>{member.mobileNumber} (Primary)</p>
-                </div>
-              </div>
               <div className="info-item">
                 <div className="info-icon"><User size={22} /></div>
                 <div className="info-text">
