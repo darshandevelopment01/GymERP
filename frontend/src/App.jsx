@@ -157,6 +157,15 @@ function App() {
         />
 
         <Route
+          path="/attendance"
+          element={
+            <PrivateRoute>
+              <AttendanceScreen />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
           path="/offers"
           element={
             <PrivateRoute>
