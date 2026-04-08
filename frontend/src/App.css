@@ -290,13 +290,25 @@ body {
   display: none; /* Chrome, Safari and Opera */
 }
 
-/* Hide scrollbar for all elements that might have overflow-y: auto in the dashboard area */
-.dashboard-main::-webkit-scrollbar,
+/* Style scrollbar for the main scrollable area */
+.dashboard-main::-webkit-scrollbar {
+  width: 6px;
+}
+.dashboard-main::-webkit-scrollbar-track {
+  background: transparent;
+}
+.dashboard-main::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
+}
+.dashboard-main::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.25);
+}
+
 .dashboard-content::-webkit-scrollbar {
   display: none;
 }
 
-.dashboard-main,
 .dashboard-content {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -466,7 +478,7 @@ body {
 
 .dashboard-content {
   padding: 20px 24px;
-  height: 100%;
+  min-height: 100%;
   display: flex;
   flex-direction: column;
 }
