@@ -238,6 +238,7 @@ export const getAllMembers = async (req: Request, res: Response): Promise<void> 
       .populate('branch', 'name city')
       .populate('plan', 'planName duration price')
       .populate('convertedBy', 'name')
+      .populate({ path: 'enquiryId', populate: { path: 'createdBy', select: 'name' } })
       .populate('history.plan', 'planName duration price')
       .sort({ createdAt: -1 });
 
@@ -254,6 +255,7 @@ export const getMemberById = async (req: Request, res: Response): Promise<void> 
       .populate('branch', 'name city')
       .populate('plan', 'planName duration price')
       .populate('convertedBy', 'name')
+      .populate({ path: 'enquiryId', populate: { path: 'createdBy', select: 'name' } })
       .populate('history.plan', 'planName duration price');
 
     if (!member) {

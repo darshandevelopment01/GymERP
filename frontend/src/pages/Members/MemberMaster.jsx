@@ -1360,7 +1360,7 @@ const MemberMaster = () => {
 
                 {/* Discount Section */}
                 {(isAdmin || noDiscountLimit || maxDiscountPercentage > 0) && (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div className="responsive-form-grid">
                     <div className="form-group">
                       <label>Discount Type</label>
                       <select value={discountType} onChange={handleRenewDiscountTypeChange}>
@@ -1371,11 +1371,6 @@ const MemberMaster = () => {
                     <div className="form-group">
                       <label>
                         Discount {discountType === 'percentage' ? '%' : '(₹)'}
-                        {noDiscountLimit && (
-                          <span style={{ color: '#10b981', fontWeight: '400', fontSize: '0.8rem', marginLeft: '5px' }}>
-                            (No Limit)
-                          </span>
-                        )}
                       </label>
                       <div style={{ position: 'relative' }}>
                         <input

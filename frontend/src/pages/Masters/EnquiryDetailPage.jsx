@@ -765,7 +765,7 @@ const EnquiryDetailPage = () => {
                   </div>
                 </div>
 
-                <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="responsive-form-grid">
                   <div className="form-group">
                     <label>Tax Slab (GST)</label>
                     <select value={paymentData.taxSlab} onChange={handleTaxSlabChange}>
@@ -776,7 +776,7 @@ const EnquiryDetailPage = () => {
                     </select>
                   </div>
                   {(isAdmin || noDiscountLimit || maxDiscountPercentage > 0) && (
-                    <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div className="responsive-form-grid">
                       <div className="form-group">
                         <label>Discount Type</label>
                         <select value={discountType} onChange={handleDiscountTypeChange}>
@@ -787,11 +787,6 @@ const EnquiryDetailPage = () => {
                       <div className="form-group">
                         <label>
                           Discount {discountType === 'percentage' ? '%' : '(₹)'}
-                          {noDiscountLimit && (
-                            <span style={{ color: '#10b981', fontSize: '0.8rem', marginLeft: '5px' }}>
-                              (No Limit)
-                            </span>
-                          )}
                         </label>
                         <div style={{ position: 'relative' }}>
                           <input
@@ -830,7 +825,7 @@ const EnquiryDetailPage = () => {
                   )}
                 </div>
 
-                <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="responsive-form-grid">
                   <div className="form-group">
                     <label>Payment Received (₹) <span className="required">*</span></label>
                     <input 

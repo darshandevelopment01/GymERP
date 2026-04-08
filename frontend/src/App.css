@@ -1051,3 +1051,16 @@ body {
     display: flex;
   }
 }
+
+/* Responsive Form Grid - stacks to 1 column on mobile */
+.responsive-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 768px) {
+  .responsive-form-grid {
+    grid-template-columns: 1fr;
+  }
+}

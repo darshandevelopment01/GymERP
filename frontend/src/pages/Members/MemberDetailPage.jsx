@@ -304,6 +304,22 @@ const MemberDetailPage = () => {
                   <p>{member.gender}</p>
                 </div>
               </div>
+
+              <div className="info-item">
+                <div className="info-icon"><Share2 size={22} /></div>
+                <div className="info-text">
+                  <label>Enquiry Created By</label>
+                  <p>{member.enquiryId?.createdBy?.name || 'N/A'}</p>
+                </div>
+              </div>
+
+              <div className="info-item">
+                <div className="info-icon"><User size={22} /></div>
+                <div className="info-text">
+                  <label>Converted By</label>
+                  <p>{member.convertedBy?.name || 'N/A'}</p>
+                </div>
+              </div>
             </div>
           </div>
         )}
