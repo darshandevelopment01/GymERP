@@ -257,6 +257,12 @@ body {
   padding: 0 12px;
   min-height: 0;
   /* Allow flex child to shrink below its content size */
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.sidebar-menu::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
 }
 
 .sidebar-item {
