@@ -230,6 +230,10 @@ body {
     transform: translateX(0);
     box-shadow: 10px 0 30px rgba(0,0,0,0.5);
   }
+
+  .sidebar.open .sidebar-close-btn {
+    display: block;
+  }
 }
 
 .sidebar::-webkit-scrollbar {
@@ -904,36 +908,12 @@ body {
     display: flex;
   }
 
-  /* Hide Sidebar by Default on Mobile */
+  /* Hide Sidebar by Default on Mobile handled by 1024px block */
   .sidebar {
-    position: fixed;
-    top: 0;
-    left: -280px;
-    height: 100dvh;
-    height: 100vh;
-    z-index: 999;
-    transition: left 0.3s ease-in-out;
-    box-shadow: none;
     overflow-y: auto;
     /* Make sidebar scrollable on mobile */
     -webkit-overflow-scrolling: touch;
     /* Smooth scroll on iOS */
-  }
-
-  /* Show Sidebar when Open */
-  .sidebar-open {
-    left: 0;
-    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
-  }
-
-  /* Show Overlay */
-  .sidebar-overlay {
-    display: block;
-  }
-
-  /* Show Close Button */
-  .sidebar-close-btn {
-    display: block;
   }
 
   /* Adjust Dashboard Content */
