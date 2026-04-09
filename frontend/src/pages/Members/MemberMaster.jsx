@@ -696,6 +696,11 @@ const MemberMaster = () => {
       )
     },
     {
+      label: 'Date',
+      field: 'createdAt',
+      render: (item) => formatDate(item.createdAt)
+    },
+    {
       label: 'Status',
       field: 'status',
       render: (item) => (

@@ -169,12 +169,25 @@ const GenericMaster = ({
       if (filterKey === 'startDate') {
         filtered = filtered.filter(item => {
           const itemDate = new Date(item.createdAt || item.joiningDate || item.date);
-          return itemDate >= new Date(filterValue);
+          const start = new Date(filterValue);
+          start.setHours(0, 0, 0, 0);
+          return itemDate >= start;
         });
       } else if (filterKey === 'endDate') {
         filtered = filtered.filter(item => {
           const itemDate = new Date(item.createdAt || item.joiningDate || item.date);
-          return itemDate <= new Date(filterValue);
+          const end = new Date(filterValue);
+          end.setHours(23, 59, 59, 999);
+          return itemDate <= end;
+        });
+      } else if (filterKey === 'paymentStatus') {
+        filtered = filtered.filter(item => {
+          if (filterValue === 'paid') {
+            return (item.paymentRemaining || 0) <= 0;
+          } else if (filterValue === 'pending') {
+            return (item.paymentRemaining || 0) > 0;
+          }
+          return true;
         });
       } else if (filterKey === 'status') {
         filtered = filtered.filter(item => {

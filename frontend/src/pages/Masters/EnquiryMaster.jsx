@@ -570,6 +570,18 @@ const EnquiryMaster = () => {
       render: (item) => item.branch?.name || '-'
     },
     {
+      label: 'Date',
+      field: 'createdAt',
+      render: (item) => {
+        const d = new Date(item.createdAt);
+        return d.toLocaleDateString('en-IN', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric'
+        });
+      }
+    },
+    {
       label: 'Status',
       field: 'status',
       render: (item) => (
