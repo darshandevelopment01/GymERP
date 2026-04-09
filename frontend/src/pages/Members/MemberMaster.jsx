@@ -7,7 +7,7 @@ import planApi from '../../services/planApi';
 import followupApi from '../../services/followupApi';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { taxSlabAPI, planCategoryAPI, paymentTypeAPI } from '../../services/mastersApi';
+import { taxSlabAPI, planCategoryAPI, paymentTypeAPI, employeeAPI } from '../../services/mastersApi';
 import { usePermissions } from '../../hooks/usePermissions';
 import './MemberMaster.css';
 
@@ -34,6 +34,7 @@ const MemberMaster = () => {
   const [error, setError] = useState(null);
   const [taxSlabs, setTaxSlabs] = useState(getInitialCache(cacheKeyTaxSlabs, []));
   const [planCategories, setPlanCategories] = useState(getInitialCache(cacheKeyPlanCategories, []));
+  const [employees, setEmployees] = useState([]);
   const [maxDiscountPercentage, setMaxDiscountPercentage] = useState(0);
   const [noDiscountLimit, setNoDiscountLimit] = useState(false);
   const [discountOptions, setDiscountOptions] = useState([]);
@@ -143,16 +144,27 @@ const MemberMaster = () => {
         fetchBranches(),
         fetchPlans(),
         fetchStats(),
+        fetchCurrentUserDiscount(),
         fetchTaxSlabs(),
         fetchPlanCategories(),
-        fetchCurrentUserDiscount(),
-        fetchPaymentModes()
+        fetchPaymentModes(),
+        fetchEmployees()
       ]);
     } catch (err) {
       console.error('Error loading data:', err);
       setError('Failed to load data. Please try again.');
     } finally {
       if (!hasCache) setLoading(false);
+    }
+  };
+
+  const fetchEmployees = async () => {
+    try {
+      const response = await employeeAPI.getAll();
+      const employeeData = response.data || response || [];
+      setEmployees(employeeData);
+    } catch (error) {
+      console.error('Error fetching employees:', error);
     }
   };
 
@@ -850,6 +862,24 @@ const MemberMaster = () => {
         { value: '', label: 'All Payments' },
         { value: 'paid', label: 'Fully Paid' },
         { value: 'pending', label: 'Pending' }
+      ]
+    },
+    {
+      name: 'convertedBy',
+      label: 'Converted By',
+      type: 'select',
+      options: [
+        { value: '', label: 'All Users' },
+        ...employees.map(e => ({ value: e._id, label: e.name }))
+      ]
+    },
+    {
+      name: 'enquiryCreatedBy',
+      label: 'Enquiry Created By',
+      type: 'select',
+      options: [
+        { value: '', label: 'All Users' },
+        ...employees.map(e => ({ value: e._id, label: e.name }))
       ]
     },
     {

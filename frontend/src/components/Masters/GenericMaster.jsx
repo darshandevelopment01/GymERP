@@ -186,8 +186,14 @@ const GenericMaster = ({
         filtered = filtered.filter(item =>
           item.branch?._id === filterValue || item.branch === filterValue
         );
-      } else if (filterKey === 'source') {
-        filtered = filtered.filter(item => item.source === filterValue);
+      } else if (filterKey === 'enquiryCreatedBy') {
+        filtered = filtered.filter(item =>
+          item.enquiryId?.createdBy?._id === filterValue || item.enquiryId?.createdBy === filterValue
+        );
+      } else if (filterKey === 'createdBy') {
+        filtered = filtered.filter(item =>
+          item.createdBy?._id === filterValue || item.createdBy === filterValue
+        );
       } else {
         filtered = filtered.filter(item => {
           const itemValue = item[filterKey];

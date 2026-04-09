@@ -8,7 +8,7 @@ import branchApi from '../../services/branchApi';
 import planApi from '../../services/planApi';
 import memberApi from '../../services/memberApi';
 import followupApi from '../../services/followupApi';
-import { taxSlabAPI, planCategoryAPI } from '../../services/mastersApi';
+import { taxSlabAPI, planCategoryAPI, employeeAPI } from '../../services/mastersApi';
 import { usePermissions } from '../../hooks/usePermissions';
 import './EnquiryMaster.css';
 
@@ -41,6 +41,7 @@ const EnquiryMaster = () => {
   const [discountInputValue, setDiscountInputValue] = useState(0); 
   const [taxSlabs, setTaxSlabs] = useState(getInitialCache(cacheKeyTaxSlabs, []));
   const [planCategories, setPlanCategories] = useState(getInitialCache(cacheKeyPlanCategories, []));
+  const [employees, setEmployees] = useState([]);
 
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedEnquiry, setSelectedEnquiry] = useState(null);
@@ -124,13 +125,24 @@ const EnquiryMaster = () => {
         fetchStats(),
         fetchCurrentUserDiscount(),
         fetchTaxSlabs(),
-        fetchPlanCategories()
+        fetchPlanCategories(),
+        fetchEmployees()
       ]);
     } catch (err) {
       console.error('Error loading data:', err);
       setError('Failed to load data. Please try again.');
     } finally {
       if (!hasCache) setLoading(false);
+    }
+  };
+
+  const fetchEmployees = async () => {
+    try {
+      const response = await employeeAPI.getAll();
+      const employeeData = response.data || response || [];
+      setEmployees(employeeData);
+    } catch (error) {
+      console.error('Error fetching employees:', error);
     }
   };
 
@@ -754,6 +766,15 @@ const EnquiryMaster = () => {
         { value: 'Referral', label: 'Referral' },
         { value: 'Website', label: 'Website' },
         { value: 'Phone Call', label: 'Phone Call' }
+      ]
+    },
+    {
+      name: 'createdBy',
+      label: 'Enquiry Created By',
+      type: 'select',
+      options: [
+        { value: '', label: 'All Users' },
+        ...employees.map(e => ({ value: e._id, label: e.name }))
       ]
     },
     {
