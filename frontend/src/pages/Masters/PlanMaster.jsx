@@ -142,31 +142,11 @@ const PlanMaster = () => {
   return (
     <div>
       {/* Sub-tab Switcher */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        gap: '0.75rem',
-        padding: '0 1rem',
-        marginTop: '1.25rem',
-        marginBottom: '0.25rem',
-      }}>
+      <div className="plan-tabs-container">
         {showCategoriesTab && (
           <button
             onClick={() => setActiveSubTab('categories')}
-            style={{
-              padding: '0.7rem 2rem',
-              borderRadius: '8px 8px 0 0',
-              border: 'none',
-              cursor: 'pointer',
-              fontWeight: '600',
-              fontSize: '0.95rem',
-              transition: 'all 0.2s ease',
-              background: activeSubTab === 'categories'
-                ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-                : '#f1f5f9',
-              color: activeSubTab === 'categories' ? 'white' : '#64748b',
-              boxShadow: activeSubTab === 'categories' ? '0 2px 8px rgba(16, 185, 129, 0.3)' : 'none',
-            }}
+            className={`plan-tab-btn ${activeSubTab === 'categories' ? 'plan-tab-btn-active' : ''}`}
           >
             🏷️ Plan Category
           </button>
@@ -174,20 +154,7 @@ const PlanMaster = () => {
         {showPlansTab && (
           <button
             onClick={() => setActiveSubTab('plans')}
-            style={{
-              padding: '0.7rem 2rem',
-              borderRadius: '8px 8px 0 0',
-              border: 'none',
-              cursor: 'pointer',
-              fontWeight: '600',
-              fontSize: '0.95rem',
-              transition: 'all 0.2s ease',
-              background: activeSubTab === 'plans'
-                ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-                : '#f1f5f9',
-              color: activeSubTab === 'plans' ? 'white' : '#64748b',
-              boxShadow: activeSubTab === 'plans' ? '0 2px 8px rgba(16, 185, 129, 0.3)' : 'none',
-            }}
+            className={`plan-tab-btn ${activeSubTab === 'plans' ? 'plan-tab-btn-active' : ''}`}
           >
             📋 Membership Plan
           </button>
@@ -195,20 +162,7 @@ const PlanMaster = () => {
         {showDietTab && (
           <button
             onClick={() => setActiveSubTab('diet')}
-            style={{
-              padding: '0.7rem 1.5rem',
-              borderRadius: '8px 8px 0 0',
-              border: 'none',
-              cursor: 'pointer',
-              fontWeight: '600',
-              fontSize: '0.95rem',
-              transition: 'all 0.2s ease',
-              background: activeSubTab === 'diet'
-                ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-                : '#f1f5f9',
-              color: activeSubTab === 'diet' ? 'white' : '#64748b',
-              boxShadow: activeSubTab === 'diet' ? '0 2px 8px rgba(16, 185, 129, 0.3)' : 'none',
-            }}
+            className={`plan-tab-btn ${activeSubTab === 'diet' ? 'plan-tab-btn-active' : ''}`}
           >
             🥗 Diet Plan
           </button>
@@ -216,20 +170,7 @@ const PlanMaster = () => {
         {showWorkoutTab && (
           <button
             onClick={() => setActiveSubTab('workout')}
-            style={{
-              padding: '0.7rem 1.5rem',
-              borderRadius: '8px 8px 0 0',
-              border: 'none',
-              cursor: 'pointer',
-              fontWeight: '600',
-              fontSize: '0.95rem',
-              transition: 'all 0.2s ease',
-              background: activeSubTab === 'workout'
-                ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-                : '#f1f5f9',
-              color: activeSubTab === 'workout' ? 'white' : '#64748b',
-              boxShadow: activeSubTab === 'workout' ? '0 2px 8px rgba(16, 185, 129, 0.3)' : 'none',
-            }}
+            className={`plan-tab-btn ${activeSubTab === 'workout' ? 'plan-tab-btn-active' : ''}`}
           >
             💪 Workout Plan
           </button>
