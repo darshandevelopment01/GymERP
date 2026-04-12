@@ -27,7 +27,7 @@ export const sendEmail = async (
         const host = process.env.SMTP_HOST;
         const port = parseInt(process.env.SMTP_PORT || '587', 10);
         const user = process.env.SMTP_USER;
-        const pass = process.env.SMTP_PASS;
+        const pass = process.env.SMTP_PASS?.replace(/\s/g, ''); // ✅ Fix: Strip spaces from Google App Password
 
         if (!host || !user || !pass) {
             console.warn('⚠️ [MAILER] SMTP config missing! Check SMTP_HOST, SMTP_USER, SMTP_PASS.');
@@ -41,14 +41,14 @@ export const sendEmail = async (
             port,
             secure: port === 465,
             auth: { user, pass },
-            pool: false, // Ensure full flush before closing
-            connectionTimeout: 15000, // 15s
-            greetingTimeout: 15000,
-            socketTimeout: 30000,
+            pool: false, 
+            connectionTimeout: 30000, // Increased to 30s
+            greetingTimeout: 30000,
+            socketTimeout: 45000, // Increased to 45s
             ...(port === 587 ? { requireTLS: true } : {}),
             tls: { rejectUnauthorized: false },
-            debug: false, // ❌ DISABLE: Prevents log flooding with PDF base64
-            logger: false // ❌ DISABLE: Prevents log flooding
+            debug: false, 
+            logger: false 
         } as any);
 
         // 1. Verify Connection

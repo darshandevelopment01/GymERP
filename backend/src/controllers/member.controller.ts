@@ -207,14 +207,15 @@ export const createMember = async (req: Request, res: Response): Promise<void> =
       receiptErrorMsg = docxErr?.message || 'Unknown PDF generation error';
     }
 
-    // 📧 Send email (awaited to ensure completion on Vercel)
-    const emailSent = await sendEmail(
+    // 📧 Send email asynchronously (prevents Vercel timeout)
+    sendEmail(
       trimmedData.email,
       'Welcome to MuscleTime - Your Membership Credentials',
       htmlMessage,
       attachments
-    );
-    console.log(`📡 Email Status: ${emailSent ? 'Sent' : 'Failed'}`);
+    ).catch(err => console.error('❌ Background email failed:', err));
+
+    console.log(`📡 Email triggered for ${trimmedData.email}`);
 
     // ✅ Create activity log
     try {
@@ -244,7 +245,7 @@ export const createMember = async (req: Request, res: Response): Promise<void> =
       receiptBuffer: receiptBuffer ? receiptBuffer.toString('base64') : null,
       receiptFilename: receiptBuffer ? `${trimmedData.name}_MTF_Reseat.pdf` : null,
       message: 'Member created successfully!' + 
-        (emailSent ? ' Credentials emailed.' : ' (⚠️ Email failed to send)') +
+        ' Credentials will be sent to email shortly.' +
         (receiptErrorMsg ? ` \n⚠️ Receipt Error: ${receiptErrorMsg}` : '')
     });
   } catch (error: any) {
@@ -440,14 +441,15 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
           console.log(`✅ PDF Receipt generated (Update): ${receiptBuffer.length} bytes`);
           receiptFilename = `${member.name}_MTF_Reseat.pdf`;
 
-          // 📧 Send receipt (awaited)
-          const receiptEmailSent = await sendEmail(
+          // 📧 Send receipt asynchronously
+          sendEmail(
             member.email,
             `Payment Receipt - ${receiptTitle} (${member.memberId})`,
             `<p>Dear ${member.name}, your payment of Rs. ${freshPaymentAmount} has been received.</p>`,
             [{ filename: receiptFilename, content: receiptBuffer, contentType: 'application/pdf' }]
-          );
-          console.log(`📡 Receipt Email Status: ${receiptEmailSent ? 'Sent' : 'Failed'}`);
+          ).catch(err => console.error('❌ Background receipt email failed:', err));
+
+          console.log(`📡 Receipt Email triggered for ${member.email}`);
       } catch (err: any) {
           console.error('❌ Failed to send payment receipt:', err);
           receiptErrorMsg = err.message;
