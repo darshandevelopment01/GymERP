@@ -187,7 +187,7 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
   const planLineText = `${data.planName.toUpperCase()}, Date :${data.startDate} To ${data.endDate}`;
   page.drawText(planLineText, { x: 55, y: currentY, size: 11, font: boldFont, color: pureBlack });
   
-  const baseFeeText = `Base Fee : ₹ ${data.price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+  const baseFeeText = `Base Fee : Rs. ${data.price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
   const baseFeeWidth = boldFont.widthOfTextAtSize(baseFeeText, 11);
   page.drawText(baseFeeText, { x: width - 50 - baseFeeWidth, y: currentY, size: 11, font: boldFont, color: pureBlack });
   
@@ -205,10 +205,10 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
     page.drawText(value, { x: width - 55 - valWidth, y, size: 10, font, color: pureBlack });
   };
 
-  drawSummaryRow('Total Due', `₹ ${data.totalPayment.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, true, currentY);
+  drawSummaryRow('Total Due', `Rs. ${data.totalPayment.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, true, currentY);
   currentY -= 25;
   
-  drawSummaryRow(`Paid (${data.date})`, `₹ ${data.paidPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, true, currentY);
+  drawSummaryRow(`Paid (${data.date})`, `Rs. ${data.paidPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, true, currentY);
   currentY -= 30;
 
   // Mode of Payment Box
