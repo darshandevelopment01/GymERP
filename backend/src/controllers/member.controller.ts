@@ -9,6 +9,33 @@ import bcrypt from 'bcryptjs';
 import { sendEmail, generateDocxBuffer, generateReceiptPdfBuffer } from '../utils/mailer';
 import path from 'path';
 
+// Helper to format Invoice No based on Image 1 (S/serial/fiscal_year)
+const formatInvoiceNo = (memberId: string): string => {
+  try {
+    const parts = memberId.split('-');
+    if (parts.length < 3) return `S/${memberId}`;
+    
+    const serial = parts[2].replace(/^0+/, ''); // Remove leading zeros
+    const date = new Date();
+    const currentYear = date.getFullYear();
+    const currentMonth = date.getMonth() + 1; // 1-12
+
+    let startYear, endYear;
+    if (currentMonth >= 4) {
+      startYear = currentYear;
+      endYear = currentYear + 1;
+    } else {
+      startYear = currentYear - 1;
+      endYear = currentYear;
+    }
+
+    const fiscalYear = `${String(startYear).slice(-2)}-${String(endYear).slice(-2)}`;
+    return `S/${serial}/${fiscalYear}`;
+  } catch (err) {
+    return `S/${memberId}`;
+  }
+};
+
 // Create new member
 export const createMember = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -147,6 +174,7 @@ export const createMember = async (req: Request, res: Response): Promise<void> =
         startDate: startDate.toLocaleDateString('en-IN'),
         endDate: endDate.toLocaleDateString('en-IN'),
         memberId: member.memberId,
+        invoiceNo: formatInvoiceNo(member.memberId),
         branch: branchExists?.name || 'N/A',
         city: branchExists?.city || 'N/A',
         date: new Date().toLocaleDateString('en-IN'),
@@ -384,6 +412,7 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
             startDate: member.membershipStartDate ? new Date(member.membershipStartDate).toLocaleDateString('en-IN') : 'N/A',
             endDate: member.membershipEndDate ? new Date(member.membershipEndDate).toLocaleDateString('en-IN') : 'N/A',
             memberId: member.memberId,
+            invoiceNo: formatInvoiceNo(member.memberId),
             branch: (populatedForEmail?.branch as any)?.name || 'N/A',
             city: (populatedForEmail?.branch as any)?.city || 'N/A',
             date: new Date().toLocaleDateString('en-IN'),
@@ -531,6 +560,7 @@ export const getMemberPaymentReceipt = async (req: Request, res: Response): Prom
       startDate: member.membershipStartDate ? new Date(member.membershipStartDate).toLocaleDateString('en-IN') : 'N/A',
       endDate: member.membershipEndDate ? new Date(member.membershipEndDate).toLocaleDateString('en-IN') : 'N/A',
       memberId: member.memberId,
+      invoiceNo: formatInvoiceNo(member.memberId),
       branch: (member.branch as any)?.name || 'N/A',
       city: (member.branch as any)?.city || 'N/A',
       date: new Date(payment.paymentDate).toLocaleDateString('en-IN'),
