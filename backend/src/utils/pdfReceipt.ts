@@ -137,8 +137,8 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
   // Gym Address Info (Right of logo, centered context)
   const gymAddress = [
     `${data.branch || 'Muscle Time Fitness'}`,
-    data.branchAddress || "Dapodi Rd, Near Ramkrishna Mangal Karyalay, opp.",
-    data.city ? `${data.city}, ${data.state || ''} ${data.zipCode || ''}` : "Maharashtra 411061"
+    data.branchAddress,
+    data.city ? `${data.city}, ${data.state || ''} ${data.zipCode}` : "India"
   ];
   let addressY = currentY;
   gymAddress.forEach((line, i) => {
