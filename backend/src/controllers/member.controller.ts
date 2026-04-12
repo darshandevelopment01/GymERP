@@ -176,7 +176,10 @@ export const createMember = async (req: Request, res: Response): Promise<void> =
         memberId: member.memberId,
         invoiceNo: formatInvoiceNo(member.memberId),
         branch: branchExists?.name || 'N/A',
+        branchAddress: branchExists?.address || 'N/A',
         city: branchExists?.city || 'N/A',
+        state: branchExists?.state || 'N/A',
+        zipCode: branchExists?.zipCode || 'N/A',
         date: new Date().toLocaleDateString('en-IN'),
         dateTime: new Date().toLocaleString('en-IN'),
         dateOfInvoice: new Date().toLocaleDateString('en-IN'),
@@ -230,7 +233,7 @@ export const createMember = async (req: Request, res: Response): Promise<void> =
     }
 
     const populatedMember = await Member.findById(member._id)
-      .populate('branch', 'name city')
+      .populate('branch', 'name city address state zipCode')
       .populate('plan', 'planName duration price');
 
     console.log('✅ Member created:', populatedMember?.memberId);
@@ -263,7 +266,7 @@ export const getAllMembers = async (req: Request, res: Response): Promise<void> 
     }
 
     const members = await Member.find(filter)
-      .populate('branch', 'name city')
+      .populate('branch', 'name city address state zipCode')
       .populate('plan', 'planName duration price')
       .populate('convertedBy', 'name')
       .populate({ path: 'enquiryId', populate: { path: 'createdBy', select: 'name' } })
@@ -280,7 +283,7 @@ export const getAllMembers = async (req: Request, res: Response): Promise<void> 
 export const getMemberById = async (req: Request, res: Response): Promise<void> => {
   try {
     const member = await Member.findById(req.params.id)
-      .populate('branch', 'name city')
+      .populate('branch', 'name city address state zipCode')
       .populate('plan', 'planName duration price')
       .populate('convertedBy', 'name')
       .populate({ path: 'enquiryId', populate: { path: 'createdBy', select: 'name' } })
@@ -398,7 +401,7 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
           console.log('📄 Receipt PDF generation starting (Update/Payment)...');
           const employee = await Employee.findById(req.user?.id);
           const populatedForEmail = await Member.findById(member._id)
-            .populate('branch', 'name city')
+            .populate('branch', 'name city address state zipCode')
             .populate('plan', 'planName duration price');
 
           receiptBuffer = await generateReceiptPdfBuffer({
@@ -414,7 +417,10 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
             memberId: member.memberId,
             invoiceNo: formatInvoiceNo(member.memberId),
             branch: (populatedForEmail?.branch as any)?.name || 'N/A',
+            branchAddress: (populatedForEmail?.branch as any)?.address || 'N/A',
             city: (populatedForEmail?.branch as any)?.city || 'N/A',
+            state: (populatedForEmail?.branch as any)?.state || 'N/A',
+            zipCode: (populatedForEmail?.branch as any)?.zipCode || 'N/A',
             date: new Date().toLocaleDateString('en-IN'),
             dateTime: new Date().toLocaleString('en-IN'),
             dateOfInvoice: new Date().toLocaleDateString('en-IN'),
@@ -466,7 +472,7 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
 
     // 6. Return response
     const populatedMember = await Member.findById(member._id)
-      .populate('branch', 'name city')
+      .populate('branch', 'name city address state zipCode')
       .populate('plan', 'planName duration price')
       .populate('history.plan', 'planName duration price');
 
@@ -490,7 +496,7 @@ export const getMemberPaymentReceipt = async (req: Request, res: Response): Prom
     const index = parseInt(paymentIndex as string, 10);
 
     const member = await Member.findById(id)
-      .populate('branch', 'name city')
+      .populate('branch', 'name city address state zipCode')
       .populate('plan', 'planName duration price')
       .populate('history.plan', 'planName duration price');
 
@@ -562,7 +568,10 @@ export const getMemberPaymentReceipt = async (req: Request, res: Response): Prom
       memberId: member.memberId,
       invoiceNo: formatInvoiceNo(member.memberId),
       branch: (member.branch as any)?.name || 'N/A',
+      branchAddress: (member.branch as any)?.address || 'N/A',
       city: (member.branch as any)?.city || 'N/A',
+      state: (member.branch as any)?.state || 'N/A',
+      zipCode: (member.branch as any)?.zipCode || 'N/A',
       date: new Date(payment.paymentDate).toLocaleDateString('en-IN'),
       dateTime: new Date(payment.paymentDate).toLocaleString('en-IN'),
       dateOfInvoice: new Date(payment.paymentDate).toLocaleDateString('en-IN'),

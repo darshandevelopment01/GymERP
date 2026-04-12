@@ -30,6 +30,9 @@ export interface ReceiptData {
   paymentMode: string;
   previousRemaining?: number;
   invoiceNo?: string;
+  branchAddress?: string;
+  state?: string;
+  zipCode?: string;
 }
 
 /**
@@ -134,9 +137,8 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
   // Gym Address Info (Right of logo, centered context)
   const gymAddress = [
     `${data.branch || 'Muscle Time Fitness'}`,
-    "Dapodi Rd, Near Ramkrishna Mangal Karyalay, opp.",
-    "Mamata Sweat, Gangotri Nagar, Pimple Gurav, Pimpri-Chinchwad, Pune,",
-    "Maharashtra 411061"
+    data.branchAddress || "Dapodi Rd, Near Ramkrishna Mangal Karyalay, opp.",
+    data.city ? `${data.city}, ${data.state || ''} ${data.zipCode || ''}` : "Maharashtra 411061"
   ];
   let addressY = currentY;
   gymAddress.forEach((line, i) => {
