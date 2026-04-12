@@ -219,7 +219,8 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
   currentY -= 40;
 
   // Amount in words
-  page.drawText('Paid Amountin Words', { x: summaryBlockX + 5, y: currentY, size: 9, font: boldFont, color: pureBlack });
+  page.drawText('Paid Amount in Words :', { x: summaryBlockX + 5, y: currentY, size: 9, font: boldFont, color: pureBlack });
+  currentY -= 18;
   const words = numberToWords(data.paidPrice);
   const wordsWidth = boldFont.widthOfTextAtSize(words, 10);
   page.drawText(words, { x: width - 50 - wordsWidth, y: currentY, size: 10, font: boldFont, color: darkGrey });
