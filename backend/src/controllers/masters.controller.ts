@@ -522,12 +522,12 @@ export const createEmployee = async (req: Request, res: Response) => {
       </div>
     `;
 
-    // 📧 Send email asynchronously
-    sendEmail(
+    // 📧 Send email (awaiting to ensure Vercel doesn't kill it)
+    const emailSent = await sendEmail(
       req.body.email,
       'Your MuscleTime ERP Account Credentials',
       htmlMessage
-    ).catch(err => console.error('❌ Background employee email failed:', err));
+    );
 
     const populatedEmployee = await Employee.findById(employee._id)
       .populate('designation')
@@ -535,7 +535,9 @@ export const createEmployee = async (req: Request, res: Response) => {
       .populate('branchId')
       .populate('shift');
 
-    const messageContent = `User created successfully!\n\nCredentials will be emailed to ${req.body.email} shortly.\n\nEmail ID: ${req.body.email}\nTemporary Password: ${rawPassword}`;
+    const messageContent = emailSent
+      ? `User created successfully!\n\nCredentials have been securely EMAILED to ${req.body.email}. Keep them safe.\n\nEmail ID: ${req.body.email}\nTemporary Password: ${rawPassword}`
+      : `User created successfully!\n\nEmail ID: ${req.body.email}\nTemporary Password: ${rawPassword}\n\n(⚠️ Email failed to send, check logs)`;
 
     res.status(201).json({
       message: messageContent,
