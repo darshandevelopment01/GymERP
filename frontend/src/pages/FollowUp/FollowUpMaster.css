@@ -19,28 +19,50 @@
   align-items: center;
   gap: 1rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
 }
 
 .stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-4px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
 }
 
 .stat-card.total {
   border-left: 4px solid #3b82f6;
 }
 
+.stat-card.total.active {
+  background: linear-gradient(to right, #eff6ff, white);
+  border-bottom: 3px solid #3b82f6;
+}
+
 .stat-card.pending {
   border-left: 4px solid #f59e0b;
+}
+
+.stat-card.pending.active {
+  background: linear-gradient(to right, #fffbeb, white);
+  border-bottom: 3px solid #f59e0b;
 }
 
 .stat-card.completed {
   border-left: 4px solid #10b981;
 }
 
+.stat-card.completed.active {
+  background: linear-gradient(to right, #ecfdf5, white);
+  border-bottom: 3px solid #10b981;
+}
+
 .stat-card.expired {
   border-left: 4px solid #ef4444;
+}
+
+.stat-card.expired.active {
+  background: linear-gradient(to right, #fef2f2, white);
+  border-bottom: 3px solid #ef4444;
 }
 
 .stat-icon {

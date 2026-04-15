@@ -30,7 +30,8 @@ const GenericMaster = ({
   showActionsColumn = true, // ✅ Add this to hide the entire actions column
   autoEditItemId = null, // ✅ Add this to programmatically trigger edit
   onAutoEditComplete, // ✅ Callback when auto-edit is triggered
-  onDuplicateFound // ✅ New prop for handling 409 Conflict
+  onDuplicateFound, // ✅ New prop for handling 409 Conflict
+  externalFilters = {} // ✅ New prop for externally controlled filters
 }) => {
   const navigate = useNavigate();
   // Include apiOptions in cache key so selfOnly-filtered data is cached separately
@@ -97,6 +98,13 @@ const GenericMaster = ({
       }
     }
   }, [autoEditItemId, data]);
+
+  // Handle external filters
+  useEffect(() => {
+    if (externalFilters && Object.keys(externalFilters).length > 0) {
+      setFilters(prev => ({ ...prev, ...externalFilters }));
+    }
+  }, [JSON.stringify(externalFilters)]);
 
   const fetchData = async (signal) => {
     try {

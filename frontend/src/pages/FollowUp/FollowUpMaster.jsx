@@ -36,6 +36,9 @@ const FollowUpMaster = () => {
   // Refresh key to trigger GenericMaster re-fetch
   const [refreshKey, setRefreshKey] = useState(0);
 
+  // Status Filter for Interactive Cards
+  const [statusFilter, setStatusFilter] = useState('');
+
   useEffect(() => {
     fetchInitialData();
   }, []);
@@ -342,28 +345,40 @@ const FollowUpMaster = () => {
     <>
       <div className="followup-master-page">
         <div className="stats-container">
-          <div className="stat-card total">
+          <div 
+            className={`stat-card total ${statusFilter === '' ? 'active' : ''}`}
+            onClick={() => setStatusFilter('')}
+          >
             <div className="stat-icon">📝</div>
             <div className="stat-content">
               <h3>{stats.total}</h3>
-              <p>Total Follow-ups</p>
+              <p>All Follow-ups</p>
             </div>
           </div>
-          <div className="stat-card pending">
+          <div 
+            className={`stat-card pending ${statusFilter === 'pending' ? 'active' : ''}`}
+            onClick={() => setStatusFilter('pending')}
+          >
             <div className="stat-icon">⏳</div>
             <div className="stat-content">
               <h3>{stats.pending}</h3>
               <p>Pending</p>
             </div>
           </div>
-          <div className="stat-card completed">
+          <div 
+            className={`stat-card completed ${statusFilter === 'completed' ? 'active' : ''}`}
+            onClick={() => setStatusFilter('completed')}
+          >
             <div className="stat-icon">✅</div>
             <div className="stat-content">
               <h3>{stats.completed}</h3>
               <p>Completed</p>
             </div>
           </div>
-          <div className="stat-card expired">
+          <div 
+            className={`stat-card expired ${statusFilter === 'expired' ? 'active' : ''}`}
+            onClick={() => setStatusFilter('expired')}
+          >
             <div className="stat-icon">⏰</div>
             <div className="stat-content">
               <h3>{stats.expired}</h3>
@@ -386,6 +401,7 @@ const FollowUpMaster = () => {
           onRowClick={handleRowClick}
           showEditDeleteButtons={false}
           refreshKey={refreshKey}
+          externalFilters={{ status: statusFilter }}
           customActions={(item) => (
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
               {/* ✅ Edit Button - Gated by granular permissions */}
