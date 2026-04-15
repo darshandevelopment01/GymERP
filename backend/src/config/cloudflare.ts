@@ -12,6 +12,7 @@ export const r2Client = new S3Client({
         accessKeyId: R2_ACCESS_KEY_ID,
         secretAccessKey: R2_SECRET_ACCESS_KEY,
     },
+    forcePathStyle: true,
 });
 
 export const R2_BUCKET_NAME = process.env.CLOUDFLARE_R2_BUCKET_NAME || '';
