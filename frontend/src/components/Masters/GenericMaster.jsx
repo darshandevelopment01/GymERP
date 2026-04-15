@@ -5,6 +5,8 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import * as XLSX from 'xlsx';
 import SkeletonLoader from '../SkeletonLoader';
+import { compressImage } from '../../utils/compressImage';
+
 
 const GenericMaster = ({
   title,
@@ -990,8 +992,11 @@ const GenericMaster = ({
                                 }
                                 setUploadingPhoto(true);
                                 try {
+                                  // Compress the image to < 1MB
+                                  const compressedFile = await compressImage(file);
+                                  
                                   const fd = new FormData();
-                                  fd.append('photo', file);
+                                  fd.append('photo', compressedFile);
                                   const token = localStorage.getItem('token');
                                   const res = await fetch(`${import.meta.env.VITE_API_URL}/upload/profile-photo`, {
                                     method: 'POST',

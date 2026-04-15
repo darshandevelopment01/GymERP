@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { offerApi } from '../../services/offerApi';
 import { planCategoryAPI } from '../../services/mastersApi';
+import { compressImage } from '../../utils/compressImage';
 import './OffersMaster.css';
 
 export default function OffersMaster() {
@@ -110,7 +111,9 @@ export default function OffersMaster() {
 
     try {
       setIsSubmitting(true);
-      const res = await offerApi.uploadImage(file);
+      // Compress the image to < 1MB
+      const compressedFile = await compressImage(file);
+      const res = await offerApi.uploadImage(compressedFile);
       if (res.success) {
         setFormData(prev => ({ ...prev, imageUrl: res.data.url }));
       }
