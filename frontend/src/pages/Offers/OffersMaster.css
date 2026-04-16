@@ -2,7 +2,7 @@
 
 .offers-master {
   padding: 1.5rem 2rem;
-  max-width: 1600px; /* Expanded from 1200px */
+  max-width: 1600px; 
   margin: 0 auto;
   min-height: 100vh;
   background-color: #f8fafc;
@@ -144,7 +144,7 @@
 /* Offers Grid - Forced 4 Columns */
 .offers-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr); /* FORCED 4 COLUMNS */
+  grid-template-columns: repeat(4, 1fr); 
   gap: 1.5rem;
 }
 
@@ -274,6 +274,9 @@
 .offer-action-btn.edit:hover { background: #ecfdf5; }
 .offer-action-btn.delete:hover { background: #fff1f2; }
 
+.offer-action-btn.edit { border: 1px solid #d1fae5 !important; }
+.offer-action-btn.delete { border: 1px solid #fecaca !important; }
+
 .offer-desc {
   margin: 0.6rem 0 1rem 0;
   color: #64748b;
@@ -379,6 +382,14 @@
 
 .close-btn:hover { background: #fee2e2; color: #ef4444; }
 
+.offer-form {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  overflow: hidden; 
+  min-height: 0; 
+}
+
 .modal-body {
   padding: 1.5rem;
   overflow-y: auto;
@@ -427,7 +438,7 @@
 .preview-container img {
   width: 100%;
   height: 100%;
-  object-fit: contain; /* Contain vs cover for preview */
+  object-fit: contain; 
   background: #1e293b;
 }
 
@@ -490,7 +501,7 @@
 }
 .symbol-prefix { left: 0.75rem; }
 .symbol-suffix { right: 0.75rem; }
-.input-with-symbol input { padding-left: 1.75rem !important; } /* Adjust for ₹ */
+.input-with-symbol input { padding-left: 1.75rem !important; }
 
 /* Plan Categories Multi-select */
 .plan-cats-section { margin-top: 1rem; }
@@ -553,6 +564,8 @@
   justify-content: flex-end;
   gap: 0.75rem;
   flex-shrink: 0;
+  background: white; 
+  z-index: 10;
 }
 
 .cancel-btn {

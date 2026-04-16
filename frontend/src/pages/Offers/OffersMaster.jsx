@@ -273,10 +273,10 @@ export default function OffersMaster() {
                     <h3>{offer.title}</h3>
                     <div className="offer-actions">
                       <button className="offer-action-btn edit" onClick={() => handleOpenModal(offer)} title="Edit Offer">
-                        <Edit2 size={18} color="#10b981" strokeWidth={2.5} />
+                        <Edit2 size={16} style={{ stroke: '#10b981', strokeWidth: 2.5, fill: 'none' }} />
                       </button>
                       <button className="offer-action-btn delete" onClick={() => handleDelete(offer._id)} title="Delete Offer">
-                        <Trash2 size={18} color="#ef4444" strokeWidth={2.5} />
+                        <Trash2 size={16} style={{ stroke: '#ef4444', strokeWidth: 2.5, fill: 'none' }} />
                       </button>
                     </div>
                   </div>
@@ -315,7 +315,7 @@ export default function OffersMaster() {
             <div className="modal-header">
               <h3>{editingOffer ? 'Edit Offer' : 'Create New Offer'}</h3>
               <button className="close-btn" onClick={handleCloseModal}>
-                <X size={24} />
+                <X size={20} style={{ stroke: '#64748b', strokeWidth: 2.5, fill: 'none' }} />
               </button>
             </div>
             <form onSubmit={handleSubmit} className="offer-form">
