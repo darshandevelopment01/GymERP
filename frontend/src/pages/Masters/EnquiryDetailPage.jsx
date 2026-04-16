@@ -44,6 +44,7 @@ const EnquiryDetailPage = () => {
   // If we already have enquiry data from state, we don't need a full-page loading block
   const [loading, setLoading] = useState(!enquiry);
   const [error, setError] = useState(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   // Metadata for modals
   const [branches, setBranches] = useState([]);
