@@ -75,7 +75,7 @@ export default function OffersMaster() {
         discountAmount: offer.discountAmount,
         validFrom: new Date(offer.validFrom).toISOString().split('T')[0],
         validTo: new Date(offer.validTo).toISOString().split('T')[0],
-        planCategories: offer.planCategories.map(c => typeof c === 'object' ? c._id : c),
+        planCategories: (offer.planCategories || []).filter(Boolean).map(c => typeof c === 'object' ? c._id : c),
       });
     } else {
       setEditingOffer(null);
@@ -288,7 +288,7 @@ export default function OffersMaster() {
                       <span>{new Date(offer.validFrom).toLocaleDateString('en-IN')} - {new Date(offer.validTo).toLocaleDateString('en-IN')}</span>
                     </div>
                     <div className="offer-cats">
-                      {offer.planCategories.map(cat => (
+                      {(offer.planCategories || []).filter(Boolean).map(cat => (
                         <span key={cat._id} className="cat-tag">{cat.categoryName}</span>
                       ))}
                     </div>
