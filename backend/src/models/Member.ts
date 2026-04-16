@@ -23,6 +23,7 @@ export interface IMember extends Document {
   paymentRemaining: number;
   status: 'active' | 'inactive' | 'expired';
   profilePhoto?: string;
+  nextPaymentDate?: Date;
   enquiryId?: mongoose.Types.ObjectId;
   convertedBy?: mongoose.Types.ObjectId;
   history: {
@@ -159,6 +160,10 @@ const MemberSchema = new Schema<IMember>(
     },
     profilePhoto: {
       type: String,
+      default: null
+    },
+    nextPaymentDate: {
+      type: Date,
       default: null
     },
     enquiryId: {

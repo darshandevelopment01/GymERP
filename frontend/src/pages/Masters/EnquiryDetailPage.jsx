@@ -28,6 +28,7 @@ import branchApi from '../../services/branchApi';
 import planApi from '../../services/planApi';
 import { taxSlabAPI, planCategoryAPI, paymentTypeAPI } from '../../services/mastersApi';
 import { usePermissions } from '../../hooks/usePermissions';
+import { compressImage } from '../../utils/compressImage';
 import './EnquiryDetailPage.css';
 
 const EnquiryDetailPage = () => {
@@ -77,11 +78,12 @@ const EnquiryDetailPage = () => {
     plan: '',
     taxSlab: '',
     discountPercentage: 0,
-    paymentReceived: 0,
     paymentRemaining: 0,
     paymentMode: '',
     membershipStartDate: new Date(),
-    membershipEndDate: null
+    membershipEndDate: null,
+    nextPaymentDate: null,
+    profilePhoto: ''
   });
   const [submittingConvert, setSubmittingConvert] = useState(false);
 
@@ -197,7 +199,8 @@ const EnquiryDetailPage = () => {
     return {
       ...updatedData,
       paymentRemaining: remaining > 0 ? remaining : 0,
-      membershipEndDate: calculatedEndDate
+      membershipEndDate: calculatedEndDate,
+      nextPaymentDate: remaining > 0 ? updatedData.nextPaymentDate : null
     };
   };
 
@@ -350,7 +353,9 @@ const EnquiryDetailPage = () => {
       paymentRemaining: 0,
       paymentMode: '',
       membershipStartDate: new Date(),
-      membershipEndDate: null
+      membershipEndDate: null,
+      nextPaymentDate: null,
+      profilePhoto: enquiry.profilePhoto || ''
     };
     setDiscountType('percentage');
     setDiscountWarning('');
@@ -389,8 +394,9 @@ const EnquiryDetailPage = () => {
         status: 'active',
         membershipStartDate: paymentData.membershipStartDate.toISOString(),
         membershipEndDate: paymentData.membershipEndDate ? paymentData.membershipEndDate.toISOString() : null,
+        nextPaymentDate: paymentData.nextPaymentDate ? paymentData.nextPaymentDate.toISOString() : null,
         enquiryId: id,
-        ...(enquiry.profilePhoto && { profilePhoto: enquiry.profilePhoto })
+        profilePhoto: paymentData.profilePhoto || enquiry.profilePhoto || null
       };
 
       const response = await memberApi.create(memberData);
@@ -704,43 +710,120 @@ const EnquiryDetailPage = () => {
                   background: '#f8fafc',
                   padding: '1rem',
                   borderRadius: '8px',
-                  marginBottom: '1rem'
+                  marginBottom: '1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '1.5rem'
                 }}>
-                  <p style={{ margin: '0.25rem 0', color: '#64748b' }}><strong>Name:</strong> {enquiry?.name}</p>
-                  <p style={{ margin: '0.25rem 0', color: '#64748b' }}><strong>Mobile:</strong> {enquiry?.mobileNumber}</p>
+                  <div className="profile-photo-upload-section" style={{ flexShrink: 0 }}>
+                    <div style={{
+                      width: '100px',
+                      height: '100px',
+                      borderRadius: '50%',
+                      border: '3px dashed #cbd5e1',
+                      overflow: 'hidden',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background: '#fff',
+                      position: 'relative',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+                    }}>
+                      {uploadingPhoto ? (
+                        <div style={{ textAlign: 'center', color: '#64748b', fontSize: '0.7rem' }}>⏳...</div>
+                      ) : paymentData.profilePhoto ? (
+                        <img
+                          src={paymentData.profilePhoto}
+                          alt="Profile"
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                      ) : (
+                        <div style={{ textAlign: 'center', color: '#94a3b8', fontSize: '2rem' }}>👤</div>
+                      )}
+                    </div>
+                    <label style={{
+                      display: 'block',
+                      textAlign: 'center',
+                      marginTop: '0.5rem',
+                      color: '#6366f1',
+                      fontSize: '0.75rem',
+                      fontWeight: '600',
+                      cursor: 'pointer'
+                    }}>
+                      {uploadingPhoto ? 'Uploading...' : 'Change Photo'}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          setUploadingPhoto(true);
+                          try {
+                            const compressedFile = await compressImage(file);
+                            const fd = new FormData();
+                            fd.append('photo', compressedFile);
+                            const token = localStorage.getItem('token');
+                            const res = await fetch(`${import.meta.env.VITE_API_URL}/upload/profile-photo`, {
+                              method: 'POST',
+                              headers: { 'Authorization': `Bearer ${token}` },
+                              body: fd
+                            });
+                            const result = await res.json();
+                            if (result.success) {
+                              setPaymentData(prev => ({ ...prev, profilePhoto: result.data.url }));
+                            } else {
+                              alert(result.message || 'Upload failed');
+                            }
+                          } catch (err) {
+                            console.error(err);
+                            alert('Failed to upload');
+                          } finally {
+                            setUploadingPhoto(false);
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ margin: '0.25rem 0', color: '#64748b' }}><strong>Name:</strong> {enquiry?.name}</p>
+                    <p style={{ margin: '0.25rem 0', color: '#64748b' }}><strong>Mobile:</strong> {enquiry?.mobileNumber}</p>
+                  </div>
                 </div>
 
-                <div className="form-group">
-                  <label>Plan Category <span className="required">*</span></label>
-                  <select 
-                    value={paymentData.planCategory} 
-                    onChange={(e) => {
-                      const catId = e.target.value;
-                      setPaymentData(prev => recalcRemaining({...prev, planCategory: catId, plan: ''}));
-                    }}
-                    required
-                  >
-                    <option value="">Select Category</option>
-                    {planCategories.map(c => <option key={c._id} value={c._id}>{c.categoryName}</option>)}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Membership Plan <span className="required">*</span></label>
-                  <select 
-                    value={paymentData.plan} 
-                    required
-                    onChange={handlePlanChangeInPayment}
-                    disabled={!paymentData.planCategory}
-                  >
-                    <option value="">{paymentData.planCategory ? 'Select Membership Plan' : 'Select a category first'}</option>
-                    {plans
-                      .filter(p => {
-                        if (!paymentData.planCategory) return false;
-                        const catId = typeof p.category === 'object' ? p.category?._id : p.category;
-                        return catId === paymentData.planCategory;
-                      })
-                      .map(p => <option key={p._id} value={p._id}>{p.planName} - ₹{p.price} ({p.duration})</option>)}
-                  </select>
+                <div className="responsive-form-grid" style={{ marginBottom: '1rem' }}>
+                  <div className="form-group">
+                    <label>Plan Category <span className="required">*</span></label>
+                    <select 
+                      value={paymentData.planCategory} 
+                      onChange={(e) => {
+                        const catId = e.target.value;
+                        setPaymentData(prev => recalcRemaining({...prev, planCategory: catId, plan: ''}));
+                      }}
+                      required
+                    >
+                      <option value="">Select Category</option>
+                      {planCategories.map(c => <option key={c._id} value={c._id}>{c.categoryName}</option>)}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Membership Plan <span className="required">*</span></label>
+                    <select 
+                      value={paymentData.plan} 
+                      required
+                      onChange={handlePlanChangeInPayment}
+                      disabled={!paymentData.planCategory}
+                    >
+                      <option value="">{paymentData.planCategory ? 'Select Membership Plan' : 'Select a category first'}</option>
+                      {plans
+                        .filter(p => {
+                          if (!paymentData.planCategory) return false;
+                          const catId = typeof p.category === 'object' ? p.category?._id : p.category;
+                          return catId === paymentData.planCategory;
+                        })
+                        .map(p => <option key={p._id} value={p._id}>{p.planName} - ₹{p.price} ({p.duration})</option>)}
+                    </select>
+                  </div>
                 </div>
                 <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   <div className="form-group">
@@ -854,15 +937,32 @@ const EnquiryDetailPage = () => {
                   </div>
                 </div>
                 
-                <div className="form-group">
-                  <label>Remaining Amount (₹)</label>
-                  <input 
-                    type="number" 
-                    value={paymentData.paymentRemaining} 
-                    readOnly 
-                    disabled 
-                    style={{ background: '#f1f5f9' }}
-                  />
+                <div className="responsive-form-grid" style={{ marginTop: '0.5rem' }}>
+                  <div className="form-group">
+                    <label>Remaining Amount (₹)</label>
+                    <input 
+                      type="number" 
+                      value={paymentData.paymentRemaining} 
+                      readOnly 
+                      disabled 
+                      style={{ background: '#f1f5f9' }}
+                    />
+                  </div>
+                  {paymentData.paymentRemaining > 0 && (
+                    <div className="form-group">
+                      <label>Next Payment Date <span className="required">*</span></label>
+                      <DatePicker
+                        selected={paymentData.nextPaymentDate}
+                        onChange={(date) => setPaymentData(prev => ({ ...prev, nextPaymentDate: date }))}
+                        dateFormat="dd/MM/yyyy"
+                        placeholderText="Select date"
+                        required
+                        minDate={new Date()}
+                        className="custom-datepicker"
+                        wrapperClassName="datepicker-wrapper"
+                      />
+                    </div>
+                  )}
                 </div>
 
                 {/* Billing Summary Section */}

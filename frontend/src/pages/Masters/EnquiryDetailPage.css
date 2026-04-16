@@ -423,3 +423,34 @@
     font-size: 1.1rem;
   }
 }
+
+/* Grid for side-by-side fields in modal */
+.enquiry-detail-page .responsive-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 0;
+}
+
+/* Stack on mobile */
+@media (max-width: 768px) {
+  .enquiry-detail-page .responsive-form-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+/* Fix dropdown conflicts: Ensure opened select is on top */
+.enquiry-detail-page .form-group {
+  position: relative;
+  z-index: 1;
+}
+
+.enquiry-detail-page .form-group:focus-within {
+  z-index: 10;
+}
+
+.enquiry-detail-page .form-group select:focus {
+  position: relative;
+  z-index: 11;
+}
