@@ -256,21 +256,51 @@
 }
 
 .offer-action-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: none;
+  border: 1px solid transparent;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
 }
 
-.offer-action-btn.edit { background: #f1f5f9; color: #64748b; }
-.offer-action-btn.edit:hover { background: #e2e8f0; color: #1e293b; }
-.offer-action-btn.delete { background: #fef2f2; color: #ef4444; }
-.offer-action-btn.delete:hover { background: #fee2e2; }
+.offer-action-btn.edit {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.offer-action-btn.edit:hover {
+  background: #ecfdf5;
+  color: #10b981;
+  border-color: #10b981;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.15);
+}
+
+.offer-action-btn.delete {
+  background: #fef2f2;
+  color: #f87171;
+}
+
+.offer-action-btn.delete:hover {
+  background: #fff1f2;
+  color: #ef4444;
+  border-color: #ef4444;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.15);
+}
+
+.offer-action-btn svg {
+  transition: transform 0.2s ease;
+}
+
+.offer-action-btn:active {
+  transform: scale(0.95);
+}
 
 .offer-desc {
   margin: 0 0 1.5rem 0;

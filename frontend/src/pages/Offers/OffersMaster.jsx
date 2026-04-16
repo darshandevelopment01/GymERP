@@ -276,7 +276,7 @@ export default function OffersMaster() {
                         <Edit2 size={16} />
                       </button>
                       <button className="offer-action-btn delete" onClick={() => handleDelete(offer._id)}>
-                        <X size={16} />
+                        <Trash2 size={16} />
                       </button>
                     </div>
                   </div>
