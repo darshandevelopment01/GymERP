@@ -27,7 +27,7 @@ export const sendEmail = async (
         const host = process.env.SMTP_HOST;
         const port = parseInt(process.env.SMTP_PORT || '587', 10);
         const user = process.env.SMTP_USER;
-        const pass = process.env.SMTP_PASS?.replace(/\s/g, ''); // ✅ Fix: Strip spaces from Google App Password
+        const pass = process.env.SMTP_PASS?.replace(/\s/g, ''); // ✅ Fix: Strip accidental spaces from SMTP password
 
         if (!host || !user || !pass) {
             console.warn('⚠️ [MAILER] SMTP config missing! Check SMTP_HOST, SMTP_USER, SMTP_PASS.');
