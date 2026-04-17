@@ -8,14 +8,16 @@
 .detail-header {
   background: #ffffff;
   padding: 1rem 1.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
   gap: 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   position: sticky;
   top: 0;
   z-index: 10;
+  width: 100%;
 }
 
 .back-btn {

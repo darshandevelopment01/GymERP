@@ -55,6 +55,10 @@ const MemberMaster = () => {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [activeHistoryTab, setActiveHistoryTab] = useState('plans'); // 'plans' or 'payments'
   const [expandedPlanId, setExpandedPlanId] = useState(null); // To track which plan is expanded
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Status Filter for Interactive Cards
+  const [statusFilter, setStatusFilter] = useState('');
   const [renewData, setRenewData] = useState({
     planCategory: '',
     plan: '',
@@ -257,9 +261,18 @@ const MemberMaster = () => {
       const response = await memberApi.getAll();
       if (response.success && response.data) {
         const members = response.data;
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        const nextWeek = new Date(today); nextWeek.setDate(nextWeek.getDate() + 7);
+
         const newStats = {
           total: members.length,
           active: members.filter(m => m.status === 'active').length,
+          expiring: members.filter(m => {
+            if (!m.membershipEndDate || m.status !== 'active') return false;
+            const endDate = new Date(m.membershipEndDate);
+            endDate.setHours(0, 0, 0, 0);
+            return endDate <= nextWeek && endDate >= today;
+          }).length,
           expired: members.filter(m => m.status === 'expired').length
         };
         setStats(newStats);
@@ -966,21 +979,44 @@ const MemberMaster = () => {
   return (
     <div className="member-master-page">
       <div className="stats-container">
-        <div className="stat-card total">
+        <div 
+          className={`stat-card total ${statusFilter === '' ? 'active' : ''}`}
+          onClick={() => setStatusFilter('')}
+          style={{ cursor: 'pointer' }}
+        >
           <div className="stat-icon">👥</div>
           <div className="stat-content">
             <h3>{stats.total}</h3>
             <p>Total Members</p>
           </div>
         </div>
-        <div className="stat-card active">
+        <div 
+          className={`stat-card active ${statusFilter === 'active' ? 'active' : ''}`}
+          onClick={() => setStatusFilter('active')}
+          style={{ cursor: 'pointer' }}
+        >
           <div className="stat-icon">✅</div>
           <div className="stat-content">
             <h3>{stats.active}</h3>
             <p>Active</p>
           </div>
         </div>
-        <div className="stat-card expired">
+        <div 
+          className={`stat-card expiring ${statusFilter === 'expiring' ? 'active' : ''}`}
+          onClick={() => setStatusFilter('expiring')}
+          style={{ cursor: 'pointer' }}
+        >
+          <div className="stat-icon">⚠️</div>
+          <div className="stat-content">
+            <h3>{stats.expiring || 0}</h3>
+            <p>Expiring (7 days)</p>
+          </div>
+        </div>
+        <div 
+          className={`stat-card expired ${statusFilter === 'expired' ? 'active' : ''}`}
+          onClick={() => setStatusFilter('expired')}
+          style={{ cursor: 'pointer' }}
+        >
           <div className="stat-icon">⏰</div>
           <div className="stat-content">
             <h3>{stats.expired}</h3>
@@ -1003,6 +1039,7 @@ const MemberMaster = () => {
         showExportButton={true}
         exportFileName="members"
         onRowClick={(item) => navigate(`/members/${item._id}`)}
+        externalFilters={{ status: statusFilter }}
       />
 
       {/* Add Payment Modal */}

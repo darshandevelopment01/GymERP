@@ -196,6 +196,7 @@ const FollowUpMaster = () => {
     {
       label: 'Type',
       field: 'type',
+      exportValue: (item) => item.member ? 'Member' : 'Enquiry',
       render: (item) => (
         <span style={{
           padding: '0.25rem 0.75rem',
@@ -212,6 +213,7 @@ const FollowUpMaster = () => {
     {
       label: 'Name',
       field: 'name',
+      exportValue: (item) => item.member?.name || item.enquiry?.name || '-',
       render: (item) => (
         <div>
           <div style={{ fontWeight: '600', color: '#1e293b' }}>
@@ -241,6 +243,7 @@ const FollowUpMaster = () => {
     {
       label: 'Follow-up Date',
       field: 'followUpDate',
+      exportValue: (item) => item.followUpDate ? `${formatLocalDate(item.followUpDate)} ${item.followUpTime || ''}` : '-',
       render: (item) => (
         <div>
           <div style={{ fontSize: '0.85rem', fontWeight: '600' }}>
@@ -257,6 +260,7 @@ const FollowUpMaster = () => {
     {
       label: 'Created Date',
       field: 'createdAt',
+      exportValue: (item) => formatLocalDate(item.createdAt),
       render: (item) => (
         <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
           {formatDate(item.createdAt)}
@@ -286,6 +290,7 @@ const FollowUpMaster = () => {
     ...(isAdmin ? [{
       label: 'Created By',
       field: 'createdBy',
+      exportValue: (item) => item.createdBy?.name || '-',
       render: (item) => (
         <span style={{ fontSize: '0.85rem', color: '#6366f1', fontWeight: '600' }}>
           {item.createdBy?.name || '-'}
@@ -448,26 +453,6 @@ const FollowUpMaster = () => {
                   }}
                 >
                   ✅ Complete
-                </button>
-              )}
-              {item.status === 'completed' && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleStatusChange(item._id, 'pending');
-                  }}
-                  style={{
-                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                    color: 'white',
-                    border: 'none',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    fontSize: '0.85rem',
-                    fontWeight: '600'
-                  }}
-                >
-                  ⏳ Reopen
                 </button>
               )}
             </div>
@@ -687,27 +672,6 @@ const FollowUpMaster = () => {
                   }}
                 >
                   ✅ Mark Completed
-                </button>
-              )}
-              {selectedFollowUp.status === 'completed' && (
-                <button
-                  onClick={() => {
-                    handleCloseModal();
-                    handleStatusChange(selectedFollowUp._id, 'pending');
-                  }}
-                  style={{
-                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                    color: 'white',
-                    border: 'none',
-                    padding: '0.75rem 2rem',
-                    borderRadius: '10px',
-                    cursor: 'pointer',
-                    fontWeight: '700',
-                    fontSize: '1rem',
-                    boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)'
-                  }}
-                >
-                  ⏳ Reopen
                 </button>
               )}
             </div>

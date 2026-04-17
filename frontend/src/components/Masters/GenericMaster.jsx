@@ -218,6 +218,20 @@ const GenericMaster = ({
         filtered = filtered.filter(item =>
           item.createdBy?._id === filterValue || item.createdBy === filterValue
         );
+      } else if (filterKey === 'type') {
+        filtered = filtered.filter(item => {
+          if (filterValue === 'member') return !!item.member;
+          if (filterValue === 'enquiry') return !!item.enquiry;
+          return true;
+        });
+      } else if (filterKey === 'status' && filterValue === 'expiring') {
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        const nextWeek = new Date(today); nextWeek.setDate(nextWeek.getDate() + 7);
+        filtered = filtered.filter(item => {
+          if (!item.membershipEndDate) return false;
+          const endDate = new Date(item.membershipEndDate); endDate.setHours(0, 0, 0, 0);
+          return item.status === 'active' && endDate >= today && endDate <= nextWeek;
+        });
       } else {
         filtered = filtered.filter(item => {
           const itemValue = item[filterKey];
@@ -263,7 +277,9 @@ const GenericMaster = ({
       const exportData = dataToExport.map(item => {
         const row = {};
         columns.forEach(col => {
-          if (col.field === 'branch') {
+          if (col.exportValue) {
+            row[col.label] = col.exportValue(item);
+          } else if (col.field === 'branch') {
             row[col.label] = item.branch?.name || '-';
           } else if (col.field === 'plan') {
             row[col.label] = item.plan?.planName || '-';
