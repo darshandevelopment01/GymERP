@@ -167,6 +167,11 @@ export const createMember = async (req: Request, res: Response): Promise<void> =
     `;
 
     console.log('📄 Receipt PDF generation starting...');
+    console.log('📄 Receipt Input Data:', JSON.stringify({
+      name: trimmedData.name, email: trimmedData.email,
+      planName: planExists.planName, price: planExists.price,
+      paymentReceived: trimmedData.paymentReceived
+    }));
     // 📄 Prepare PDF Attachment
     let attachments: any[] = [];
     let receiptBuffer: Buffer | null = null;

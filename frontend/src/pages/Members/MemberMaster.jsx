@@ -805,6 +805,7 @@ const MemberMaster = () => {
       label: 'Membership Plan',
       type: 'select',
       required: true,
+      hideOnEdit: true,
       options: [
         { value: '', label: 'Select Plan' },
         ...plans.map(p => ({
@@ -822,6 +823,7 @@ const MemberMaster = () => {
       label: 'Payment Received',
       type: 'number',
       required: true,
+      hideOnEdit: true,
       placeholder: 'Enter amount'
     },
     {
@@ -829,6 +831,7 @@ const MemberMaster = () => {
       label: 'Membership Start Date',
       type: 'date',
       required: false,
+      hideOnEdit: true,
       displayValue: (item) => formatDate(item.membershipStartDate),
       onChange: (value, formData, setFormData) => {
         const updated = { ...formData, membershipStartDate: value };
@@ -840,6 +843,7 @@ const MemberMaster = () => {
       label: 'Membership End Date',
       type: 'date',
       required: false,
+      hideOnEdit: true,
       disabled: true,
       displayValue: (item) => formatDate(item.membershipEndDate)
     },
@@ -848,6 +852,7 @@ const MemberMaster = () => {
       label: 'Status',
       type: 'select',
       required: false,
+      hideOnEdit: true,
       options: [
         { value: '', label: 'Select Status' },
         { value: 'active', label: 'Active' },

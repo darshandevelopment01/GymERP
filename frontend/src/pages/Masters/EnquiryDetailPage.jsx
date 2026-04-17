@@ -17,7 +17,8 @@ import {
   Trash2,
   AlertCircle,
   ArrowRight,
-  Info
+  Info,
+  RefreshCw
 } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -402,6 +403,8 @@ const EnquiryDetailPage = () => {
       };
 
       const response = await memberApi.create(memberData);
+      console.log('Member created:', response);
+      console.log('📄 Receipt keys:', { hasBuffer: !!response.receiptBuffer, hasFilename: !!response.receiptFilename });
       
       // Auto-download receipt logic
       if (response.receiptBuffer && response.receiptFilename) {
@@ -503,7 +506,25 @@ const EnquiryDetailPage = () => {
   };
 
   if (loading && !enquiry) return <SkeletonLoader variant="enquiry-detail" />;
-  if (error) return <div className="error-state">{error} <button onClick={fetchData}>Retry</button></div>;
+  if (error) return (
+    <div className="error-card-container">
+      <div className="error-card">
+        <div className="error-icon-wrapper">
+          <AlertCircle size={32} />
+        </div>
+        <h2>Something went wrong</h2>
+        <p>{error}</p>
+        <div className="error-actions">
+          <button className="btn-retry" onClick={fetchData}>
+            <RefreshCw size={18} /> Retry
+          </button>
+          <button className="btn-go-back" onClick={() => navigate('/enquiry')}>
+            Back to List
+          </button>
+        </div>
+      </div>
+    </div>
+  );
   if (!enquiry) return <div className="error-state">Enquiry not found</div>;
 
   const isPending = enquiry.status === 'pending';

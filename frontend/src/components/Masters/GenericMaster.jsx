@@ -837,6 +837,11 @@ const GenericMaster = ({
                     return null;
                   }
 
+                  // ✅ Hide fields flagged for edit mode
+                  if (field.hideOnEdit && editingItem) {
+                    return null;
+                  }
+
                   // Permission groups field type
                   if (field.type === 'permission-groups') {
                     return (

@@ -505,8 +505,8 @@ const EnquiryMaster = () => {
 
       console.log('Sending member data:', memberData);
 
-      const response = await memberApi.create(memberData);
       console.log('Member created:', response);
+      console.log('📄 Receipt keys:', { hasBuffer: !!response.receiptBuffer, hasFilename: !!response.receiptFilename });
 
       // 📥 Automatic Download of Receipt
       if (response.receiptBuffer && response.receiptFilename) {

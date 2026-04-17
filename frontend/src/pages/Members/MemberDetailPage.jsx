@@ -18,7 +18,8 @@ import {
   Edit,
   History,
   Wallet,
-  RefreshCw
+  RefreshCw,
+  AlertCircle
 } from 'lucide-react';
 import memberApi from '../../services/memberApi';
 import followupApi from '../../services/followupApi';
@@ -156,7 +157,25 @@ const MemberDetailPage = () => {
   if (loading && !member) return (
     <SkeletonLoader variant="member-detail" />
   );
-  if (error) return <div className="member-detail-error"><h3>⚠️ Error</h3><p>{error}</p><button onClick={() => navigate('/members')}>Go Back</button></div>;
+  if (error) return (
+    <div className="error-card-container">
+      <div className="error-card">
+        <div className="error-icon-wrapper">
+          <AlertCircle size={32} />
+        </div>
+        <h2>Something went wrong</h2>
+        <p>{error}</p>
+        <div className="error-actions">
+          <button className="btn-retry" onClick={fetchMemberData}>
+            <RefreshCw size={18} /> Retry
+          </button>
+          <button className="btn-go-back" onClick={() => navigate('/members')}>
+            Back to List
+          </button>
+        </div>
+      </div>
+    </div>
+  );
   if (!member) return null;
 
   const formatDate = (date) => date ? new Date(date).toLocaleDateString() : 'N/A';
