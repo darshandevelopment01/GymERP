@@ -39,11 +39,16 @@ export default function DashboardContent() {
   // Date Filters
   const [startDate, setStartDate] = useState(() => {
     const today = new Date();
-    return new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    return `${year}-${month}-01`;
   });
   const [endDate, setEndDate] = useState(() => {
     const today = new Date();
-    return new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0];
+    const year = today.getFullYear();
+    const month = today.getMonth() + 1;
+    const lastDay = new Date(year, month, 0).getDate();
+    return `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
   });
   const navigate = useNavigate();
 
@@ -159,6 +164,13 @@ export default function DashboardContent() {
     localStorage.removeItem('user');
     sessionStorage.clear();
     navigate('/login');
+  };
+
+  const handleStatClick = (statLabel) => {
+    const enquiryLabels = ['Total Enquiries', 'Total Converted', 'Total Lost'];
+    if (enquiryLabels.includes(statLabel)) {
+      navigate('/enquiry');
+    }
   };
 
   const handleMenuChange = (menu) => {
@@ -285,7 +297,14 @@ export default function DashboardContent() {
                 const Icon = getIcon(stat.icon);
 
                 return (
-                  <div key={index} className="stat-card">
+                  <div 
+                    key={index} 
+                    className="stat-card"
+                    onClick={() => handleStatClick(stat.label)}
+                    style={{ 
+                      cursor: ['Total Enquiries', 'Total Converted', 'Total Lost'].includes(stat.label) ? 'pointer' : 'default' 
+                    }}
+                  >
                     <div className="stat-icon" style={{ backgroundColor: `${stat.color}20` }}>
                       <Icon size={28} color={stat.color} strokeWidth={2} />
                     </div>

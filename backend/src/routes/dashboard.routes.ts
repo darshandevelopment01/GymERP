@@ -13,22 +13,39 @@ router.get('/stats', authMiddleware, async (req: Request, res: Response) => {
     const { startDate, endDate } = req.query;
     let query: any = {};
 
+    const start = new Date(startDate as string);
+    const end = new Date(new Date(endDate as string).setHours(23, 59, 59, 999));
+
     if (startDate && endDate) {
-      query.createdAt = {
-        $gte: new Date(startDate as string),
-        $lte: new Date(new Date(endDate as string).setHours(23, 59, 59, 999))
-      };
+      query.createdAt = { $gte: start, $lte: end };
     }
 
-    const [totalEnquiries, totalConverted, totalLost] = await Promise.all([
-      Enquiry.countDocuments(query),
-      Enquiry.countDocuments({ ...query, status: 'converted' }),
-      Enquiry.countDocuments({ ...query, status: 'lost' })
+    const [enquiryStats, revenueResult] = await Promise.all([
+      Promise.all([
+        Enquiry.countDocuments(query),
+        Enquiry.countDocuments({ ...query, status: 'converted' }),
+        Enquiry.countDocuments({ ...query, status: 'lost' })
+      ]),
+      Member.aggregate([
+        { $unwind: '$payments' },
+        {
+          $match: {
+            'payments.paymentDate': { $gte: start, $lte: end }
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            totalRevenue: { $sum: '$payments.amount' }
+          }
+        }
+      ])
     ]);
 
-    console.log('📊 Fetching dashboard enquiry stats:', { totalEnquiries, totalConverted, totalLost, query });
+    const [totalEnquiries, totalConverted, totalLost] = enquiryStats;
+    const revenue = revenueResult.length > 0 ? revenueResult[0].totalRevenue : 0;
 
-    const revenue = 840000;
+    console.log('📊 Fetching dashboard stats:', { totalEnquiries, totalConverted, totalLost, revenue, query });
 
     res.json({
       totalEnquiries,
