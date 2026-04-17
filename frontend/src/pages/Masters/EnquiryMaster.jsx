@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import GenericMaster from '../../components/Masters/GenericMaster';
@@ -15,6 +15,7 @@ import './EnquiryMaster.css';
 
 const EnquiryMaster = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { can, isAdmin } = usePermissions();
   const cacheKeyBranches = 'cache_global_branches';
   const cacheKeyPlans = 'cache_global_plans';
@@ -75,6 +76,14 @@ const EnquiryMaster = () => {
   const [submittingReopen, setSubmittingReopen] = useState(false);
   const [liveDuplicate, setLiveDuplicate] = useState(null);
   const [checkingDuplicate, setCheckingDuplicate] = useState(false);
+
+  // ✅ Handle external filter status from navigation state
+  const externalFilters = React.useMemo(() => {
+    if (location.state?.filterStatus !== undefined) {
+      return { status: location.state.filterStatus };
+    }
+    return {};
+  }, [location.state?.filterStatus]);
 
   // ✅ Debounced Duplicate Check
   useEffect(() => {
@@ -883,6 +892,7 @@ const EnquiryMaster = () => {
         refreshKey={refreshKey}
         exportFileName="enquiries"
         onDuplicateFound={handleDuplicateFound}
+        externalFilters={externalFilters}
       />
 
       {/* ✅ DUPLICATE ENQUIRY DIALOG */}

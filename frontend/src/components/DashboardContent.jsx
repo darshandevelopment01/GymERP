@@ -167,9 +167,14 @@ export default function DashboardContent() {
   };
 
   const handleStatClick = (statLabel) => {
-    const enquiryLabels = ['Total Enquiries', 'Total Converted', 'Total Lost'];
-    if (enquiryLabels.includes(statLabel)) {
-      navigate('/enquiry');
+    const statusMap = {
+      'Total Enquiries': '',
+      'Total Converted': 'converted',
+      'Total Lost': 'lost'
+    };
+    
+    if (statusMap.hasOwnProperty(statLabel)) {
+      navigate('/enquiry', { state: { filterStatus: statusMap[statLabel] } });
     }
   };
 
