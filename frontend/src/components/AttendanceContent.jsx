@@ -14,7 +14,9 @@ import {
   Filter,
   CheckCircle,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  Check,
+  X
 } from 'lucide-react';
 import attendanceApi from '../services/attendanceApi';
 import memberApi from '../services/memberApi';
@@ -26,11 +28,16 @@ import './AttendanceContent.css';
 
 const AttendanceContent = () => {
   const [activeTab, setActiveTab] = useState('member');
-  const [attendanceData, setAttendanceData] = useState([]);
+  const [people, setPeople] = useState([]); // All members or employees
+  const [attendanceRecords, setAttendanceRecords] = useState([]); // All records for the selected month
   const [leavesData, setLeavesData] = useState([]);
   const [stats, setStats] = useState({ present: 0, absent: 0, leave: 0 });
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   
   // Date context
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -41,21 +48,43 @@ const AttendanceContent = () => {
   
   const { can, isAdmin } = usePermissions();
 
-  const fetchAllData = async () => {
+  // Normalize date to midnight UTC for comparison
+  const normalizeDate = (date) => {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    return d.getTime();
+  };
+
+  const fetchPeopleAndAttendance = async () => {
     setLoading(true);
     try {
       const month = selectedDate.getMonth() + 1;
       const year = selectedDate.getFullYear();
       
+      // 1. Fetch the list of all people first
+      let peopleList = [];
+      if (activeTab === 'member') {
+        const res = await memberApi.getAll();
+        peopleList = res.members || res.data || [];
+      } else {
+        const res = await employeeAPI.getAll();
+        peopleList = res || [];
+      }
+      setPeople(peopleList);
+
+      // 2. Fetch attendance, stats, and leaves for the selected time
       const [attendance, currentStats, leaves] = await Promise.all([
         attendanceApi.getAttendance(activeTab, month, year),
         attendanceApi.getAttendanceStats(activeTab, month, year),
         attendanceApi.getLeaves(activeTab)
       ]);
       
-      setAttendanceData(attendance);
+      setAttendanceRecords(attendance);
       setStats(currentStats);
       setLeavesData(leaves);
+      
+      // Reset to first page when tab or date changes
+      setCurrentPage(1);
     } catch (error) {
       console.error('Error fetching attendance data:', error);
     } finally {
@@ -64,20 +93,63 @@ const AttendanceContent = () => {
   };
 
   useEffect(() => {
-    fetchAllData();
+    fetchPeopleAndAttendance();
   }, [activeTab, selectedDate]);
 
-  const filteredAttendance = useMemo(() => {
-    return attendanceData.filter(item => {
-      const name = item.personId?.name?.toLowerCase() || '';
-      return name.includes(searchTerm.toLowerCase());
+  // Combine people list with their attendance status for the selected date
+  const combinedList = useMemo(() => {
+    const todayTime = normalizeDate(selectedDate);
+    
+    // Create a lookup for attendance records on today/selected date
+    const attendanceLookup = {};
+    attendanceRecords.forEach(record => {
+      const recordTime = normalizeDate(new Date(record.date));
+      if (recordTime === todayTime) {
+        attendanceLookup[record.personId?._id || record.personId] = record;
+      }
     });
-  }, [attendanceData, searchTerm]);
+
+    return people.map(p => ({
+      ...p,
+      todayAttendance: attendanceLookup[p._id] || null
+    }));
+  }, [people, attendanceRecords, selectedDate]);
+
+  const filteredList = useMemo(() => {
+    return combinedList.filter(item => {
+      const name = item.name?.toLowerCase() || '';
+      const idCode = (item.memberId || item.employeeCode || '').toLowerCase();
+      return name.includes(searchTerm.toLowerCase()) || idCode.includes(searchTerm.toLowerCase());
+    });
+  }, [combinedList, searchTerm]);
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredList.length / itemsPerPage);
+  const paginatedList = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredList.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredList, currentPage]);
+
+  const handleMarkAttendance = async (personId, status) => {
+    try {
+      await attendanceApi.markAttendance({
+        personId,
+        personType: activeTab,
+        date: selectedDate,
+        status,
+        note: `Marked ${status} via dashboard`
+      });
+      // Refresh only attendance data to show update
+      fetchPeopleAndAttendance();
+    } catch (error) {
+      alert(error.message || 'Failed to mark attendance');
+    }
+  };
 
   const handleStatusUpdate = async (leaveId, newStatus) => {
     try {
       await attendanceApi.updateLeaveStatus(leaveId, newStatus);
-      fetchAllData(); // Refresh
+      fetchPeopleAndAttendance();
     } catch (error) {
       alert('Failed to update leave status');
     }
@@ -105,7 +177,7 @@ const AttendanceContent = () => {
       <div className="attendance-header">
         <div className="date-display">
           <span className="current-date">
-            {selectedDate.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}
+            {selectedDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}
           </span>
           <span className="current-time">Manage daily attendance and leaves</span>
         </div>
@@ -114,24 +186,24 @@ const AttendanceContent = () => {
           <div className="filter-group">
              <button 
               className="btn-secondary"
-              onClick={() => setSelectedDate(new Date(selectedDate.setMonth(selectedDate.getMonth() - 1)))}
+              onClick={() => setSelectedDate(new Date(selectedDate.setDate(selectedDate.getDate() - 1)))}
             >
               <ChevronLeft size={18} />
             </button>
             <button 
               className="btn-secondary"
-              onClick={() => setSelectedDate(new Date(selectedDate.setMonth(selectedDate.getMonth() + 1)))}
+              onClick={() => setSelectedDate(new Date(selectedDate.setDate(selectedDate.getDate() + 1)))}
             >
               <ChevronRight size={18} />
             </button>
           </div>
           
           <button className="btn-primary" onClick={() => setIsLeaveModalOpen(true)}>
-            <Plus size={18} /> Apply Leave / Mark
+            <Plus size={18} /> Apply Leave
           </button>
           
           {isAdmin && (
-            <button className="btn-secondary" onClick={() => setIsQrModalOpen(true)}>
+            <button className="btn-secondary gym-qr-btn" onClick={() => setIsQrModalOpen(true)}>
               <QrCode size={18} /> Gym QR
             </button>
           )}
@@ -175,8 +247,8 @@ const AttendanceContent = () => {
             <Users size={24} />
           </div>
           <div className="stat-info">
-            <span className="stat-value">{filteredAttendance.length}</span>
-            <span className="stat-label">Total Records</span>
+            <span className="stat-value">{people.length}</span>
+            <span className="stat-label">Total {activeTab}s</span>
           </div>
         </div>
       </div>
@@ -203,15 +275,15 @@ const AttendanceContent = () => {
           <Search size={18} />
           <input 
             type="text" 
-            placeholder={`Search ${activeTab}s...`}
+            placeholder={`Search ${activeTab}s by name or ID...`}
             className="search-input"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
         
-        <div className="filter-group">
-          {/* Add more filters if needed */}
+        <div className="pagination-info">
+          <span>Showing {(currentPage-1)*itemsPerPage + 1} - {Math.min(currentPage*itemsPerPage, filteredList.length)} of {filteredList.length}</span>
         </div>
       </div>
 
@@ -221,51 +293,63 @@ const AttendanceContent = () => {
           <thead>
             <tr>
               <th>Person</th>
-              <th>Date</th>
+              <th>Member/Emp ID</th>
               <th>Status</th>
               <th>Check-in</th>
-              <th>Method</th>
-              <th>Notes</th>
+              <th>Mark Attendance</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan="6" style={{ textAlign: 'center', padding: '2rem' }}>Loading records...</td></tr>
-            ) : filteredAttendance.length === 0 ? (
-              <tr><td colSpan="6" style={{ textAlign: 'center', padding: '2rem' }}>No records found for this period.</td></tr>
+              <tr><td colSpan="5" style={{ textAlign: 'center', padding: '2rem' }}>Loading {activeTab}s...</td></tr>
+            ) : paginatedList.length === 0 ? (
+              <tr><td colSpan="5" style={{ textAlign: 'center', padding: '2rem' }}>No {activeTab}s found matching your search.</td></tr>
             ) : (
-              filteredAttendance.map((record) => (
-                <tr key={record._id}>
+              paginatedList.map((person) => (
+                <tr key={person._id}>
                   <td>
                     <div className="user-cell">
-                      {record.personId?.profilePhoto ? (
-                        <img src={record.personId.profilePhoto} className="user-avatar" alt="" />
+                      {person.profilePhoto ? (
+                        <img src={person.profilePhoto} className="user-avatar" alt="" />
                       ) : (
-                        <div className="no-avatar">{record.personId?.name?.charAt(0)}</div>
+                        <div className="no-avatar">{person.name?.charAt(0)}</div>
                       )}
-                      <div>
-                        <div style={{ fontWeight: '600' }}>{record.personId?.name}</div>
-                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                          {record.personId?.memberId || record.personId?.employeeCode}
-                        </div>
+                      <div className="user-name-cell">
+                        <div style={{ fontWeight: '600' }}>{person.name}</div>
+                        {person.todayAttendance?.method === 'qr' && (
+                          <span className="method-badge-small"><QrCode size={10} /> QR</span>
+                        )}
                       </div>
                     </div>
                   </td>
-                  <td>{formatDate(record.date)}</td>
+                  <td>{person.memberId || person.employeeCode || '-'}</td>
                   <td>
-                    <span className={`status-badge status-${record.status}`}>
-                      {record.status}
-                    </span>
+                    {person.todayAttendance ? (
+                      <span className={`status-badge status-${person.todayAttendance.status}`}>
+                        {person.todayAttendance.status}
+                      </span>
+                    ) : (
+                      <span className="status-badge status-pending">Not Marked</span>
+                    )}
                   </td>
-                  <td>{formatTime(record.checkInTime)}</td>
+                  <td>{person.todayAttendance ? formatTime(person.todayAttendance.checkInTime) : '-'}</td>
                   <td>
-                    <span className="method-badge">
-                      {record.method === 'qr' ? <QrCode size={12} /> : <Clock size={12} />}
-                      {record.method}
-                    </span>
-                  </td>
-                  <td style={{ maxWidth: '200px', fontSize: '0.75rem', color: '#64748b' }}>
-                    {record.note || '-'}
+                    <div className="mark-actions-cell">
+                      <button 
+                        className={`mark-btn mark-present ${person.todayAttendance?.status === 'present' ? 'active' : ''}`}
+                        title="Mark Present"
+                        onClick={() => handleMarkAttendance(person._id, 'present')}
+                      >
+                        <Check size={16} />
+                      </button>
+                      <button 
+                        className={`mark-btn mark-absent ${person.todayAttendance?.status === 'absent' ? 'active' : ''}`}
+                        title="Mark Absent"
+                        onClick={() => handleMarkAttendance(person._id, 'absent')}
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -273,6 +357,37 @@ const AttendanceContent = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="pagination-controls">
+          <button 
+            disabled={currentPage === 1} 
+            onClick={() => setCurrentPage(prev => prev - 1)}
+            className="btn-pagination"
+          >
+            <ChevronLeft size={16} /> Previous
+          </button>
+          <div className="page-numbers">
+            {[...Array(totalPages)].map((_, i) => (
+              <button 
+                key={i} 
+                className={`page-num ${currentPage === i + 1 ? 'active' : ''}`}
+                onClick={() => setCurrentPage(i + 1)}
+              >
+                {i + 1}
+              </button>
+            ))}
+          </div>
+          <button 
+            disabled={currentPage === totalPages} 
+            onClick={() => setCurrentPage(prev => prev + 1)}
+            className="btn-pagination"
+          >
+            Next <ChevronRight size={16} />
+          </button>
+        </div>
+      )}
 
       {/* Pending Leaves Section (If Admin) */}
       {isAdmin && leavesData.some(l => l.status === 'pending') && (
@@ -299,17 +414,15 @@ const AttendanceContent = () => {
                     <td>{leave.reason}</td>
                     <td>{leave.appliedBy?.name}</td>
                     <td>
-                      <div className="filter-group">
+                      <div className="leave-action-btns">
                         <button 
-                          className="btn-primary" 
-                          style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                          className="btn-approve" 
                           onClick={() => handleStatusUpdate(leave._id, 'approved')}
                         >
                           Approve
                         </button>
                         <button 
-                          className="btn-secondary" 
-                          style={{ padding: '4px 8px', fontSize: '0.75rem', backgroundColor: '#fee2e2', color: '#dc2626' }}
+                          className="btn-reject" 
                           onClick={() => handleStatusUpdate(leave._id, 'rejected')}
                         >
                           Reject
@@ -330,7 +443,7 @@ const AttendanceContent = () => {
           onClose={() => setIsLeaveModalOpen(false)} 
           onSuccess={() => {
             setIsLeaveModalOpen(false);
-            fetchAllData();
+            fetchPeopleAndAttendance();
           }} 
         />
       )}

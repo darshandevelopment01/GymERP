@@ -52,10 +52,10 @@ const QRDisplayModal = ({ onClose }) => {
     }}>
       <div className="modal-content" style={{
         background: 'white', padding: '2.5rem', borderRadius: '24px', width: '90%', maxWidth: '450px',
-        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', textAlign: 'center'
+        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', textAlign: 'center', position: 'relative'
       }}>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', position: 'absolute', right: '1.5rem', top: '1.5rem' }}>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
+        <div style={{ position: 'absolute', right: '1.25rem', top: '1.25rem' }}>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', display: 'flex' }}>
             <X size={24} />
           </button>
         </div>
