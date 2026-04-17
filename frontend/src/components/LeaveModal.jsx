@@ -1,54 +1,36 @@
 // frontend/src/components/LeaveModal.jsx
-import React, { useState, useEffect, useMemo } from 'react';
-import { X, Calendar, User, FileText, Search, UserCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Calendar, User, FileText, UserCircle } from 'lucide-react';
 import attendanceApi from '../services/attendanceApi';
-import { employeeAPI } from '../services/mastersApi';
 
 const LeaveModal = ({ onClose, onSuccess }) => {
-  const [people, setPeople] = useState([]);
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
   
   // Form state
-  const [selectedPerson, setSelectedPerson] = useState(null); // Full person object
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showResults, setShowResults] = useState(false);
-  
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
   const [reason, setReason] = useState('');
 
   useEffect(() => {
-    const fetchPeople = async () => {
-      setLoading(true);
-      try {
-        // Switch to Fetching Employees instead of Members
-        const res = await employeeAPI.getAll();
-        setPeople(res || []);
-      } catch (err) {
-        console.error('Fetch error:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchPeople();
+    // Get logged-in user from localStorage
+    const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+    if (storedUser && storedUser._id) {
+      setUser(storedUser);
+    } else {
+      alert("User session not found. Please login again.");
+      onClose();
+    }
   }, []);
-
-  const filteredPeople = useMemo(() => {
-    if (!searchQuery.trim()) return [];
-    return people.filter(p => 
-      p.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      p.employeeCode?.toLowerCase().includes(searchQuery.toLowerCase()) // Search by employee code
-    ).slice(0, 5); // Limit to top 5 matches
-  }, [people, searchQuery]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!selectedPerson) return alert('Please select an employee');
+    if (!user) return alert('Session error. Please logout and login again.');
 
     try {
       await attendanceApi.applyLeave({
-        personId: selectedPerson._id,
-        personType: 'employee', // Explicitly employee
+        personId: user._id,
+        personType: 'employee', // User applying their own leave is treated as an employee leave
         startDate,
         endDate,
         reason
@@ -60,6 +42,8 @@ const LeaveModal = ({ onClose, onSuccess }) => {
     }
   };
 
+  if (!user) return null;
+
   return (
     <div className="modal-overlay" style={{
       position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
@@ -70,7 +54,7 @@ const LeaveModal = ({ onClose, onSuccess }) => {
         boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', position: 'relative'
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem', alignItems: 'center' }}>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#111827' }}>Apply Employee Leave</h2>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#111827' }}>Apply Leave Request</h2>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}>
             <X size={24} />
           </button>
@@ -79,74 +63,21 @@ const LeaveModal = ({ onClose, onSuccess }) => {
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <div>
             <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '700', color: '#374151', marginBottom: '0.5rem' }}>
-              Select Employee
+              Employee Details
             </label>
             
-            {!selectedPerson ? (
-              <div className="search-select-container">
-                <div className="search-input-wrapper" style={{ position: 'relative' }}>
-                  <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-                  <input 
-                    type="text"
-                    placeholder="Search by name or employee code..."
-                    value={searchQuery}
-                    onChange={(e) => {
-                      setSearchQuery(e.target.value);
-                      setShowResults(true);
-                    }}
-                    onFocus={() => setShowResults(true)}
-                    style={{ 
-                      width: '100%', padding: '12px 12px 12px 40px', borderRadius: '12px', 
-                      border: '2px solid #e5e7eb', outline: 'none', fontSize: '1rem',
-                      boxSizing: 'border-box'
-                    }}
-                    autoComplete="off"
-                  />
+            <div className="selected-person-chip">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <UserCircle size={32} color="#1ccaa1" />
+                <div>
+                  <div style={{ fontWeight: '700', color: '#111827' }}>{user.name}</div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{user.employeeCode || user.email}</div>
                 </div>
-                
-                {showResults && searchQuery.trim() && (
-                  <div className="search-select-results">
-                    {filteredPeople.length > 0 ? (
-                      filteredPeople.map(p => (
-                        <div 
-                          key={p._id} 
-                          className="search-select-item"
-                          onClick={() => {
-                            setSelectedPerson(p);
-                            setShowResults(false);
-                            setSearchQuery('');
-                          }}
-                        >
-                          <div style={{ fontWeight: '600' }}>{p.name}</div>
-                          <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Code: {p.employeeCode}</div>
-                        </div>
-                      ))
-                    ) : (
-                      <div style={{ padding: '12px', fontSize: '0.875rem', color: '#94a3b8', textAlign: 'center' }}>
-                        No employees found
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
-            ) : (
-              <div className="selected-person-chip">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <UserCircle size={32} color="#1ccaa1" />
-                  <div>
-                    <div style={{ fontWeight: '700', color: '#111827' }}>{selectedPerson.name}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{selectedPerson.employeeCode}</div>
-                  </div>
-                </div>
-                <button 
-                  type="button"
-                  onClick={() => setSelectedPerson(null)}
-                  style={{ background: '#fee2e2', color: '#ef4444', border: 'none', padding: '6px', borderRadius: '50%', cursor: 'pointer', display: 'flex' }}
-                >
-                  <X size={16} />
-                </button>
+              <div style={{ fontSize: '0.75rem', color: '#1ccaa1', fontWeight: '600', padding: '4px 8px', background: 'rgba(28, 202, 161, 0.1)', borderRadius: '6px' }}>
+                AUTO-SELECTED
               </div>
-            )}
+            </div>
           </div>
 
           <div style={{ display: 'flex', gap: '1rem' }}>
@@ -191,7 +122,7 @@ const LeaveModal = ({ onClose, onSuccess }) => {
               <textarea 
                 value={reason} 
                 onChange={(e) => setReason(e.target.value)}
-                placeholder="Explain why the employee is taking leave..."
+                placeholder="Explain why you are taking leave..."
                 style={{ 
                   width: '100%', padding: '12px 12px 12px 40px', borderRadius: '12px', border: '2px solid #e5e7eb', 
                   minHeight: '100px', boxSizing: 'border-box', outline: 'none', fontFamily: 'inherit', resize: 'vertical'
@@ -208,7 +139,6 @@ const LeaveModal = ({ onClose, onSuccess }) => {
               width: '100%', marginTop: '0.5rem', justifyContent: 'center', height: '48px',
               fontSize: '1rem', borderRadius: '14px'
             }}
-            disabled={!selectedPerson}
           >
             Submit Leave Request
           </button>
