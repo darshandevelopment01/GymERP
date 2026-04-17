@@ -271,6 +271,19 @@ export const createMember = async (req: Request, res: Response): Promise<void> =
 // Get all members
 export const getAllMembers = async (req: Request, res: Response): Promise<void> => {
   try {
+    // ✅ AUTO-EXPIRE: Mark active members as expired if membershipEndDate has passed
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const autoExpiredResult = await Member.updateMany({
+      status: 'active',
+      membershipEndDate: { $lt: today, $ne: null }
+    }, { status: 'expired' });
+
+    if (autoExpiredResult.modifiedCount > 0) {
+      console.log(`📉 Auto-marked ${autoExpiredResult.modifiedCount} members as EXPIRED`);
+    }
+
     // Support selfOnly filter for viewOnlySelfCreated permission
     const filter: any = {};
     if (req.query.selfOnly === 'true' && req.user?.id) {
@@ -294,6 +307,19 @@ export const getAllMembers = async (req: Request, res: Response): Promise<void> 
 
 export const getMemberById = async (req: Request, res: Response): Promise<void> => {
   try {
+    // ✅ AUTO-EXPIRE: Mark active members as expired if membershipEndDate has passed
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const autoExpiredResult = await Member.updateMany({
+      status: 'active',
+      membershipEndDate: { $lt: today, $ne: null }
+    }, { status: 'expired' });
+
+    if (autoExpiredResult.modifiedCount > 0) {
+      console.log(`📉 Auto-marked ${autoExpiredResult.modifiedCount} members as EXPIRED (during fetch by ID)`);
+    }
+
     const member = await Member.findById(req.params.id)
       .populate('branch', 'name city address state zipCode')
       .populate('plan', 'planName duration price')

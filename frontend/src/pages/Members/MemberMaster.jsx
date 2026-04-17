@@ -705,11 +705,45 @@ const MemberMaster = () => {
     {
       label: 'Status',
       field: 'status',
-      render: (item) => (
-        <span className={`status-badge status-${item.status}`}>
-          {item.status}
-        </span>
-      )
+      render: (item) => {
+        let isExpired = item.status === 'expired';
+        
+        // Fallback check just in case backend hasn't updated yet
+        if (item.status === 'active' && item.membershipEndDate) {
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const endDate = new Date(item.membershipEndDate);
+          if (endDate < today) isExpired = true;
+        }
+
+        const displayStatus = isExpired ? 'Expired' : item.status.charAt(0).toUpperCase() + item.status.slice(1);
+
+        return (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span className={`status-badge status-${isExpired ? 'expired' : item.status}`}>
+              {displayStatus}
+            </span>
+            {isExpired && (
+              <button 
+                className="btn-renew-small" 
+                onClick={(e) => { e.stopPropagation(); handleRenewMember(item); }}
+                style={{
+                  background: '#6366f1',
+                  color: 'white',
+                  border: 'none',
+                  padding: '4px 10px',
+                  borderRadius: '4px',
+                  fontSize: '0.75rem',
+                  cursor: 'pointer',
+                  fontWeight: '600'
+                }}
+              >
+                Renew
+              </button>
+            )}
+          </div>
+        );
+      }
     }
   ];
 
