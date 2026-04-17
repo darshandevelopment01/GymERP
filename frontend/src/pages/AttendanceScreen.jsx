@@ -1,8 +1,9 @@
+// frontend/src/pages/AttendanceScreen.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Menu } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
-import ComingSoon from './ComingSoon';
+import AttendanceContent from '../components/AttendanceContent';
 import '../App.css';
 
 export default function AttendanceScreen() {
@@ -52,7 +53,7 @@ export default function AttendanceScreen() {
           <h1 className="dashboard-mobile-title">Attendance</h1>
         </div>
         <div className="dashboard-content">
-          <ComingSoon title="Attendance" />
+          <AttendanceContent />
         </div>
       </div>
     </div>

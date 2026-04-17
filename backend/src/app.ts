@@ -13,6 +13,7 @@ import followupRoutes from './routes/followup.routes';
 import uploadRoutes from './routes/upload.routes';
 import activityLogRoutes from './routes/activityLog.routes';
 import memberPlansRoutes from './routes/memberPlans.routes';
+import attendanceRoutes from './routes/attendance.routes';
 
 const app: Application = express();
 
@@ -81,5 +82,6 @@ app.use('/api/followups', followupRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/activity-logs', activityLogRoutes);
 app.use('/api/member-plans', memberPlansRoutes);
+app.use('/api/attendance', attendanceRoutes);
 
 export default app;

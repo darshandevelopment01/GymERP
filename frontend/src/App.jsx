@@ -162,7 +162,9 @@ function App() {
           path="/attendance"
           element={
             <PrivateRoute>
-              <AttendanceScreen />
+              <PermissionRoute permKey="viewAttendanceTab">
+                <AttendanceScreen />
+              </PermissionRoute>
             </PrivateRoute>
           }
         />
