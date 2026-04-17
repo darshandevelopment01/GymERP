@@ -34,8 +34,7 @@ const GenericMaster = ({
   autoEditItemId = null, // ✅ Add this to programmatically trigger edit
   onAutoEditComplete, // ✅ Callback when auto-edit is triggered
   onDuplicateFound, // ✅ New prop for handling 409 Conflict
-  externalFilters = {}, // ✅ New prop for externally controlled filters
-  hideTable = false // ✅ New prop to hide the list/search/stats and only use modals
+  externalFilters = {} // ✅ New prop for externally controlled filters
 }) => {
   const navigate = useNavigate();
   // Include apiOptions in cache key so selfOnly-filtered data is cached separately
@@ -596,248 +595,245 @@ const GenericMaster = ({
 
   return (
     <div className="generic-master">
-      {!hideTable && (
+      <div className="master-header">
+        <h1>{icon} {title}</h1>
+        <span className="date">{new Date().toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        })}</span>
+      </div>
+
+      <div className="master-controls">
+        <div className="search-box">
+          <span className="search-icon">🔍</span>
+          <input
+            type="text"
+            placeholder={searchPlaceholder}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <div className="control-buttons">
+          {filterConfig.length > 0 && (
+            <button
+              className={`btn-filter ${showFilters ? 'active' : ''}`}
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              🔽 Filters
+              {activeFilterCount > 0 && (
+                <span className="filter-badge">{activeFilterCount}</span>
+              )}
+            </button>
+          )}
+          {showExportButton && (
+            <button
+              className="btn-export"
+              onClick={handleExportToExcel}
+              disabled={exporting || data.length === 0}
+            >
+              {exporting ? '⏳ Exporting...' : '📊 Export to Excel'}
+            </button>
+          )}
+          {showCreateButton && (
+            <button className="btn-create" onClick={handleCreate}>
+              + Create {title.replace(' Master', '').replace(' Management', '')}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {showFilters && filterConfig.length > 0 && (
+        <div className="filter-panel">
+          <div className="filter-grid">
+            {filterConfig.map((filter, idx) => (
+              <div className="filter-item" key={idx}>
+                <label>{filter.label}</label>
+                {filter.type === 'select' ? (
+                  <select
+                    value={filters[filter.name] || ''}
+                    onChange={(e) => handleFilterChange(filter.name, e.target.value)}
+                  >
+                    {filter.options.map((opt, i) => (
+                      <option key={i} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                ) : filter.type === 'date' ? (
+                  <div className="filter-date-wrapper">
+                    <DatePicker
+                      selected={filters[filter.name] ? new Date(filters[filter.name]) : null}
+                      onChange={(date) => handleFilterChange(filter.name, formatLocalDate(date))}
+                      dateFormat="dd-MM-yyyy"
+                      placeholderText="dd-mm-yyyy"
+                      className="filter-date-input"
+                      showYearDropdown
+                      showMonthDropdown
+                      dropdownMode="select"
+                      isClearable
+                      showPopperArrow={false}
+                    />
+                    <svg
+                      className="filter-calendar-icon"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                      <line x1="16" y1="2" x2="16" y2="6"></line>
+                      <line x1="8" y1="2" x2="8" y2="6"></line>
+                      <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                  </div>
+                ) : (
+                  <input
+                    type="text"
+                    value={filters[filter.name] || ''}
+                    onChange={(e) => handleFilterChange(filter.name, e.target.value)}
+                    placeholder={filter.placeholder}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="filter-actions">
+            <button className="clear-filters-btn" onClick={clearFilters}>
+              ✕ Clear All Filters
+            </button>
+            <span className="results-count">
+              Showing {filteredData.length} of {data.length} results
+            </span>
+          </div>
+        </div>
+      )}
+
+      {fetchError && (
+        <div style={{
+          backgroundColor: '#fef2f2',
+          border: '1px solid #fecaca',
+          borderRadius: '8px',
+          padding: '12px 16px',
+          margin: '16px 0',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          color: '#dc2626',
+          fontSize: '14px',
+        }}>
+          <span>⚠️ {fetchError}</span>
+          <button
+            onClick={() => {
+              const controller = new AbortController();
+              fetchData(controller.signal);
+            }}
+            style={{
+              background: '#dc2626',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '6px 12px',
+              cursor: 'pointer',
+              fontSize: '13px',
+              marginLeft: '12px',
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {loading ? (
+        <SkeletonLoader variant="list" />
+      ) : (
         <>
-          <div className="master-header">
-            <h1>{icon} {title}</h1>
-            <span className="date">{new Date().toLocaleDateString('en-US', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric'
-            })}</span>
-          </div>
-
-          <div className="master-controls">
-            <div className="search-box">
-              <span className="search-icon">🔍</span>
-              <input
-                type="text"
-                placeholder={searchPlaceholder}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <div className="control-buttons">
-              {filterConfig.length > 0 && (
-                <button
-                  className={`btn-filter ${showFilters ? 'active' : ''}`}
-                  onClick={() => setShowFilters(!showFilters)}
-                >
-                  🔽 Filters
-                  {activeFilterCount > 0 && (
-                    <span className="filter-badge">{activeFilterCount}</span>
-                  )}
-                </button>
-              )}
-              {showExportButton && (
-                <button
-                  className="btn-export"
-                  onClick={handleExportToExcel}
-                  disabled={exporting || data.length === 0}
-                >
-                  {exporting ? '⏳ Exporting...' : '📊 Export to Excel'}
-                </button>
-              )}
-              {showCreateButton && (
-                <button className="btn-create" onClick={handleCreate}>
-                  + Create {title.replace(' Master', '').replace(' Management', '')}
-                </button>
-              )}
-            </div>
-          </div>
-
-          {showFilters && filterConfig.length > 0 && (
-            <div className="filter-panel">
-              <div className="filter-grid">
-                {filterConfig.map((filter, idx) => (
-                  <div className="filter-item" key={idx}>
-                    <label>{filter.label}</label>
-                    {filter.type === 'select' ? (
-                      <select
-                        value={filters[filter.name] || ''}
-                        onChange={(e) => handleFilterChange(filter.name, e.target.value)}
-                      >
-                        <option value="">All</option>
-                        {filter.options?.map((opt, i) => (
-                          <option key={i} value={opt.value}>{opt.label}</option>
-                        ))}
-                      </select>
-                    ) : filter.type === 'date' ? (
-                      <div className="filter-date-wrapper">
-                        <DatePicker
-                          selected={filters[filter.name] ? new Date(filters[filter.name]) : null}
-                          onChange={(date) => handleFilterChange(filter.name, formatLocalDate(date))}
-                          dateFormat="dd-MM-yyyy"
-                          placeholderText="dd-mm-yyyy"
-                          className="filter-date-input"
-                          showYearDropdown
-                          showMonthDropdown
-                          dropdownMode="select"
-                          isClearable
-                          showPopperArrow={false}
-                        />
-                        <svg
-                          className="filter-calendar-icon"
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                          <line x1="16" y1="2" x2="16" y2="6"></line>
-                          <line x1="8" y1="2" x2="8" y2="6"></line>
-                          <line x1="3" y1="10" x2="21" y2="10"></line>
-                        </svg>
-                      </div>
-                    ) : (
-                      <input
-                        type="text"
-                        value={filters[filter.name] || ''}
-                        onChange={(e) => handleFilterChange(filter.name, e.target.value)}
-                        placeholder={filter.placeholder}
-                      />
-                    )}
-                  </div>
-                ))}
-              </div>
-              <div className="filter-actions">
-                <button className="clear-filters-btn" onClick={clearFilters}>
-                  ✕ Clear All Filters
-                </button>
-                <span className="results-count">
-                  Showing {filteredData.length} of {data.length} results
-                </span>
-              </div>
-            </div>
-          )}
-
-          {fetchError && (
-            <div style={{
-              backgroundColor: '#fef2f2',
-              border: '1px solid #fecaca',
-              borderRadius: '8px',
-              padding: '12px 16px',
-              margin: '16px 0',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              color: '#dc2626',
-              fontSize: '14px',
-            }}>
-              <span>⚠️ {fetchError}</span>
-              <button
-                onClick={() => {
-                  const controller = new AbortController();
-                  fetchData(controller.signal);
-                }}
-                style={{
-                  background: '#dc2626',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '6px',
-                  padding: '6px 12px',
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                  marginLeft: '12px',
-                }}
-              >
-                Retry
-              </button>
-            </div>
-          )}
-
-          {loading ? (
-            <SkeletonLoader variant="list" />
-          ) : (
-            <>
-              <div className="master-table-container">
-                <table className="master-table generic-master-table">
-                  <thead>
-                    <tr>
+          <div className="master-table-container">
+            <table className="master-table generic-master-table">
+              <thead>
+                <tr>
+                  {columns.map((col, idx) => (
+                    <th key={idx} className={col.mobileHide ? 'col-mobile-hide' : ''}>{col.label}</th>
+                  ))}
+                  {showActionsColumn && <th>Actions</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {filteredData.length === 0 ? (
+                  <tr>
+                    <td colSpan={columns.length + (showActionsColumn ? 1 : 0)} style={{ textAlign: 'center' }}>
+                      No data available
+                    </td>
+                  </tr>
+                ) : (
+                  filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((item, index) => (
+                    <tr
+                      key={item._id || index}
+                      onClick={() => handleRowClick(item)}
+                      style={{ cursor: 'pointer' }}
+                      className="table-row-hover"
+                    >
                       {columns.map((col, idx) => (
-                        <th key={idx} className={col.mobileHide ? 'col-mobile-hide' : ''}>{col.label}</th>
-                      ))}
-                      {showActionsColumn && <th>Actions</th>}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredData.length === 0 ? (
-                      <tr>
-                        <td colSpan={columns.length + (showActionsColumn ? 1 : 0)} style={{ textAlign: 'center' }}>
-                          No data available
+                        <td key={idx} className={col.mobileHide ? 'col-mobile-hide' : ''}>
+                          {col.icon && <span className="icon">{col.icon}</span>}
+                          {col.render ? col.render(item) : item[col.field]}
                         </td>
-                      </tr>
-                    ) : (
-                      filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((item, index) => (
-                        <tr
-                          key={item._id || index}
-                          onClick={() => handleRowClick(item)}
-                          style={{ cursor: 'pointer' }}
-                          className="table-row-hover"
-                        >
-                          {columns.map((col, idx) => (
-                            <td key={idx} className={col.mobileHide ? 'col-mobile-hide' : ''}>
-                              {col.icon && <span className="icon">{col.icon}</span>}
-                              {col.render ? col.render(item) : item[col.field]}
-                            </td>
-                          ))}
-                          {showActionsColumn && (
-                            <td className="actions" onClick={(e) => e.stopPropagation()}>
-                              {showEditDeleteButtons && (
-                                <>
-                                  {(typeof showEditButton === 'function' ? showEditButton(item) : showEditButton) && (
-                                    <button className="btn-edit" onClick={() => handleEdit(item)}>
-                                      ✏️
-                                    </button>
-                                  )}
-                                  {(typeof showDeleteButton === 'function' ? showDeleteButton(item) : showDeleteButton) && (
-                                    <button className="btn-delete" onClick={() => handleDelete(item._id)}>
-                                      🗑️
-                                    </button>
-                                  )}
-                                </>
+                      ))}
+                      {showActionsColumn && (
+                        <td className="actions" onClick={(e) => e.stopPropagation()}>
+                          {/* ✅ CONDITIONALLY SHOW EDIT/DELETE BUTTONS */}
+                          {showEditDeleteButtons && (
+                            <>
+                              {(typeof showEditButton === 'function' ? showEditButton(item) : showEditButton) && (
+                                <button className="btn-edit" onClick={() => handleEdit(item)}>
+                                  ✏️
+                                </button>
                               )}
-                              {customActions && customActions(item)}
-                            </td>
+                              {(typeof showDeleteButton === 'function' ? showDeleteButton(item) : showDeleteButton) && (
+                                <button className="btn-delete" onClick={() => handleDelete(item._id)}>
+                                  🗑️
+                                </button>
+                              )}
+                            </>
                           )}
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                          {customActions && customActions(item)}
+                        </td>
+                      )}
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
 
-              {filteredData.length > itemsPerPage && (
-                <div className="master-pagination-footer">
-                  <div className="pagination-info">
-                    Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredData.length)} of {filteredData.length} entries
-                  </div>
-                  <div className="pagination-controls">
-                    <button
-                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                      disabled={currentPage === 1}
-                      className="btn-pagination"
-                    >
-                      Previous
-                    </button>
-                    <div className="page-number">
-                      Page {currentPage} of {Math.ceil(filteredData.length / itemsPerPage)}
-                    </div>
-                    <button
-                      onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredData.length / itemsPerPage), p + 1))}
-                      disabled={currentPage === Math.ceil(filteredData.length / itemsPerPage)}
-                      className="btn-pagination"
-                    >
-                      Next
-                    </button>
-                  </div>
+          {/* Pagination Controls */}
+          {filteredData.length > itemsPerPage && (
+            <div className="master-pagination-footer">
+              <div className="pagination-info">
+                Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredData.length)} of {filteredData.length} entries
+              </div>
+              <div className="pagination-controls">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="btn-pagination"
+                >
+                  Previous
+                </button>
+                <div className="page-number">
+                  Page {currentPage} of {Math.ceil(filteredData.length / itemsPerPage)}
                 </div>
-              )}
-            </>
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredData.length / itemsPerPage), p + 1))}
+                  disabled={currentPage === Math.ceil(filteredData.length / itemsPerPage)}
+                  className="btn-pagination"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
           )}
         </>
       )}
@@ -853,9 +849,17 @@ const GenericMaster = ({
             <form onSubmit={handleSubmit}>
               <div className="form-content">
                 {formFields.map((field, idx) => {
-                  if (field.visibleWhen && !field.visibleWhen(formData)) return null;
-                  if (field.hideOnEdit && editingItem) return null;
+                  // Support conditional visibility
+                  if (field.visibleWhen && !field.visibleWhen(formData)) {
+                    return null;
+                  }
 
+                  // ✅ Hide fields flagged for edit mode
+                  if (field.hideOnEdit && editingItem) {
+                    return null;
+                  }
+
+                  // Permission groups field type
                   if (field.type === 'permission-groups') {
                     return (
                       <div className="permission-groups-container" key={idx}>
@@ -894,6 +898,7 @@ const GenericMaster = ({
                   return (
                     <div className="form-group" key={idx}>
                       <label>{field.label} {field.required && <span className="required">*</span>}</label>
+
                       {field.type === 'select' ? (
                         <select
                           name={field.name}
@@ -934,7 +939,16 @@ const GenericMaster = ({
                             disabled={field.disabled}
                             showPopperArrow={false}
                           />
-                          <svg className="calendar-icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <svg
+                            className="calendar-icon-svg"
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
                             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                             <line x1="16" y1="2" x2="16" y2="6"></line>
                             <line x1="8" y1="2" x2="8" y2="6"></line>
@@ -943,82 +957,325 @@ const GenericMaster = ({
                         </div>
                       ) : field.type === 'image-upload' ? (
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-                          <div style={{ width: '120px', height: '120px', borderRadius: '50%', border: '3px dashed #cbd5e1', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f1f5f9', position: 'relative' }}>
-                            {uploadingPhoto ? <div style={{ textAlign: 'center', color: '#64748b', fontSize: '0.8rem' }}>⏳ Uploading...</div> : formData[field.name] ? <img src={formData[field.name]} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ textAlign: 'center', color: '#94a3b8', fontSize: '2.5rem' }}>👤</div>}
+                          <div style={{
+                            width: '120px',
+                            height: '120px',
+                            borderRadius: '50%',
+                            border: '3px dashed #cbd5e1',
+                            overflow: 'hidden',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            background: '#f1f5f9',
+                            position: 'relative'
+                          }}>
+                            {uploadingPhoto ? (
+                              <div style={{ textAlign: 'center', color: '#64748b', fontSize: '0.8rem' }}>⏳ Uploading...</div>
+                            ) : formData[field.name] ? (
+                              <img
+                                src={formData[field.name]}
+                                alt="Profile"
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                              />
+                            ) : (
+                              <div style={{ textAlign: 'center', color: '#94a3b8', fontSize: '2.5rem' }}>👤</div>
+                            )}
                           </div>
-                          <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.2rem', background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)', color: 'white', borderRadius: '8px', cursor: uploadingPhoto ? 'not-allowed' : 'pointer', fontSize: '0.9rem', fontWeight: '600', transition: 'transform 0.2s, box-shadow 0.2s', boxShadow: '0 2px 8px rgba(99, 102, 241, 0.3)', opacity: uploadingPhoto ? 0.7 : 1 }}>
+                          <label style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            padding: '0.6rem 1.2rem',
+                            background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                            color: 'white',
+                            borderRadius: '8px',
+                            cursor: uploadingPhoto ? 'not-allowed' : 'pointer',
+                            fontSize: '0.9rem',
+                            fontWeight: '600',
+                            transition: 'transform 0.2s, box-shadow 0.2s',
+                            boxShadow: '0 2px 8px rgba(99, 102, 241, 0.3)',
+                            opacity: uploadingPhoto ? 0.7 : 1
+                          }}
+                            onMouseOver={(e) => !uploadingPhoto && (e.currentTarget.style.transform = 'translateY(-1px)')}
+                            onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                          >
                             📷 {uploadingPhoto ? 'Uploading...' : (formData[field.name] ? 'Change Photo' : 'Upload Photo')}
-                            <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" style={{ display: 'none' }} disabled={uploadingPhoto} onChange={async (e) => {
-                              const file = e.target.files?.[0];
-                              if (!file) return;
-                              if (file.size > 5 * 1024 * 1024) { alert('❌ File size must be less than 5MB'); return; }
-                              setUploadingPhoto(true);
-                              try {
-                                const compressedFile = await compressImage(file);
-                                const fd = new FormData();
-                                fd.append('photo', compressedFile);
-                                const token = localStorage.getItem('token');
-                                const res = await fetch(`${import.meta.env.VITE_API_URL}/upload/profile-photo`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: fd });
-                                const result = await res.json();
-                                if (result.success) setFormData(prev => ({ ...prev, [field.name]: result.data.url }));
-                                else alert('❌ ' + (result.message || 'Upload failed'));
-                              } catch (err) { alert('❌ Failed to upload photo'); } finally { setUploadingPhoto(false); e.target.value = ''; }
-                            }} />
+                            <input
+                              type="file"
+                              accept="image/jpeg,image/png,image/webp,image/gif"
+                              style={{ display: 'none' }}
+                              disabled={uploadingPhoto}
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                if (file.size > 5 * 1024 * 1024) {
+                                  alert('❌ File size must be less than 5MB');
+                                  return;
+                                }
+                                setUploadingPhoto(true);
+                                try {
+                                  // Compress the image to < 1MB
+                                  const compressedFile = await compressImage(file);
+                                  
+                                  const fd = new FormData();
+                                  fd.append('photo', compressedFile);
+                                  const token = localStorage.getItem('token');
+                                  const res = await fetch(`${import.meta.env.VITE_API_URL}/upload/profile-photo`, {
+                                    method: 'POST',
+                                    headers: { 'Authorization': `Bearer ${token}` },
+                                    body: fd
+                                  });
+                                  const result = await res.json();
+                                  if (result.success) {
+                                    setFormData(prev => ({ ...prev, [field.name]: result.data.url }));
+                                  } else {
+                                    alert('❌ ' + (result.message || 'Upload failed'));
+                                  }
+                                } catch (err) {
+                                  console.error('Upload error:', err);
+                                  alert('❌ Failed to upload photo');
+                                } finally {
+                                  setUploadingPhoto(false);
+                                  e.target.value = '';
+                                }
+                              }}
+                            />
                           </label>
-                          {formData[field.name] && <button type="button" onClick={() => setFormData(prev => ({ ...prev, [field.name]: '' }))} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500' }}>🗑️ Remove Photo</button>}
+                          {formData[field.name] && (
+                            <button
+                              type="button"
+                              onClick={() => setFormData(prev => ({ ...prev, [field.name]: '' }))}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                color: '#ef4444',
+                                cursor: 'pointer',
+                                fontSize: '0.85rem',
+                                fontWeight: '500'
+                              }}
+                            >
+                              🗑️ Remove Photo
+                            </button>
+                          )}
                         </div>
                       ) : field.type === 'location-button' ? (
-                        <button type="button" onClick={handleGetLocation} disabled={loadingLocation} style={{ width: '100%', padding: '0.75rem', background: loadingLocation ? '#ccc' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '1rem', cursor: loadingLocation ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                        <button
+                          type="button"
+                          onClick={handleGetLocation}
+                          disabled={loadingLocation}
+                          style={{
+                            width: '100%',
+                            padding: '0.75rem',
+                            background: loadingLocation
+                              ? '#ccc'
+                              : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            fontSize: '1rem',
+                            cursor: loadingLocation ? 'not-allowed' : 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.5rem',
+                            transition: 'transform 0.2s',
+                          }}
+                          onMouseOver={(e) => !loadingLocation && (e.target.style.transform = 'scale(1.02)')}
+                          onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
+                        >
                           📍 {loadingLocation ? 'Getting Location...' : 'Get Current Location'}
                         </button>
                       ) : (
-                        <input type={field.type || 'text'} name={field.name} value={formData[field.name] || ''} onChange={handleInputChange} required={field.required} placeholder={field.placeholder} step={field.step} min={field.min} max={field.max} disabled={field.disabled} className={field.errorText && field.errorText(formData) ? 'input-error' : ''} />
+                        <input
+                          type={field.type || 'text'}
+                          name={field.name}
+                          value={formData[field.name] || ''}
+                          onChange={handleInputChange}
+                          required={field.required}
+                          placeholder={field.placeholder}
+                          step={field.step}
+                          min={field.min}
+                          max={field.max}
+                          disabled={field.disabled}
+                          className={field.errorText && field.errorText(formData) ? 'input-error' : ''}
+                        />
+                      )}
+                      {field.errorText && field.errorText(formData) && (
+                        <span className="field-error">{field.errorText(formData)}</span>
+                      )}
+                      {field.helperText && field.helperText(formData) && (
+                        <span className="field-helper">{field.helperText(formData)}</span>
                       )}
                     </div>
                   );
                 })}
               </div>
+
               <div className="modal-footer">
-                <button type="button" className="btn-cancel" onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="submit" className="btn-save">{editingItem ? 'Update' : 'Save & Close'}</button>
+                <button type="button" className="btn-cancel" onClick={() => setShowModal(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn-save">
+                  {editingItem ? 'Update' : 'Save & Close'}
+                </button>
               </div>
             </form>
           </div>
         </div>
       )}
 
+      {/* ✅ VIEW MODAL WITH FOLLOW-UP BUTTON */}
       {showViewModal && viewingItem && (
         <div className="modal-overlay" onClick={() => setShowViewModal(false)}>
-          <div className="modal-content view-modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+          <div
+            className="modal-content view-modal-content"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: '600px' }}
+          >
             <div className="modal-header">
-              <h2>👁️ View Details</h2>
+              <h2>👁️ View {title.replace(' Master', '').replace(' Management', '')} Details</h2>
               <button className="btn-close" onClick={() => setShowViewModal(false)}>✕</button>
             </div>
-            <div className="form-content view-form-content" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
-              {formFields.filter(f => f.type !== 'location-button').map((field, idx) => {
-                const value = viewingItem[field.name];
-                let displayValue = '-';
-                if (field.displayValue) displayValue = field.displayValue(viewingItem);
-                else if (value !== null && value !== undefined && value !== '') {
-                  if (field.type === 'image-upload') displayValue = value;
-                  else if (field.type === 'select' && field.options) {
-                    const option = field.options.find(opt => opt.value === value || opt.value === value?._id);
-                    displayValue = option ? option.label : (typeof value === 'object' ? value.name || value.planName || value._id : value);
-                  } else if (field.type === 'date') displayValue = new Date(value).toLocaleDateString();
-                  else displayValue = typeof value === 'object' ? value.name || value._id : String(value);
-                }
-                return (
-                  <div key={idx} className="view-detail-row" style={{ marginBottom: '0.75rem', display: 'grid', gridTemplateColumns: '40% 60%', gap: '1rem', borderBottom: '1px solid #e5e7eb', padding: '0.75rem', background: idx % 2 === 0 ? '#f8fafc' : '#ffffff', borderRadius: '6px' }}>
-                    <div style={{ fontWeight: '600', color: '#1e293b' }}>{field.label}:</div>
-                    <div>{field.type === 'image-upload' && displayValue !== '-' ? <img src={displayValue} alt="Profile" style={{ width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover' }} /> : displayValue}</div>
-                  </div>
-                );
-              })}
+
+            <div
+              className="form-content view-form-content"
+              style={{
+                maxHeight: '60vh',
+                overflowY: 'auto',
+              }}
+            >
+              {formFields
+                .filter(f => f.type !== 'location-button')
+                .map((field, idx) => {
+                  const value = viewingItem[field.name];
+                  let displayValue = '-';
+
+                  if (field.displayValue && typeof field.displayValue === 'function') {
+                    displayValue = field.displayValue(viewingItem);
+                  } else if (value !== null && value !== undefined && value !== '') {
+                    if (field.type === 'image-upload') {
+                      displayValue = value;
+                    } else if (field.type === 'number') {
+                      displayValue = String(value);
+                    } else if (field.type === 'select' && field.options) {
+                      const option = field.options.find(opt => opt.value === value || opt.value === value?._id);
+                      displayValue = option ? option.label : (typeof value === 'object' ? value.name || value.planName || value._id : value);
+                    } else if (field.type === 'date') {
+                      try {
+                        const date = new Date(value);
+                        if (!isNaN(date.getTime())) {
+                          displayValue = date.toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          });
+                        } else {
+                          displayValue = '-';
+                        }
+                      } catch (error) {
+                        console.error('Date parsing error:', error);
+                        displayValue = '-';
+                      }
+                    } else if (typeof value === 'object' && value !== null) {
+                      displayValue = value.name || value.planName || value.designationName || value.shiftName || value.branchName || value._id || String(value);
+                    } else {
+                      displayValue = String(value);
+                    }
+                  }
+
+                  return (
+                    <div
+                      key={idx}
+                      className="view-detail-row"
+                      style={{
+                        marginBottom: '0.75rem',
+                        display: 'grid',
+                        gridTemplateColumns: '40% 60%',
+                        gap: '1rem',
+                        borderBottom: '1px solid #e5e7eb',
+                        paddingBottom: '0.75rem',
+                        padding: '0.75rem',
+                        background: idx % 2 === 0 ? '#f8fafc' : '#ffffff',
+                        borderRadius: '6px'
+                      }}
+                    >
+                      <div style={{
+                        fontWeight: '600',
+                        color: '#1e293b',
+                        fontSize: '0.95rem'
+                      }}>
+                        {field.label}:
+                      </div>
+                      <div style={{
+                        color: '#334155',
+                        fontSize: '0.95rem',
+                        wordBreak: 'break-word'
+                      }}>
+                        {field.type === 'image-upload' && displayValue && displayValue !== '-' ? (
+                          <img
+                            src={displayValue}
+                            alt="Profile"
+                            style={{
+                              width: '80px',
+                              height: '80px',
+                              borderRadius: '50%',
+                              objectFit: 'cover',
+                              border: '2px solid #e2e8f0'
+                            }}
+                          />
+                        ) : displayValue}
+                      </div>
+                    </div>
+                  );
+                })}
             </div>
+
+            {/* ✅ MODAL FOOTER WITH FOLLOW-UP BUTTON */}
             <div className="modal-footer">
-              {onAddFollowUp && <button type="button" onClick={() => { setShowViewModal(false); onAddFollowUp(viewingItem); }} style={{ background: '#f59e0b', color: 'white', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '8px', cursor: 'pointer' }}>📝 Add Follow-up</button>}
-              <button type="button" className="btn-cancel" onClick={() => setShowViewModal(false)}>Close</button>
-              <button type="button" className="btn-save" onClick={() => { setShowViewModal(false); handleEdit(viewingItem); }}>✏️ Edit</button>
+              {/* ✅ Add Follow-up Button (only if onAddFollowUp prop exists) */}
+              {onAddFollowUp && (typeof showFollowUpButton === 'function' ? showFollowUpButton(viewingItem) : showFollowUpButton) && (
+                <button
+                  type="button"
+                  className="btn-followup"
+                  onClick={() => {
+                    setShowViewModal(false);
+                    onAddFollowUp(viewingItem);
+                  }}
+                  style={{
+                    background: '#f59e0b',
+                    color: 'white',
+                    border: 'none',
+                    padding: '0.75rem 1.5rem',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontWeight: '600',
+                    marginRight: 'auto',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseOver={(e) => {
+                    e.target.style.background = '#d97706';
+                    e.target.style.transform = 'translateY(-2px)';
+                  }}
+                  onMouseOut={(e) => {
+                    e.target.style.background = '#f59e0b';
+                    e.target.style.transform = 'translateY(0)';
+                  }}
+                >
+                  📝 Add Follow-up
+                </button>
+              )}
+
+              <button type="button" className="btn-cancel" onClick={() => setShowViewModal(false)}>
+                Close
+              </button>
+              {(typeof showEditButton === 'function' ? showEditButton(viewingItem) : showEditButton) && (
+                <button type="button" className="btn-save" onClick={() => {
+                  setShowViewModal(false);
+                  handleEdit(viewingItem);
+                }}>
+                  ✏️ Edit
+                </button>
+              )}
             </div>
           </div>
         </div>

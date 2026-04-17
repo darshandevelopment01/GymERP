@@ -106,9 +106,9 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
   let logoY = currentY - 50;
   try {
     const logoPaths = [
-      path.join(__dirname, '../assets/muscle_time.jpeg'),
-      path.join(__dirname, '../../src/assets/muscle_time.jpeg'),
-      'src/assets/muscle_time.jpeg'
+      path.join(__dirname, '../assets/logo.png'),
+      path.join(__dirname, '../../src/assets/logo.png'),
+      'src/assets/logo.png'
     ];
     let logoBuffer;
     for (const p of logoPaths) {
@@ -118,7 +118,7 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
       }
     }
     if (logoBuffer) {
-      const logoImage = await pdfDoc.embedJpg(logoBuffer);
+      const logoImage = await pdfDoc.embedPng(logoBuffer);
       const logoDims = logoImage.scale(0.12);
       page.drawImage(logoImage, {
         x: 50,
@@ -126,8 +126,8 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
         width: logoDims.width,
         height: logoDims.height,
       });
-      // Brand name below logo (left)
-      page.drawText('Muscle Time Fitness', { x: 50, y: logoY - 15, size: 11, font: boldFont, color: brandRed });
+      // Brand name below logo (left) - REMOVED AS PER REQUEST
+      // page.drawText('Muscle Time Fitness', { x: 50, y: logoY - 15, size: 11, font: boldFont, color: brandRed });
     }
   } catch (err) {
     console.error('Logo error:', err);

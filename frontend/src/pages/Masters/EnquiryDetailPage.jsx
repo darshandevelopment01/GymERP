@@ -627,7 +627,7 @@ const EnquiryDetailPage = () => {
                 <div className="info-label">
                   <span className="label-text">Enquiry Date</span>
                   <span className="value-text">
-                    {enquiry.createdAt ? new Date(enquiry.createdAt).toLocaleDateString() : 'N/A'}
+                    {enquiry.createdAt ? new Date(enquiry.createdAt).toLocaleDateString('en-GB') : 'N/A'}
                   </span>
                 </div>
               </div>
@@ -702,11 +702,11 @@ const EnquiryDetailPage = () => {
                       <div className="followup-note">{fu.note}</div>
                       <div className="followup-meta">
                         <span className="followup-date">
-                          📅 {new Date(fu.createdAt).toLocaleDateString()}
+                          📅 {new Date(fu.createdAt).toLocaleDateString('en-GB')}
                         </span>
                         {fu.followUpDate && fu.status === 'pending' && (
                           <span className="next-date-badge">
-                            Next: {new Date(fu.followUpDate).toLocaleDateString()}
+                            Next: {new Date(fu.followUpDate).toLocaleDateString('en-GB')}
                           </span>
                         )}
                         <span className={`fu-status-label ${fu.status}`}>{fu.status}</span>
