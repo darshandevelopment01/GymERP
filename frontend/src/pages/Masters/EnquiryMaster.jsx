@@ -77,6 +77,7 @@ const EnquiryMaster = () => {
   const [liveDuplicate, setLiveDuplicate] = useState(null);
   const [checkingDuplicate, setCheckingDuplicate] = useState(false);
   const [activeStatusFilter, setActiveStatusFilter] = useState(location.state?.filterStatus || '');
+  const [submittingFollowUp, setSubmittingFollowUp] = useState(false);
 
   // ✅ Handle external filter status from navigation state or stat card clicks
   const externalFilters = React.useMemo(() => {
@@ -268,13 +269,9 @@ const EnquiryMaster = () => {
 
   const handleFollowUpSubmit = async (e) => {
     e.preventDefault();
-
-    if (!followUpData.note.trim()) {
-      alert('Please enter follow-up notes');
-      return;
-    }
-
+    if (!followUpData.note.trim()) return alert('Note is required');
     try {
+      setSubmittingFollowUp(true);
       await followupApi.create({
         enquiry: selectedEnquiryForFollowUp._id,
         note: followUpData.note,
@@ -670,13 +667,21 @@ const EnquiryMaster = () => {
               <div className="field-helper-text">
                 <span>⚠️ This mobile number is already registered in our system.</span>
               </div>
-              <a href={`/enquiry/${liveDuplicate._id}`} target="_blank" rel="noreferrer" className="field-helper-btn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <button 
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate(`/enquiry/${liveDuplicate._id}`);
+                }} 
+                className="field-helper-btn"
+                style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: '5px' }}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '16px', height: '16px' }}>
                   <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                   <circle cx="12" cy="12" r="3"></circle>
                 </svg>
                 View Existing Enquiry
-              </a>
+              </button>
             </div>
           );
         }
@@ -709,13 +714,21 @@ const EnquiryMaster = () => {
               <div className="field-helper-text">
                 <span>⚠️ This email address is already registered in our system.</span>
               </div>
-              <a href={`/enquiry/${liveDuplicate._id}`} target="_blank" rel="noreferrer" className="field-helper-btn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <button 
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate(`/enquiry/${liveDuplicate._id}`);
+                }} 
+                className="field-helper-btn"
+                style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: '5px' }}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '16px', height: '16px' }}>
                   <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                   <circle cx="12" cy="12" r="3"></circle>
                 </svg>
                 View Existing Enquiry
-              </a>
+              </button>
             </div>
           );
         }
@@ -1485,17 +1498,18 @@ const EnquiryMaster = () => {
                 <button
                   type="submit"
                   className="btn-save"
+                  disabled={submittingFollowUp}
                   style={{
                     background: 'white',
                     color: '#10b981',
                     border: 'none',
                     padding: '0.75rem 1.5rem',
                     borderRadius: '8px',
-                    cursor: 'pointer',
+                    cursor: submittingFollowUp ? 'not-allowed' : 'pointer',
                     fontWeight: '600'
                   }}
                 >
-                  💾 Save Follow-up
+                  {submittingFollowUp ? '⏳ Saving...' : '💾 Save Follow-up'}
                 </button>
               </div>
             </form>

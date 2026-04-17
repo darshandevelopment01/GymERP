@@ -212,9 +212,9 @@ body {
   transition: transform 0.3s ease;
   z-index: 1001; /* Above overlay */
   
-  /* Ensure no scrollbar shows up on the sidebar itself */
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+  /* Ensure scrollbar shows up on the sidebar when needed */
+  -ms-overflow-style: auto;
+  scrollbar-width: thin;
 }
 
 @media (max-width: 1024px) {
@@ -237,7 +237,11 @@ body {
 }
 
 .sidebar::-webkit-scrollbar {
-  display: none;
+  width: 6px;
+}
+.sidebar::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
 }
 
 .sidebar-header {
@@ -286,12 +290,16 @@ body {
   padding: 0 12px;
   min-height: 0;
   /* Allow flex child to shrink below its content size */
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: auto;  /* IE and Edge */
+  scrollbar-width: thin;  /* Firefox */
 }
 
 .sidebar-menu::-webkit-scrollbar {
-  display: none; /* Chrome, Safari and Opera */
+  width: 6px;
+}
+.sidebar-menu::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
 }
 
 /* Style scrollbar for the main scrollable area */

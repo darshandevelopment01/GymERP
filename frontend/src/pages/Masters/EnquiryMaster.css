@@ -196,13 +196,14 @@
 
 /* Status Badges */
 .status-badge {
-  padding: 0.45rem 1rem;
+  padding: 0.6rem 1.25rem;
   border-radius: 20px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  letter-spacing: 0.3px;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
   display: inline-block;
   text-transform: capitalize;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .status-pending {

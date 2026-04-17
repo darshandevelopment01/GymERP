@@ -69,6 +69,7 @@ const EnquiryDetailPage = () => {
   // Follow-up state
   const [followUpData, setFollowUpData] = useState({ note: '', followUpDate: null, followUpTime: '', status: 'pending' });
   const [editingFollowUp, setEditingFollowUp] = useState(null);
+  const [submittingFollowUp, setSubmittingFollowUp] = useState(false);
 
   // Enquiry Edit state
   const [editFormData, setEditFormData] = useState({});
@@ -462,9 +463,9 @@ const EnquiryDetailPage = () => {
   };
 
   const handleFollowUpSubmit = async (e) => {
-    e.preventDefault();
     if (!followUpData.note.trim()) return alert('Note is required');
     try {
+      setSubmittingFollowUp(true);
       const data = {
         ...followUpData,
         enquiry: id,
@@ -480,9 +481,9 @@ const EnquiryDetailPage = () => {
       }
       setShowFollowUpModal(false);
       fetchData();
-    } catch (err) {
-      console.error(err);
       alert('Failed to save follow-up');
+    } finally {
+      setSubmittingFollowUp(false);
     }
   };
 
@@ -1117,8 +1118,8 @@ const EnquiryDetailPage = () => {
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn-cancel" onClick={() => setShowFollowUpModal(false)}>Cancel</button>
-                <button type="submit" className="btn-save">
-                  {editingFollowUp ? 'Update Follow-up' : 'Add Follow-up'}
+                <button type="submit" className="btn-save" disabled={submittingFollowUp}>
+                  {submittingFollowUp ? '⏳ Saving...' : (editingFollowUp ? 'Update Follow-up' : 'Add Follow-up')}
                 </button>
               </div>
             </form>
