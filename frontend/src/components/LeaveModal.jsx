@@ -1,17 +1,18 @@
 // frontend/src/components/LeaveModal.jsx
-import React, { useState, useEffect } from 'react';
-import { X, Calendar, User, FileText } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { X, Calendar, User, FileText, Search, UserCircle } from 'lucide-react';
 import attendanceApi from '../services/attendanceApi';
 import memberApi from '../services/memberApi';
-import { employeeAPI } from '../services/mastersApi';
 
 const LeaveModal = ({ onClose, onSuccess }) => {
-  const [type, setType] = useState('member');
   const [people, setPeople] = useState([]);
   const [loading, setLoading] = useState(false);
   
   // Form state
-  const [selectedPerson, setSelectedPerson] = useState('');
+  const [selectedPerson, setSelectedPerson] = useState(null); // Full person object
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showResults, setShowResults] = useState(false);
+  
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
   const [reason, setReason] = useState('');
@@ -20,13 +21,8 @@ const LeaveModal = ({ onClose, onSuccess }) => {
     const fetchPeople = async () => {
       setLoading(true);
       try {
-        if (type === 'member') {
-          const res = await memberApi.getAll();
-          setPeople(res.members || res.data || []);
-        } else {
-          const res = await employeeAPI.getAll();
-          setPeople(res || []);
-        }
+        const res = await memberApi.getAll();
+        setPeople(res.members || res.data || []);
       } catch (err) {
         console.error('Fetch error:', err);
       } finally {
@@ -34,16 +30,24 @@ const LeaveModal = ({ onClose, onSuccess }) => {
       }
     };
     fetchPeople();
-  }, [type]);
+  }, []);
+
+  const filteredPeople = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    return people.filter(p => 
+      p.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      p.memberId?.toLowerCase().includes(searchQuery.toLowerCase())
+    ).slice(0, 5); // Limit to top 5 matches
+  }, [people, searchQuery]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!selectedPerson) return alert('Please select a person');
+    if (!selectedPerson) return alert('Please select a member');
 
     try {
       await attendanceApi.applyLeave({
-        personId: selectedPerson,
-        personType: type,
+        personId: selectedPerson._id,
+        personType: 'member',
         startDate,
         endDate,
         reason
@@ -61,100 +65,149 @@ const LeaveModal = ({ onClose, onSuccess }) => {
       backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 2000
     }}>
       <div className="modal-content" style={{
-        background: 'white', padding: '2rem', borderRadius: '16px', width: '90%', maxWidth: '500px',
+        background: 'white', padding: '2rem', borderRadius: '24px', width: '90%', maxWidth: '500px',
         boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', position: 'relative'
       }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: '700' }}>Apply Leave Request</h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem', alignItems: 'center' }}>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#111827' }}>Apply Member Leave</h2>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}>
             <X size={24} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', marginBottom: '0.5rem' }}>Leave For</label>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button 
-                type="button" 
-                onClick={() => setType('member')}
-                style={{
-                  flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid #e2e8f0',
-                  backgroundColor: type === 'member' ? '#1ccaa1' : 'white',
-                  color: type === 'member' ? 'white' : '#64748b', fontWeight: '600',
-                  boxSizing: 'border-box'
-                }}
-              >Member</button>
-              <button 
-                type="button" 
-                onClick={() => setType('employee')}
-                style={{
-                  flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid #e2e8f0',
-                  backgroundColor: type === 'employee' ? '#1ccaa1' : 'white',
-                  color: type === 'employee' ? 'white' : '#64748b', fontWeight: '600',
-                  boxSizing: 'border-box'
-                }}
-              >Employee</button>
-            </div>
-          </div>
-
-          <div>
-            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', marginBottom: '0.5rem' }}>Select {type}</label>
-            <select 
-              value={selectedPerson} 
-              onChange={(e) => setSelectedPerson(e.target.value)}
-              style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', boxSizing: 'border-box' }}
-              disabled={loading}
-              required
-            >
-              <option value="">-- Select {type} --</option>
-              {people.map(p => (
-                <option key={p._id} value={p._id}>{p.name} ({p.memberId || p.employeeCode})</option>
-              ))}
-            </select>
+            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '700', color: '#374151', marginBottom: '0.5rem' }}>
+              Select Member
+            </label>
+            
+            {!selectedPerson ? (
+              <div className="search-select-container">
+                <div className="search-input-wrapper" style={{ position: 'relative' }}>
+                  <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                  <input 
+                    type="text"
+                    placeholder="Search by name or member ID..."
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setShowResults(true);
+                    }}
+                    onFocus={() => setShowResults(true)}
+                    style={{ 
+                      width: '100%', padding: '12px 12px 12px 40px', borderRadius: '12px', 
+                      border: '2px solid #e5e7eb', outline: 'none', fontSize: '1rem',
+                      boxSizing: 'border-box'
+                    }}
+                    autoComplete="off"
+                  />
+                </div>
+                
+                {showResults && searchQuery.trim() && (
+                  <div className="search-select-results">
+                    {filteredPeople.length > 0 ? (
+                      filteredPeople.map(p => (
+                        <div 
+                          key={p._id} 
+                          className="search-select-item"
+                          onClick={() => {
+                            setSelectedPerson(p);
+                            setShowResults(false);
+                            setSearchQuery('');
+                          }}
+                        >
+                          <div style={{ fontWeight: '600' }}>{p.name}</div>
+                          <div style={{ fontSize: '0.75rem', color: '#64748b' }}>ID: {p.memberId}</div>
+                        </div>
+                      ))
+                    ) : (
+                      <div style={{ padding: '12px', fontSize: '0.875rem', color: '#94a3b8', textAlign: 'center' }}>
+                        No members found
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="selected-person-chip">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <UserCircle size={32} color="#1ccaa1" />
+                  <div>
+                    <div style={{ fontWeight: '700', color: '#111827' }}>{selectedPerson.name}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{selectedPerson.memberId}</div>
+                  </div>
+                </div>
+                <button 
+                  type="button"
+                  onClick={() => setSelectedPerson(null)}
+                  style={{ background: '#fee2e2', color: '#ef4444', border: 'none', padding: '6px', borderRadius: '50%', cursor: 'pointer', display: 'flex' }}
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            )}
           </div>
 
           <div style={{ display: 'flex', gap: '1rem' }}>
             <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', marginBottom: '0.5rem' }}>Start Date</label>
-              <input 
-                type="date" 
-                value={startDate} 
-                onChange={(e) => setStartDate(e.target.value)}
-                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', boxSizing: 'border-box' }}
-                required
-              />
+              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '700', color: '#374151', marginBottom: '0.5rem' }}>Start Date</label>
+              <div style={{ position: 'relative' }}>
+                <Calendar size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none' }} />
+                <input 
+                  type="date" 
+                  value={startDate} 
+                  onChange={(e) => setStartDate(e.target.value)}
+                  style={{ 
+                    width: '100%', padding: '12px 12px 12px 40px', borderRadius: '12px', 
+                    border: '2px solid #e5e7eb', boxSizing: 'border-box', outline: 'none'
+                  }}
+                  required
+                />
+              </div>
             </div>
             <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', marginBottom: '0.5rem' }}>End Date</label>
-              <input 
-                type="date" 
-                value={endDate} 
-                onChange={(e) => setEndDate(e.target.value)}
-                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', boxSizing: 'border-box' }}
-                required
-              />
+              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '700', color: '#374151', marginBottom: '0.5rem' }}>End Date</label>
+              <div style={{ position: 'relative' }}>
+                <Calendar size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none' }} />
+                <input 
+                  type="date" 
+                  value={endDate} 
+                  onChange={(e) => setEndDate(e.target.value)}
+                  style={{ 
+                    width: '100%', padding: '12px 12px 12px 40px', borderRadius: '12px', 
+                    border: '2px solid #e5e7eb', boxSizing: 'border-box', outline: 'none'
+                  }}
+                  required
+                />
+              </div>
             </div>
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', marginBottom: '0.5rem' }}>Reason for Leave</label>
-            <textarea 
-              value={reason} 
-              onChange={(e) => setReason(e.target.value)}
-              placeholder="Explain why you are taking leave..."
-              style={{ 
-                width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', 
-                minHeight: '100px', boxSizing: 'border-box', fontFamily: 'inherit' 
-              }}
-              required
-            />
+            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '700', color: '#374151', marginBottom: '0.5rem' }}>Reason for Leave</label>
+            <div style={{ position: 'relative' }}>
+              <FileText size={18} style={{ position: 'absolute', left: '12px', top: '15px', color: '#94a3b8', pointerEvents: 'none' }} />
+              <textarea 
+                value={reason} 
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="Explain why the member is taking leave..."
+                style={{ 
+                  width: '100%', padding: '12px 12px 12px 40px', borderRadius: '12px', border: '2px solid #e5e7eb', 
+                  minHeight: '100px', boxSizing: 'border-box', outline: 'none', fontFamily: 'inherit', resize: 'vertical'
+                }}
+                required
+              />
+            </div>
           </div>
 
           <button 
             type="submit" 
             className="btn-primary" 
-            style={{ width: '100%', marginTop: '1rem', justifyContent: 'center' }}
+            style={{ 
+              width: '100%', marginTop: '0.5rem', justifyContent: 'center', height: '48px',
+              fontSize: '1rem', borderRadius: '14px'
+            }}
+            disabled={!selectedPerson}
           >
             Submit Leave Request
           </button>

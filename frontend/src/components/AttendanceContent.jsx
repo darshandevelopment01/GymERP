@@ -14,9 +14,7 @@ import {
   Filter,
   CheckCircle,
   XCircle,
-  AlertCircle,
-  Check,
-  X
+  AlertCircle
 } from 'lucide-react';
 import attendanceApi from '../services/attendanceApi';
 import memberApi from '../services/memberApi';
@@ -185,25 +183,27 @@ const AttendanceContent = () => {
         <div className="header-actions">
           <div className="filter-group">
              <button 
-              className="btn-secondary"
+              className="btn-secondary btn-icon"
               onClick={() => setSelectedDate(new Date(selectedDate.setDate(selectedDate.getDate() - 1)))}
+              title="Previous Day"
             >
-              <ChevronLeft size={18} />
+              <ChevronLeft size={20} />
             </button>
             <button 
-              className="btn-secondary"
+              className="btn-secondary btn-icon"
               onClick={() => setSelectedDate(new Date(selectedDate.setDate(selectedDate.getDate() + 1)))}
+              title="Next Day"
             >
-              <ChevronRight size={18} />
+              <ChevronRight size={20} />
             </button>
           </div>
           
-          <button className="btn-primary" onClick={() => setIsLeaveModalOpen(true)}>
+          <button className="btn-primary btn-sm" onClick={() => setIsLeaveModalOpen(true)}>
             <Plus size={18} /> Apply Leave
           </button>
           
           {isAdmin && (
-            <button className="btn-secondary gym-qr-btn" onClick={() => setIsQrModalOpen(true)}>
+            <button className="btn-secondary btn-sm gym-qr-btn" onClick={() => setIsQrModalOpen(true)}>
               <QrCode size={18} /> Gym QR
             </button>
           )}
@@ -275,7 +275,7 @@ const AttendanceContent = () => {
           <Search size={18} />
           <input 
             type="text" 
-            placeholder={`Search ${activeTab}s by name or ID...`}
+            placeholder={`Search ${activeTab}s...`}
             className="search-input"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -340,14 +340,14 @@ const AttendanceContent = () => {
                         title="Mark Present"
                         onClick={() => handleMarkAttendance(person._id, 'present')}
                       >
-                        <Check size={16} />
+                        P
                       </button>
                       <button 
                         className={`mark-btn mark-absent ${person.todayAttendance?.status === 'absent' ? 'active' : ''}`}
                         title="Mark Absent"
                         onClick={() => handleMarkAttendance(person._id, 'absent')}
                       >
-                        <X size={16} />
+                        A
                       </button>
                     </div>
                   </td>

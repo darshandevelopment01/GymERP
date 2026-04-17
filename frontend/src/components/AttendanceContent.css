@@ -32,7 +32,15 @@
 
 .header-actions {
   display: flex;
+  align-items: center;
   gap: 0.75rem;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 .stats-grid {
@@ -245,7 +253,7 @@
 .mark-btn {
   width: 32px;
   height: 32px;
-  border-radius: 6px;
+  border-radius: 8px;
   border: 1px solid #e2e8f0;
   background: white;
   display: flex;
@@ -254,6 +262,8 @@
   cursor: pointer;
   transition: all 0.2s;
   color: #94a3b8;
+  font-weight: 700;
+  font-size: 1rem;
 }
 
 .mark-present:hover { border-color: #10b981; color: #10b981; background: #ecfdf5; }
@@ -340,7 +350,7 @@
   background: #f1f5f9;
   color: #475569;
   border: 1px solid #e2e8f0;
-  padding: 0.6rem 1.25rem;
+  padding: 0.4rem 0.75rem;
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
@@ -348,6 +358,63 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
+}
+
+.btn-sm {
+  padding: 0.4rem 0.8rem !important;
+  font-size: 0.85rem !important;
+}
+
+.btn-icon {
+  width: 34px !important;
+  height: 34px !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Leave Searchable Select */
+.search-select-container {
+  position: relative;
+  width: 100%;
+}
+
+.search-select-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  margin-top: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 2100;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.search-select-item {
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.search-select-item:hover {
+  background: #f8fafc;
+  color: #1ccaa1;
+}
+
+.selected-person-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f1f5f9;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
 }
 
 /* Leave Actions */
@@ -387,6 +454,7 @@
   
   .header-actions {
     width: 100%;
+    flex-wrap: wrap;
   }
   
   .btn-primary, .btn-secondary {
