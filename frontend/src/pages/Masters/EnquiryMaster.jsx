@@ -79,9 +79,17 @@ const EnquiryMaster = () => {
   const [activeStatusFilter, setActiveStatusFilter] = useState(location.state?.filterStatus || '');
   const [submittingFollowUp, setSubmittingFollowUp] = useState(false);
 
-  // ✅ Handle external filter status from navigation state or stat card clicks
+  // ✅ Handle external filters (defaulting to current month: 1st to last day)
   const externalFilters = React.useMemo(() => {
-    return { status: activeStatusFilter };
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+    
+    return { 
+      status: activeStatusFilter,
+      startDate: firstDay,
+      endDate: lastDay
+    };
   }, [activeStatusFilter]);
 
   // ✅ Debounced Duplicate Check
@@ -288,6 +296,8 @@ const EnquiryMaster = () => {
     } catch (error) {
       console.error('Error adding follow-up:', error);
       alert('❌ Failed to add follow-up. Please try again.');
+    } finally {
+      setSubmittingFollowUp(false);
     }
   };
 
@@ -671,7 +681,8 @@ const EnquiryMaster = () => {
                 type="button"
                 onClick={(e) => {
                   e.preventDefault();
-                  navigate(`/enquiry/${liveDuplicate._id}`);
+                  // Force hard navigation to ensure modal state is cleared
+                  window.location.href = `/enquiry/${liveDuplicate._id}`;
                 }} 
                 className="field-helper-btn"
                 style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: '5px' }}
@@ -718,7 +729,8 @@ const EnquiryMaster = () => {
                 type="button"
                 onClick={(e) => {
                   e.preventDefault();
-                  navigate(`/enquiry/${liveDuplicate._id}`);
+                  // Force hard navigation to ensure modal state is cleared
+                  window.location.href = `/enquiry/${liveDuplicate._id}`;
                 }} 
                 className="field-helper-btn"
                 style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: '5px' }}

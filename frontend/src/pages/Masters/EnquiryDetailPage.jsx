@@ -463,6 +463,7 @@ const EnquiryDetailPage = () => {
   };
 
   const handleFollowUpSubmit = async (e) => {
+    if (e) e.preventDefault();
     if (!followUpData.note.trim()) return alert('Note is required');
     try {
       setSubmittingFollowUp(true);
@@ -481,6 +482,8 @@ const EnquiryDetailPage = () => {
       }
       setShowFollowUpModal(false);
       fetchData();
+    } catch (error) {
+      console.error('Error saving follow-up:', error);
       alert('Failed to save follow-up');
     } finally {
       setSubmittingFollowUp(false);
