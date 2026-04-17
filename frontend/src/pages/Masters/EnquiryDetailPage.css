@@ -307,7 +307,7 @@
 }
 
 .followup-note {
-  font-size: 0.95rem;
+  font-size: 1.05rem;
   color: #1f2937;
   line-height: 1.5;
 }
@@ -316,7 +316,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   color: #6b7280;
 }
 

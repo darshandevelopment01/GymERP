@@ -79,17 +79,9 @@ const EnquiryMaster = () => {
   const [activeStatusFilter, setActiveStatusFilter] = useState(location.state?.filterStatus || '');
   const [submittingFollowUp, setSubmittingFollowUp] = useState(false);
 
-  // ✅ Handle external filters (defaulting to current month: 1st to last day)
+  // ✅ Handle external filters
   const externalFilters = React.useMemo(() => {
-    const now = new Date();
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
-    
-    return { 
-      status: activeStatusFilter,
-      startDate: firstDay,
-      endDate: lastDay
-    };
+    return activeStatusFilter ? { status: activeStatusFilter } : {};
   }, [activeStatusFilter]);
 
   // ✅ Debounced Duplicate Check
@@ -277,6 +269,7 @@ const EnquiryMaster = () => {
 
   const handleFollowUpSubmit = async (e) => {
     e.preventDefault();
+    if (submittingFollowUp) return;
     if (!followUpData.note.trim()) return alert('Note is required');
     try {
       setSubmittingFollowUp(true);
@@ -681,6 +674,7 @@ const EnquiryMaster = () => {
                 type="button"
                 onClick={(e) => {
                   e.preventDefault();
+                  e.stopPropagation();
                   // Force hard navigation to ensure modal state is cleared
                   window.location.href = `/enquiry/${liveDuplicate._id}`;
                 }} 
@@ -729,6 +723,7 @@ const EnquiryMaster = () => {
                 type="button"
                 onClick={(e) => {
                   e.preventDefault();
+                  e.stopPropagation();
                   // Force hard navigation to ensure modal state is cleared
                   window.location.href = `/enquiry/${liveDuplicate._id}`;
                 }} 

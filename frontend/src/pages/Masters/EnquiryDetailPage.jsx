@@ -464,6 +464,7 @@ const EnquiryDetailPage = () => {
 
   const handleFollowUpSubmit = async (e) => {
     if (e) e.preventDefault();
+    if (submittingFollowUp) return;
     if (!followUpData.note.trim()) return alert('Note is required');
     try {
       setSubmittingFollowUp(true);
@@ -690,13 +691,15 @@ const EnquiryDetailPage = () => {
                       </div>
                       <div className="followup-footer">
                         {fu.status === 'pending' && (
-                          <button className="btn-complete" onClick={() => handleMarkFollowUpComplete(fu._id)}>
-                            <CheckCircle size={16} /> Mark Complete
-                          </button>
+                          <>
+                            <button className="btn-complete" onClick={() => handleMarkFollowUpComplete(fu._id)}>
+                              <CheckCircle size={16} /> Mark Complete
+                            </button>
+                            <button className="btn-edit-small" onClick={() => handleEditFollowUpClick(fu)}>
+                              <Edit2 size={16} />
+                            </button>
+                          </>
                         )}
-                        <button className="btn-edit-small" onClick={() => handleEditFollowUpClick(fu)}>
-                          <Edit2 size={16} />
-                        </button>
                       </div>
                     </div>
                   ))}
