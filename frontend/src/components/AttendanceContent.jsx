@@ -75,7 +75,7 @@ const AttendanceContent = () => {
           peopleList = res.members || res.data || [];
         } else {
           const res = await employeeAPI.getAll();
-          peopleList = res || [];
+          peopleList = Array.isArray(res) ? res : (res.data || []);
         }
         setPeople(peopleList);
       }
