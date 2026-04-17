@@ -518,3 +518,21 @@
     display: none;
   }
 }
+
+.leave-remarks {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.825rem;
+}
+
+.leave-remarks.rejected {
+  color: #ef4444;
+  font-weight: 600;
+  font-style: italic;
+}
+
+.leave-management-view .attendance-table td {
+  padding: 1.25rem 1rem;
+}

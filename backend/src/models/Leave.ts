@@ -8,6 +8,7 @@ export interface ILeave extends Document {
   endDate: Date;
   reason: string;
   status: 'pending' | 'approved' | 'rejected';
+  rejectionReason?: string;
   appliedBy: mongoose.Types.ObjectId; // Ref to Employee who applied
   handledBy?: mongoose.Types.ObjectId; // Ref to Employee who approved/rejected
   createdAt: Date;
@@ -42,6 +43,10 @@ const LeaveSchema = new Schema<ILeave>(
       type: String,
       enum: ['pending', 'approved', 'rejected'],
       default: 'pending',
+    },
+    rejectionReason: {
+      type: String,
+      default: '',
     },
     appliedBy: {
       type: Schema.Types.ObjectId,

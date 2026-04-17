@@ -115,7 +115,7 @@ export const getLeaves = async (req: Request, res: Response) => {
 export const updateLeaveStatus = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, rejectionReason } = req.body;
     const handledBy = (req as any).user?.id;
 
     if (!['approved', 'rejected'].includes(status)) {
@@ -127,6 +127,9 @@ export const updateLeaveStatus = async (req: Request, res: Response) => {
 
     leave.status = status;
     leave.handledBy = handledBy;
+    if (status === 'rejected' && rejectionReason) {
+      leave.rejectionReason = rejectionReason;
+    }
     await leave.save();
 
     // If approved, create/update attendance records for the range
@@ -154,6 +157,23 @@ export const updateLeaveStatus = async (req: Request, res: Response) => {
     }
 
     res.json(leave);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getMyLeaves = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    const leaves = await Leave.find({ personId: userId })
+      .populate('handledBy', 'name')
+      .sort({ createdAt: -1 });
+
+    res.json(leaves);
   } catch (error: any) {
     res.status(500).json({ message: error.message });
   }

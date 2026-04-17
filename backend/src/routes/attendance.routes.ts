@@ -9,6 +9,7 @@ import {
   getGymQr,
   qrCheckin,
   getAttendanceStats,
+  getMyLeaves,
 } from '../controllers/attendance.controller';
 import { authMiddleware } from '../middleware/auth.middleware';
 
@@ -21,6 +22,7 @@ router.post('/mark', markAttendance);
 router.get('/stats', getAttendanceStats);
 
 router.post('/leave', applyLeave);
+router.get('/my-leaves', getMyLeaves);
 router.get('/leaves', getLeaves);
 router.patch('/leave/:id/status', updateLeaveStatus);
 

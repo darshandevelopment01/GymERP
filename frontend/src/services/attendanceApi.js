@@ -47,10 +47,16 @@ class AttendanceApi {
     return response.json();
   }
 
-  async updateLeaveStatus(id, status) {
+  async getMyLeaves() {
+    const response = await fetchWithAuth(`${API_URL}/attendance/my-leaves`);
+    if (!response.ok) throw new Error('Failed to fetch your leaves');
+    return response.json();
+  }
+
+  async updateLeaveStatus(id, status, rejectionReason = '') {
     const response = await fetchWithAuth(`${API_URL}/attendance/leave/${id}/status`, {
       method: 'PATCH',
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ status, rejectionReason }),
     });
     if (!response.ok) throw new Error('Failed to update leave status');
     return response.json();

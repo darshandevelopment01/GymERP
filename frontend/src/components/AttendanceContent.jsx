@@ -25,6 +25,7 @@ import { employeeAPI } from '../services/mastersApi';
 import { usePermissions } from '../hooks/usePermissions';
 import LeaveModal from './LeaveModal';
 import QRDisplayModal from './QRDisplayModal';
+import RejectReasonModal from './RejectReasonModal';
 import './AttendanceContent.css';
 
 const AttendanceContent = () => {
@@ -32,6 +33,7 @@ const AttendanceContent = () => {
   const [people, setPeople] = useState([]); // All members or employees
   const [attendanceRecords, setAttendanceRecords] = useState([]); // All records for the selected month
   const [leavesData, setLeavesData] = useState([]);
+  const [myLeavesData, setMyLeavesData] = useState([]);
   const [stats, setStats] = useState({ present: 0, absent: 0, leave: 0 });
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -51,6 +53,8 @@ const AttendanceContent = () => {
   // Modals
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
   const [isQrModalOpen, setIsQrModalOpen] = useState(false);
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [rejectingLeave, setRejectingLeave] = useState(null);
   
   const { can, isAdmin } = usePermissions();
 
@@ -91,6 +95,10 @@ const AttendanceContent = () => {
       setAttendanceRecords(attendance);
       setStats(currentStats);
       setLeavesData(leaves);
+      
+      // 3. Fetch my own leaves if available
+      const myLeaves = await attendanceApi.getMyLeaves();
+      setMyLeavesData(myLeaves);
       
       // Reset to first page when tab or date changes
       setCurrentPage(1);
@@ -180,10 +188,15 @@ const AttendanceContent = () => {
     }
   };
 
-  const handleStatusUpdate = async (leaveId, newStatus) => {
+  const handleStatusUpdate = async (leaveId, newStatus, reason = '') => {
     try {
-      if (!window.confirm(`Are you sure you want to ${newStatus} this leave?`)) return;
-      await attendanceApi.updateLeaveStatus(leaveId, newStatus);
+      if (newStatus === 'approved') {
+        if (!window.confirm(`Are you sure you want to approve this leave?`)) return;
+      }
+      
+      await attendanceApi.updateLeaveStatus(leaveId, newStatus, reason);
+      setIsRejectModalOpen(false);
+      setRejectingLeave(null);
       fetchPeopleAndAttendance();
     } catch (error) {
       alert('Failed to update leave status');
@@ -282,6 +295,12 @@ const AttendanceContent = () => {
         >
           Employees
         </button>
+        <button 
+          className={`attendance-tab-btn ${activeTab === 'myLeaves' ? 'active' : ''}`}
+          onClick={() => setActiveTab('myLeaves')}
+        >
+          My Leaves
+        </button>
         {isAdmin && (
           <button 
             className={`attendance-tab-btn ${activeTab === 'leaves' ? 'active' : ''}`}
@@ -292,7 +311,7 @@ const AttendanceContent = () => {
         )}
       </div>
 
-      {activeTab !== 'leaves' ? (
+      {(activeTab === 'member' || activeTab === 'employee') ? (
         <>
           {/* Stats */}
           <div className="stats-grid">
@@ -493,6 +512,71 @@ const AttendanceContent = () => {
             </div>
           )}
         </>
+      ) : activeTab === 'myLeaves' ? (
+        /* My Leaves View */
+        <div className="leave-management-view">
+          <div className="toolbar">
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <FileText size={20} color="#10b981" />
+              <span style={{ fontWeight: 600 }}>Track your leave applications</span>
+            </div>
+            <div className="pagination-info">
+              Showing {myLeavesData.length} leaves
+            </div>
+          </div>
+
+          <div className="attendance-table-container">
+            <table className="attendance-table">
+              <thead>
+                <tr>
+                  <th>Dates (Start - End)</th>
+                  <th>Reason</th>
+                  <th>Status</th>
+                  <th>Handled By</th>
+                  <th>Remarks/Rejection Reason</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr><td colSpan="5" style={{ textAlign: 'center', padding: '2rem' }}>Loading your leaves...</td></tr>
+                ) : myLeavesData.length === 0 ? (
+                  <tr><td colSpan="5" style={{ textAlign: 'center', padding: '2rem' }}>You haven't applied for any leaves yet.</td></tr>
+                ) : (
+                  myLeavesData.map(leave => (
+                    <tr key={leave._id}>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <Calendar size={14} color="#64748b" />
+                          {formatDate(leave.startDate)} — {formatDate(leave.endDate)}
+                        </div>
+                      </td>
+                      <td>
+                        <div style={{ maxWidth: '250px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={leave.reason}>
+                          {leave.reason}
+                        </div>
+                      </td>
+                      <td>
+                        <span className={`status-badge status-${leave.status}`}>
+                          {leave.status}
+                        </span>
+                      </td>
+                      <td>{leave.handledBy?.name || '-'}</td>
+                      <td>
+                        <div style={{ 
+                          fontSize: '0.85rem', 
+                          color: leave.status === 'rejected' ? '#ef4444' : '#64748b',
+                          fontWeight: leave.status === 'rejected' ? '600' : 'normal'
+                        }}>
+                          {leave.status === 'rejected' ? (leave.rejectionReason || 'No reason provided') : '-'}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       ) : (
         /* Leave Requests Admin Tab */
         <div className="leave-management-view">
@@ -562,13 +646,23 @@ const AttendanceContent = () => {
                             </button>
                             <button 
                               className="btn-reject" 
-                              onClick={() => handleStatusUpdate(leave._id, 'rejected')}
+                              onClick={() => {
+                                setRejectingLeave({ id: leave._id, name: leave.personId?.name });
+                                setIsRejectModalOpen(true);
+                              }}
                             >
                               Reject
                             </button>
                           </div>
                         ) : (
-                          <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Processed by {leave.handledBy?.name || 'Admin'}</span>
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Processed by {leave.handledBy?.name || 'Admin'}</span>
+                            {leave.status === 'rejected' && (
+                              <span style={{ fontSize: '0.7rem', color: '#ef4444', fontStyle: 'italic', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={leave.rejectionReason}>
+                                Reason: {leave.rejectionReason}
+                              </span>
+                            )}
+                          </div>
                         )}
                       </td>
                     </tr>
@@ -594,6 +688,17 @@ const AttendanceContent = () => {
       {isQrModalOpen && (
         <QRDisplayModal 
           onClose={() => setIsQrModalOpen(false)} 
+        />
+      )}
+
+      {isRejectModalOpen && (
+        <RejectReasonModal
+          employeeName={rejectingLeave?.name}
+          onClose={() => {
+            setIsRejectModalOpen(false);
+            setRejectingLeave(null);
+          }}
+          onConfirm={(reason) => handleStatusUpdate(rejectingLeave.id, 'rejected', reason)}
         />
       )}
     </div>
