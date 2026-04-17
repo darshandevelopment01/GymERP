@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import memberApi from '../../services/memberApi';
 import followupApi from '../../services/followupApi';
+import { formatLocalDate } from '../../utils/dateUtils';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import './MemberDetailPage.css';
@@ -141,7 +142,7 @@ const MemberDetailPage = () => {
       const payload = {
         member: id,
         note: followUpData.note,
-        followUpDate: followUpData.followUpDate,
+        followUpDate: formatLocalDate(followUpData.followUpDate),
         followUpTime: followUpData.followUpTime,
         status: 'pending'
       };
@@ -700,6 +701,21 @@ const MemberDetailPage = () => {
                   dateFormat="dd/MM/yyyy"
                   className="date-input"
                   minDate={new Date()}
+                />
+              </div>
+              <div className="form-group-custom">
+                <label>Follow-up Time</label>
+                <input 
+                  type="time" 
+                  value={followUpData.followUpTime || ''} 
+                  onChange={(e) => setFollowUpData({ ...followUpData, followUpTime: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    fontSize: '1rem'
+                  }}
                 />
               </div>
               <button className="submit-btn" onClick={handleAddFollowUp}>Save</button>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import GenericMaster from '../../components/Masters/GenericMaster';
 import followupApi from '../../services/followupApi';
 import { usePermissions } from '../../hooks/usePermissions';
+import { formatLocalDate } from '../../utils/dateUtils';
 import './FollowUpMaster.css';
 
 const FollowUpMaster = () => {
@@ -128,7 +129,7 @@ const FollowUpMaster = () => {
   const handleEditFollowUp = (followup) => {
     setEditFormData({
       note: followup.note || '',
-      followUpDate: followup.followUpDate ? new Date(followup.followUpDate).toISOString().split('T')[0] : '',
+      followUpDate: followup.followUpDate ? formatLocalDate(followup.followUpDate) : '',
       followUpTime: followup.followUpTime || '',
       status: followup.status || 'pending'
     });

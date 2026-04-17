@@ -6,6 +6,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import * as XLSX from 'xlsx';
 import SkeletonLoader from '../SkeletonLoader';
 import { compressImage } from '../../utils/compressImage';
+import { formatLocalDate } from '../../utils/dateUtils';
 
 
 const GenericMaster = ({
@@ -279,7 +280,7 @@ const GenericMaster = ({
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
 
-      const timestamp = new Date().toISOString().split('T')[0];
+      const timestamp = formatLocalDate(new Date());
       const filename = `${exportFileName}_${timestamp}.xlsx`;
 
       XLSX.writeFile(workbook, filename);
@@ -317,7 +318,7 @@ const GenericMaster = ({
         try {
           const date = new Date(item[field.name]);
           if (!isNaN(date.getTime())) {
-            formattedItem[field.name] = date.toISOString().split('T')[0];
+            formattedItem[field.name] = formatLocalDate(date);
           }
         } catch (error) {
           console.error('Date formatting error:', error);
@@ -486,7 +487,7 @@ const GenericMaster = ({
 
   const handleDateChange = (date, fieldName) => {
     const field = formFields.find(f => f.name === fieldName);
-    const dateValue = date ? date.toISOString().split('T')[0] : '';
+    const dateValue = formatLocalDate(date);
 
     if (field && field.onChange) {
       field.onChange(dateValue, formData, setFormData);
@@ -646,7 +647,7 @@ const GenericMaster = ({
                   <div className="filter-date-wrapper">
                     <DatePicker
                       selected={filters[filter.name] ? new Date(filters[filter.name]) : null}
-                      onChange={(date) => handleFilterChange(filter.name, date ? date.toISOString().split('T')[0] : '')}
+                      onChange={(date) => handleFilterChange(filter.name, formatLocalDate(date))}
                       dateFormat="dd-MM-yyyy"
                       placeholderText="dd-mm-yyyy"
                       className="filter-date-input"

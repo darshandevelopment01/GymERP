@@ -11,6 +11,7 @@ import followupApi from '../../services/followupApi';
 import { taxSlabAPI, planCategoryAPI, employeeAPI } from '../../services/mastersApi';
 import { usePermissions } from '../../hooks/usePermissions';
 import { compressImage } from '../../utils/compressImage';
+import { formatLocalDate } from '../../utils/dateUtils';
 import './EnquiryMaster.css';
 
 const EnquiryMaster = () => {
@@ -276,9 +277,7 @@ const EnquiryMaster = () => {
       await followupApi.create({
         enquiry: selectedEnquiryForFollowUp._id,
         note: followUpData.note,
-        followUpDate: followUpData.followUpDate
-          ? followUpData.followUpDate.toISOString().split('T')[0]
-          : null,
+        followUpDate: formatLocalDate(followUpData.followUpDate),
         followUpTime: followUpData.followUpTime || null
       });
 

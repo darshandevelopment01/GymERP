@@ -9,6 +9,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { taxSlabAPI, planCategoryAPI, paymentTypeAPI, employeeAPI } from '../../services/mastersApi';
 import { usePermissions } from '../../hooks/usePermissions';
+import { formatLocalDate } from '../../utils/dateUtils';
 import './MemberMaster.css';
 
 const MemberMaster = () => {
@@ -440,9 +441,7 @@ const MemberMaster = () => {
       await followupApi.create({
         member: selectedMemberForFollowUp._id,
         note: followUpData.note,
-        followUpDate: followUpData.followUpDate
-          ? followUpData.followUpDate.toISOString().split('T')[0]
-          : null,
+        followUpDate: formatLocalDate(followUpData.followUpDate),
         followUpTime: followUpData.followUpTime || null
       });
 
@@ -636,7 +635,7 @@ const MemberMaster = () => {
         calculatedEndDate.setMonth(calculatedEndDate.getMonth() + monthsToAdd);
         calculatedEndDate.setDate(calculatedEndDate.getDate() - 1);
 
-        updatedData.membershipEndDate = calculatedEndDate.toISOString().split('T')[0];
+        updatedData.membershipEndDate = formatLocalDate(calculatedEndDate);
       }
     }
     setFormData({ ...updatedData });

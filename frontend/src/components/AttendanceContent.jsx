@@ -18,6 +18,9 @@ import {
   Download,
   FileText
 } from 'lucide-react';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { formatLocalDate } from '../utils/dateUtils';
 import * as XLSX from 'xlsx';
 import attendanceApi from '../services/attendanceApi';
 import memberApi from '../services/memberApi';
@@ -225,7 +228,7 @@ const AttendanceContent = () => {
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Attendance");
-    XLSX.writeFile(wb, `Attendance_Export_${selectedDate.toISOString().split('T')[0]}.xlsx`);
+    XLSX.writeFile(wb, `Attendance_Export_${formatLocalDate(selectedDate)}.xlsx`);
   };
 
   const formatDate = (dateString) => {

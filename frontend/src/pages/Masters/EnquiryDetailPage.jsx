@@ -30,6 +30,7 @@ import planApi from '../../services/planApi';
 import { taxSlabAPI, planCategoryAPI, paymentTypeAPI } from '../../services/mastersApi';
 import { usePermissions } from '../../hooks/usePermissions';
 import { compressImage } from '../../utils/compressImage';
+import { formatLocalDate } from '../../utils/dateUtils';
 import './EnquiryDetailPage.css';
 
 const EnquiryDetailPage = () => {
@@ -474,7 +475,7 @@ const EnquiryDetailPage = () => {
       const data = {
         ...followUpData,
         enquiry: id,
-        followUpDate: followUpData.followUpDate ? followUpData.followUpDate.toISOString().split('T')[0] : null
+        followUpDate: formatLocalDate(followUpData.followUpDate)
       };
 
       if (editingFollowUp) {
@@ -1140,6 +1141,21 @@ const EnquiryDetailPage = () => {
                     dateFormat="dd/MM/yyyy"
                     placeholderText="Optional"
                     minDate={new Date()}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Follow-up Time</label>
+                  <input 
+                    type="time" 
+                    value={followUpData.followUpTime || ''} 
+                    onChange={(e) => setFollowUpData({...followUpData, followUpTime: e.target.value})}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      border: '2px solid #e2e8f0',
+                      borderRadius: '8px',
+                      fontSize: '1rem'
+                    }}
                   />
                 </div>
               </div>

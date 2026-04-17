@@ -18,6 +18,7 @@ import {
 import { offerApi } from '../../services/offerApi';
 import { planCategoryAPI } from '../../services/mastersApi';
 import { compressImage } from '../../utils/compressImage';
+import { formatLocalDate } from '../../utils/dateUtils';
 import './OffersMaster.css';
 
 export default function OffersMaster() {
@@ -73,8 +74,8 @@ export default function OffersMaster() {
         imageUrl: offer.imageUrl,
         discountType: offer.discountType,
         discountAmount: offer.discountAmount,
-        validFrom: new Date(offer.validFrom).toISOString().split('T')[0],
-        validTo: new Date(offer.validTo).toISOString().split('T')[0],
+        validFrom: formatLocalDate(offer.validFrom),
+        validTo: formatLocalDate(offer.validTo),
         planCategories: (offer.planCategories || []).filter(Boolean).map(c => typeof c === 'object' ? c._id : c),
       });
     } else {

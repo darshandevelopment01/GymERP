@@ -2,14 +2,15 @@
 import React, { useState, useEffect } from 'react';
 import { X, Calendar, User, FileText, UserCircle } from 'lucide-react';
 import attendanceApi from '../services/attendanceApi';
+import { formatLocalDate } from '../utils/dateUtils';
 
 const LeaveModal = ({ onClose, onSuccess }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
   
   // Form state
-  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
-  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const [startDate, setStartDate] = useState(formatLocalDate(new Date()));
+  const [endDate, setEndDate] = useState(formatLocalDate(new Date()));
   const [reason, setReason] = useState('');
 
   useEffect(() => {
