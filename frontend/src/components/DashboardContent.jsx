@@ -8,7 +8,12 @@ import {
   Building2,
   UsersRound,
   IndianRupee,
-  Menu
+  Menu,
+  CheckCircle,
+  UserX,
+  UserCheck,
+  Calendar,
+  Filter
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 
@@ -30,6 +35,10 @@ export default function DashboardContent() {
   const [weeklyData, setWeeklyData] = useState(getInitialCache(cacheKeyWeekly, []));
   const [membershipData, setMembershipData] = useState(getInitialCache(cacheKeyMembership, []));
   const [loading, setLoading] = useState(!hasCache);
+  
+  // Date Filters
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -40,7 +49,7 @@ export default function DashboardContent() {
     prefetchAllTabs();
 
     return () => controller.abort();
-  }, []);
+  }, [startDate, endDate]);
 
   const fetchDashboardData = async (signal) => {
     try {
@@ -63,8 +72,10 @@ export default function DashboardContent() {
       }
 
       // 2. Fetch fresh data in the background
+      const queryParams = (startDate && endDate) ? `?startDate=${startDate}&endDate=${endDate}` : '';
+      
       const [statsRes, weeklyRes, membershipRes] = await Promise.all([
-        fetchWithAuth(`${import.meta.env.VITE_API_URL}/dashboard/stats`, { signal }),
+        fetchWithAuth(`${import.meta.env.VITE_API_URL}/dashboard/stats${queryParams}`, { signal }),
         fetchWithAuth(`${import.meta.env.VITE_API_URL}/dashboard/attendance-weekly`, { signal }),
         fetchWithAuth(`${import.meta.env.VITE_API_URL}/dashboard/membership-growth`, { signal }),
       ]);
@@ -84,30 +95,30 @@ export default function DashboardContent() {
       } else if (statsData && typeof statsData === 'object') {
         finalStats = [
           {
-            label: 'Total Members',
-            value: statsData.totalMembers || statsData.members || 0,
-            growth: statsData.memberGrowth || '+0%',
-            icon: 'users',
+            label: 'Total Enquiries',
+            value: statsData.totalEnquiries || 0,
+            growth: statsData.growth?.enquiries ? `+${statsData.growth.enquiries}%` : '+0%',
+            icon: 'enquiry',
             color: '#3b82f6'
           },
           {
-            label: 'Active Branches',
-            value: statsData.activeBranches || statsData.branches || 0,
-            growth: statsData.branchGrowth || '+0',
-            icon: 'building',
+            label: 'Total Converted',
+            value: statsData.totalConverted || 0,
+            growth: statsData.growth?.converted ? `+${statsData.growth.converted}%` : '+0%',
+            icon: 'converted',
             color: '#10b981'
           },
           {
-            label: 'Total Employees',
-            value: statsData.totalEmployees || statsData.employees || 0,
-            growth: statsData.employeeGrowth || '+0%',
-            icon: 'team',
-            color: '#f59e0b'
+            label: 'Total Lost',
+            value: statsData.totalLost || 0,
+            growth: statsData.growth?.lost ? `+${statsData.growth.lost}%` : '+0%',
+            icon: 'lost',
+            color: '#ef4444'
           },
           {
             label: 'Revenue This Month',
             value: `₹${statsData.monthlyRevenue || statsData.revenue || 0}`,
-            growth: statsData.revenueGrowth || '+0%',
+            growth: statsData.growth?.revenue ? `+${statsData.growth.revenue}%` : '+0%',
             icon: 'rupee',
             color: '#17ab88'
           }
@@ -175,10 +186,12 @@ export default function DashboardContent() {
 
   const getIcon = (iconName) => {
     const iconMap = {
-      users: Users,
-      building: Building2,
-      team: UsersRound,
+      enquiry: Users,
+      converted: UserCheck,
+      lost: UserX,
       rupee: IndianRupee,
+      calendar: Calendar,
+      filter: Filter
     };
     return iconMap[iconName] || Users;
   };
@@ -211,15 +224,53 @@ export default function DashboardContent() {
 
         <div className="dashboard-content">
           <div className="dashboard-header">
-            <h1 className="dashboard-page-title">Dashboard</h1>
-            <p className="dashboard-date">
-              {new Date().toLocaleDateString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })}
-            </p>
+            <div>
+              <h1 className="dashboard-page-title">Dashboard</h1>
+              <p className="dashboard-date">
+                {new Date().toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
+              </p>
+            </div>
+
+            <div className="dashboard-filters">
+              <div className="filter-input-group">
+                <div className="filter-input-wrapper">
+                  <Calendar size={16} />
+                  <input
+                    type="date"
+                    className="dashboard-date-input"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    placeholder="Start Date"
+                  />
+                </div>
+                <span className="filter-separator">-</span>
+                <div className="filter-input-wrapper">
+                  <Calendar size={16} />
+                  <input
+                    type="date"
+                    className="dashboard-date-input"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    placeholder="End Date"
+                  />
+                </div>
+                <button
+                  className="filter-clear-btn"
+                  onClick={() => {
+                    setStartDate('');
+                    setEndDate('');
+                  }}
+                  title="Clear Filters"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
           </div>
 
           <div className="stats-grid">

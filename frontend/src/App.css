@@ -493,6 +493,8 @@ body {
   align-items: center;
   margin-bottom: 18px;
   flex-shrink: 0;
+  gap: 20px;
+  flex-wrap: wrap;
 }
 
 .dashboard-page-title {
@@ -506,6 +508,83 @@ body {
   font-size: 14px;
   color: #6b7280;
   margin: 0;
+}
+
+/* Dashboard Filters */
+.dashboard-filters {
+  display: flex;
+  align-items: center;
+}
+
+.filter-input-group {
+  display: flex;
+  align-items: center;
+  background: white;
+  padding: 6px 12px;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+  gap: 10px;
+}
+
+.filter-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #6b7280;
+}
+
+.dashboard-date-input {
+  border: none;
+  background: transparent;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 500;
+  outline: none;
+  cursor: pointer;
+  width: 120px;
+}
+
+.dashboard-date-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+}
+
+.filter-separator {
+  color: #9ca3af;
+  font-weight: 600;
+}
+
+.filter-clear-btn {
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  color: #4b5563;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filter-clear-btn:hover {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+@media (max-width: 768px) {
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .dashboard-filters {
+    width: 100%;
+  }
+  
+  .filter-input-group {
+    width: 100%;
+    justify-content: space-between;
+  }
 }
 
 /* STATS CARDS - COMPACT GRID */

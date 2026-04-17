@@ -1,15 +1,15 @@
 // frontend/src/components/AttendanceContent.jsx
 import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  Users, 
-  UserCheck, 
-  UserX, 
-  Calendar, 
-  Search, 
-  Plus, 
-  QrCode, 
-  Clock, 
-  ChevronLeft, 
+import {
+  Users,
+  UserCheck,
+  UserX,
+  Calendar,
+  Search,
+  Plus,
+  QrCode,
+  Clock,
+  ChevronLeft,
   ChevronRight,
   Filter,
   CheckCircle,
@@ -31,31 +31,33 @@ import './AttendanceContent.css';
 const AttendanceContent = () => {
   const [activeTab, setActiveTab] = useState('member'); // 'member', 'employee', 'leaves'
   const [people, setPeople] = useState([]); // All members or employees
+  const [membersCache, setMembersCache] = useState([]);
+  const [employeesCache, setEmployeesCache] = useState([]);
   const [attendanceRecords, setAttendanceRecords] = useState([]); // All records for the selected month
   const [leavesData, setLeavesData] = useState([]);
   const [myLeavesData, setMyLeavesData] = useState([]);
   const [stats, setStats] = useState({ present: 0, absent: 0, leave: 0 });
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   // Filters
   const [statusFilter, setStatusFilter] = useState('all');
   const [startDateFilter, setStartDateFilter] = useState('');
   const [endDateFilter, setEndDateFilter] = useState('');
-  
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-  
+
   // Date context
   const [selectedDate, setSelectedDate] = useState(new Date());
-  
+
   // Modals
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
   const [isQrModalOpen, setIsQrModalOpen] = useState(false);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [rejectingLeave, setRejectingLeave] = useState(null);
-  
+
   const { can, isAdmin } = usePermissions();
 
   // Normalize date to midnight UTC for comparison
@@ -70,37 +72,43 @@ const AttendanceContent = () => {
     try {
       const month = selectedDate.getMonth() + 1;
       const year = selectedDate.getFullYear();
-      
-      // 1. Fetch the list of all people first
-      let peopleList = [];
+
+      // 1. Fetch/Reuse People List
       if (activeTab === 'member' || activeTab === 'employee') {
-        if (activeTab === 'member') {
-          const res = await memberApi.getAll();
-          peopleList = res.members || res.data || [];
-        } else {
-          const res = await employeeAPI.getAll();
-          peopleList = Array.isArray(res) ? res : (res.data || []);
+        let peopleList = activeTab === 'member' ? membersCache : employeesCache;
+
+        if (peopleList.length === 0) {
+          console.log(`🌐 Fetching complete ${activeTab} list (uncached)...`);
+          if (activeTab === 'member') {
+            const res = await memberApi.getAll();
+            peopleList = res.members || res.data || [];
+            setMembersCache(peopleList);
+          } else {
+            const res = await employeeAPI.getAll();
+            peopleList = Array.isArray(res) ? res : (res.data || []);
+            setEmployeesCache(peopleList);
+          }
         }
         setPeople(peopleList);
+
+        // 2. Fetch attendance & stats concurrently (lightweight)
+        const [attendance, currentStats] = await Promise.all([
+          attendanceApi.getAttendance(activeTab, month, year),
+          attendanceApi.getAttendanceStats(activeTab, month, year)
+        ]);
+
+        setAttendanceRecords(attendance);
+        setStats(currentStats);
+      } else if (activeTab === 'leaves') {
+        // Fetch only leave requests for admin
+        const leaves = await attendanceApi.getLeaves('employee');
+        setLeavesData(leaves);
+      } else if (activeTab === 'myLeaves') {
+        // Fetch only my leaves
+        const myLeaves = await attendanceApi.getMyLeaves();
+        setMyLeavesData(myLeaves);
       }
 
-      // 2. Fetch attendance, stats, and leaves for the selected time
-      const fetchType = activeTab === 'leaves' ? 'employee' : activeTab;
-      const [attendance, currentStats, leaves] = await Promise.all([
-        attendanceApi.getAttendance(fetchType, month, year),
-        attendanceApi.getAttendanceStats(fetchType, month, year),
-        attendanceApi.getLeaves(fetchType)
-      ]);
-      
-      setAttendanceRecords(attendance);
-      setStats(currentStats);
-      setLeavesData(leaves);
-      
-      // 3. Fetch my own leaves if available
-      const myLeaves = await attendanceApi.getMyLeaves();
-      setMyLeavesData(myLeaves);
-      
-      // Reset to first page when tab or date changes
       setCurrentPage(1);
     } catch (error) {
       console.error('Error fetching attendance data:', error);
@@ -116,7 +124,7 @@ const AttendanceContent = () => {
   // Combine people list with their attendance status for the selected date
   const combinedList = useMemo(() => {
     const todayTime = normalizeDate(selectedDate);
-    
+
     // Create a lookup for attendance records on today/selected date
     const attendanceLookup = {};
     attendanceRecords.forEach(record => {
@@ -193,7 +201,7 @@ const AttendanceContent = () => {
       if (newStatus === 'approved') {
         if (!window.confirm(`Are you sure you want to approve this leave?`)) return;
       }
-      
+
       await attendanceApi.updateLeaveStatus(leaveId, newStatus, reason);
       setIsRejectModalOpen(false);
       setRejectingLeave(null);
@@ -246,17 +254,17 @@ const AttendanceContent = () => {
           </span>
           <span className="current-time">Manage attendance, filters, and exports</span>
         </div>
-        
+
         <div className="header-actions">
           <div className="filter-group">
-             <button 
+            <button
               className="btn-secondary btn-icon"
               onClick={() => setSelectedDate(new Date(selectedDate.setDate(selectedDate.getDate() - 1)))}
               title="Previous Day"
             >
               <ChevronLeft size={20} />
             </button>
-            <button 
+            <button
               className="btn-secondary btn-icon"
               onClick={() => setSelectedDate(new Date(selectedDate.setDate(selectedDate.getDate() + 1)))}
               title="Next Day"
@@ -268,11 +276,11 @@ const AttendanceContent = () => {
           <button className="btn-secondary btn-sm" onClick={handleExport}>
             <Download size={18} /> Export Excel
           </button>
-          
+
           <button className="btn-primary btn-sm" onClick={() => setIsLeaveModalOpen(true)}>
             <Plus size={18} /> Apply Leave
           </button>
-          
+
           {isAdmin && (
             <button className="btn-secondary btn-sm gym-qr-btn" onClick={() => setIsQrModalOpen(true)}>
               <QrCode size={18} /> Gym QR
@@ -283,26 +291,26 @@ const AttendanceContent = () => {
 
       {/* Tabs */}
       <div className="attendance-tabs">
-        <button 
+        <button
           className={`attendance-tab-btn ${activeTab === 'member' ? 'active' : ''}`}
           onClick={() => setActiveTab('member')}
         >
           Members
         </button>
-        <button 
+        <button
           className={`attendance-tab-btn ${activeTab === 'employee' ? 'active' : ''}`}
           onClick={() => setActiveTab('employee')}
         >
           Employees
         </button>
-        <button 
+        <button
           className={`attendance-tab-btn ${activeTab === 'myLeaves' ? 'active' : ''}`}
           onClick={() => setActiveTab('myLeaves')}
         >
           My Leaves
         </button>
         {isAdmin && (
-          <button 
+          <button
             className={`attendance-tab-btn ${activeTab === 'leaves' ? 'active' : ''}`}
             onClick={() => setActiveTab('leaves')}
           >
@@ -324,7 +332,7 @@ const AttendanceContent = () => {
                 <span className="stat-label">Present</span>
               </div>
             </div>
-            
+
             <div className="attendance-stat-card">
               <div className="stat-icon-wrapper" style={{ backgroundColor: '#fee2e2', color: '#ef4444' }}>
                 <UserX size={24} />
@@ -334,7 +342,7 @@ const AttendanceContent = () => {
                 <span className="stat-label">Absent</span>
               </div>
             </div>
-            
+
             <div className="attendance-stat-card">
               <div className="stat-icon-wrapper" style={{ backgroundColor: '#fef3c7', color: '#f59e0b' }}>
                 <Calendar size={24} />
@@ -361,18 +369,18 @@ const AttendanceContent = () => {
             <div className="toolbar-main">
               <div className="search-input-wrapper">
                 <Search size={18} />
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   placeholder={`Search ${activeTab}s...`}
                   className="search-input"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              
+
               <div className="filter-select-wrapper">
                 <Filter size={16} />
-                <select 
+                <select
                   className="filter-select"
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
@@ -388,16 +396,16 @@ const AttendanceContent = () => {
 
             <div className="toolbar-secondary">
               <div className="date-range-inputs">
-                <input 
-                  type="date" 
+                <input
+                  type="date"
                   className="toolbar-date-input"
                   value={startDateFilter}
                   onChange={(e) => setStartDateFilter(e.target.value)}
                   placeholder="Start"
                 />
                 <span>-</span>
-                <input 
-                  type="date" 
+                <input
+                  type="date"
                   className="toolbar-date-input"
                   value={endDateFilter}
                   onChange={(e) => setEndDateFilter(e.target.value)}
@@ -458,14 +466,14 @@ const AttendanceContent = () => {
                       <td>{person.todayAttendance ? formatTime(person.todayAttendance.checkInTime) : '-'}</td>
                       <td>
                         <div className="mark-actions-cell">
-                          <button 
+                          <button
                             className={`mark-btn mark-present ${person.todayAttendance?.status === 'present' ? 'active' : ''}`}
                             title="Mark Present"
                             onClick={() => handleMarkAttendance(person._id, 'present')}
                           >
                             P
                           </button>
-                          <button 
+                          <button
                             className={`mark-btn mark-absent ${person.todayAttendance?.status === 'absent' ? 'active' : ''}`}
                             title="Mark Absent"
                             onClick={() => handleMarkAttendance(person._id, 'absent')}
@@ -484,8 +492,8 @@ const AttendanceContent = () => {
           {/* Pagination Controls */}
           {totalPages > 1 && (
             <div className="pagination-controls">
-              <button 
-                disabled={currentPage === 1} 
+              <button
+                disabled={currentPage === 1}
                 onClick={() => setCurrentPage(prev => prev - 1)}
                 className="btn-pagination"
               >
@@ -493,8 +501,8 @@ const AttendanceContent = () => {
               </button>
               <div className="page-numbers">
                 {[...Array(totalPages)].map((_, i) => (
-                  <button 
-                    key={i} 
+                  <button
+                    key={i}
                     className={`page-num ${currentPage === i + 1 ? 'active' : ''}`}
                     onClick={() => setCurrentPage(i + 1)}
                   >
@@ -502,8 +510,8 @@ const AttendanceContent = () => {
                   </button>
                 ))}
               </div>
-              <button 
-                disabled={currentPage === totalPages} 
+              <button
+                disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage(prev => prev + 1)}
                 className="btn-pagination"
               >
@@ -562,8 +570,8 @@ const AttendanceContent = () => {
                       </td>
                       <td>{leave.handledBy?.name || '-'}</td>
                       <td>
-                        <div style={{ 
-                          fontSize: '0.85rem', 
+                        <div style={{
+                          fontSize: '0.85rem',
                           color: leave.status === 'rejected' ? '#ef4444' : '#64748b',
                           fontWeight: leave.status === 'rejected' ? '600' : 'normal'
                         }}>
@@ -583,8 +591,8 @@ const AttendanceContent = () => {
           <div className="toolbar">
             <div className="search-input-wrapper">
               <Search size={18} />
-              <input 
-                type="text" 
+              <input
+                type="text"
                 placeholder="Search leaves by name..."
                 className="search-input"
                 value={searchTerm}
@@ -599,7 +607,7 @@ const AttendanceContent = () => {
 
           <div className="attendance-table-container">
             <table className="attendance-table">
-               <thead>
+              <thead>
                 <tr>
                   <th>Employee</th>
                   <th>Dates (Start - End)</th>
@@ -638,14 +646,14 @@ const AttendanceContent = () => {
                       <td>
                         {leave.status === 'pending' ? (
                           <div className="leave-action-btns">
-                            <button 
-                              className="btn-approve" 
+                            <button
+                              className="btn-approve"
                               onClick={() => handleStatusUpdate(leave._id, 'approved')}
                             >
                               Approve
                             </button>
-                            <button 
-                              className="btn-reject" 
+                            <button
+                              className="btn-reject"
                               onClick={() => {
                                 setRejectingLeave({ id: leave._id, name: leave.personId?.name });
                                 setIsRejectModalOpen(true);
@@ -676,18 +684,18 @@ const AttendanceContent = () => {
 
       {/* Modals */}
       {isLeaveModalOpen && (
-        <LeaveModal 
-          onClose={() => setIsLeaveModalOpen(false)} 
+        <LeaveModal
+          onClose={() => setIsLeaveModalOpen(false)}
           onSuccess={() => {
             setIsLeaveModalOpen(false);
             fetchPeopleAndAttendance();
-          }} 
+          }}
         />
       )}
-      
+
       {isQrModalOpen && (
-        <QRDisplayModal 
-          onClose={() => setIsQrModalOpen(false)} 
+        <QRDisplayModal
+          onClose={() => setIsQrModalOpen(false)}
         />
       )}
 

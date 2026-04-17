@@ -1,8 +1,8 @@
-// backend/src/routes/dashboard.routes.ts
 import { Router, Request, Response } from 'express';
 import Member from '../models/Member';
 import Employee from '../models/Employee';
 import Branch from '../models/Branch';
+import Enquiry from '../models/Enquiry';
 import { authMiddleware } from '../middleware/auth.middleware';
 
 const router = Router();
@@ -10,23 +10,35 @@ const router = Router();
 // Dashboard stats
 router.get('/stats', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const totalMembers = await Member.countDocuments({ status: 'active' });
-    const totalEmployees = await Employee.countDocuments({ status: 'active' });
-    const activeBranches = await Branch.countDocuments({ status: 'active' });
+    const { startDate, endDate } = req.query;
+    let query: any = {};
 
-    console.log('📊 Fetching dashboard stats:', { totalMembers, totalEmployees, activeBranches });
+    if (startDate && endDate) {
+      query.createdAt = {
+        $gte: new Date(startDate as string),
+        $lte: new Date(new Date(endDate as string).setHours(23, 59, 59, 999))
+      };
+    }
+
+    const [totalEnquiries, totalConverted, totalLost] = await Promise.all([
+      Enquiry.countDocuments(query),
+      Enquiry.countDocuments({ ...query, status: 'converted' }),
+      Enquiry.countDocuments({ ...query, status: 'lost' })
+    ]);
+
+    console.log('📊 Fetching dashboard enquiry stats:', { totalEnquiries, totalConverted, totalLost, query });
 
     const revenue = 840000;
 
     res.json({
-      totalMembers,
-      totalEmployees,
-      activeBranches,
+      totalEnquiries,
+      totalConverted,
+      totalLost,
       revenue,
       growth: {
-        members: 12.5,
-        employees: 8.2,
-        branches: 2,
+        enquiries: 12.5,
+        converted: 8.2,
+        lost: 2.1,
         revenue: 15.3
       }
     });
