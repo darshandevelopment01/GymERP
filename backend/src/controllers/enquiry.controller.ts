@@ -55,7 +55,8 @@ export const getEnquiryById = async (req: Request, res: Response): Promise<void>
   try {
     const enquiry = await Enquiry.findById(req.params.id)
       .populate('branch', 'name city state')
-      .populate('plan', 'planName duration price');
+      .populate('plan', 'planName duration price')
+      .populate('createdBy', 'name');
 
     if (!enquiry) {
       res.status(404).json({ success: false, message: 'Enquiry not found' });
@@ -325,7 +326,8 @@ export const createEnquiry = async (req: Request, res: Response): Promise<void> 
     // ✅ STEP 11: Fetch with populated fields
     const populatedEnquiry = await Enquiry.findById(enquiry._id)
       .populate('branch', 'name city state')
-      .populate('plan', 'planName duration price');
+      .populate('plan', 'planName duration price')
+      .populate('createdBy', 'name');
 
     console.log('✅ Enquiry populated successfully');
 
@@ -466,7 +468,8 @@ export const updateEnquiry = async (req: Request, res: Response): Promise<void> 
       { new: true, runValidators: true }
     )
       .populate('branch', 'name city state')
-      .populate('plan', 'planName duration price');
+      .populate('plan', 'planName duration price')
+      .populate('createdBy', 'name');
 
     console.log('✅ Enquiry updated successfully');
 
@@ -575,7 +578,8 @@ export const reopenEnquiry = async (req: Request, res: Response): Promise<void> 
 
     const populatedEnquiry = await Enquiry.findById(enquiry._id)
       .populate('branch', 'name city state')
-      .populate('plan', 'planName duration price');
+      .populate('plan', 'planName duration price')
+      .populate('createdBy', 'name');
 
     res.json({
       success: true,

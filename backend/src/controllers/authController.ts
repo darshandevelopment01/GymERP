@@ -241,11 +241,11 @@ export const sendTestEmail = async (req: Request, res: Response) => {
     
     const success = await sendEmail(
       targetEmail,
-      'MuscleTime ERP - SMTP Test',
+      'Muscle Time Fitness - SMTP Test',
       `
       <div style="font-family: sans-serif; padding: 20px;">
         <h2 style="color: #6366f1;">SMTP Test Successful!</h2>
-        <p>This is a test email from your MuscleTime ERP system.</p>
+        <p>This is a test email from your Muscle Time Fitness system.</p>
         <hr/>
         <p><strong>Sent at:</strong> ${new Date().toLocaleString()}</p>
         <p><strong>Host:</strong> ${process.env.SMTP_HOST}</p>

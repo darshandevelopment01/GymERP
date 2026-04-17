@@ -58,7 +58,7 @@ export const sendEmail = async (
 
         // 2. Send Mail
         const info = await transporter.sendMail({
-            from: `"MuscleTime ERP" <${user}>`,
+            from: `"Muscle Time Fitness" <${user}>`,
             to,
             subject,
             html: htmlContent,

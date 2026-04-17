@@ -13,6 +13,17 @@ import WorkoutPlan from '../models/WorkoutPlan';
 import bcrypt from 'bcryptjs';
 import { sendEmail } from '../utils/mailer';
 
+// Helper to capitalize first letter of each name part
+const toTitleCase = (str: string): string => {
+  if (!str) return '';
+  return str
+    .toLowerCase()
+    .split(' ')
+    .filter(word => word.length > 0)
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
 // Generic CRUD helper functions
 const generateId = async (Model: any, idField: string): Promise<string> => {
   const lastItem = await Model.findOne().sort({ [idField]: -1 });
@@ -509,8 +520,8 @@ export const createEmployee = async (req: Request, res: Response) => {
 
     const htmlMessage = `
       <div style="font-family: sans-serif; color: #333;">
-        <h2 style="color: #6366f1;">Welcome to MuscleTime ERP!</h2>
-        <p>Hello <strong>${req.body.name}</strong>,</p>
+        <h2 style="color: #6366f1;">Welcome to Muscle Time Fitness!</h2>
+        <p>Hello <strong>${toTitleCase(req.body.name)}</strong>,</p>
         <p>An account has been successfully created for you. Here are your login credentials:</p>
         <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e2e8f0;">
           <p style="margin: 0 0 10px 0;"><strong>System URL:</strong> <a href="https://muscletime.net">https://muscletime.net</a></p>
@@ -518,14 +529,14 @@ export const createEmployee = async (req: Request, res: Response) => {
           <p style="margin: 0;"><strong>Password:</strong> <span style="font-family: monospace; font-size: 1.1em; background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">${rawPassword}</span></p>
         </div>
         <p><em>Please log in and change your password immediately.</em></p>
-        <p>Best regards,<br/>MuscleTime Admin</p>
+        <p>Best regards,<br/>Team Muscle Time Fitness</p>
       </div>
     `;
 
     // 📧 Send email (awaiting to ensure Vercel doesn't kill it)
     const emailSent = await sendEmail(
       req.body.email,
-      'Your MuscleTime ERP Account Credentials',
+      'Your Muscle Time Fitness Account Credentials',
       htmlMessage
     );
 

@@ -590,6 +590,11 @@ const EnquiryMaster = () => {
       }
     },
     {
+      label: 'Enquired By',
+      field: 'createdBy',
+      render: (item) => item.createdBy?.name || 'Unknown'
+    },
+    {
       label: 'Status',
       field: 'status',
       render: (item) => (

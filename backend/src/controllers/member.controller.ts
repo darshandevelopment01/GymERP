@@ -9,6 +9,17 @@ import bcrypt from 'bcryptjs';
 import { sendEmail, generateDocxBuffer, generateReceiptPdfBuffer } from '../utils/mailer';
 import path from 'path';
 
+// Helper to capitalize first letter of each name part
+const toTitleCase = (str: string): string => {
+  if (!str) return '';
+  return str
+    .toLowerCase()
+    .split(' ')
+    .filter(word => word.length > 0)
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
 // Helper to format Invoice No based on Image 1 (S/serial/fiscal_year)
 const formatInvoiceNo = (memberId: string): string => {
   try {
@@ -136,8 +147,8 @@ export const createMember = async (req: Request, res: Response): Promise<void> =
 
     const htmlMessage = `
       <div style="font-family: sans-serif; color: #333; max-width: 600px; margin: auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
-        <h2 style="color: #6366f1; text-align: center;">Welcome to MuscleTime!</h2>
-        <p>Hello <strong>${trimmedData.name}</strong>,</p>
+        <h2 style="color: #6366f1; text-align: center;">Welcome to Muscle Time Fitness!</h2>
+        <p>Hello <strong>${toTitleCase(trimmedData.name)}</strong>,</p>
         <p>Your gym membership has been successfully created. Please use the following credentials to log in to our <strong>Mobile Application</strong>:</p>
         
         <div style="background: #f1f5f9; padding: 20px; border-radius: 8px; margin: 25px 0; border-left: 5px solid #6366f1;">
@@ -151,7 +162,7 @@ export const createMember = async (req: Request, res: Response): Promise<void> =
 
         <p>We have also attached your <strong>Membership Details (MTF Reseat)</strong> to this email for your records.</p>
         
-        <p>Best regards,<br/>Team MuscleTime</p>
+        <p>Best regards,<br/>Team Muscle Time Fitness</p>
       </div>
     `;
 
@@ -210,7 +221,7 @@ export const createMember = async (req: Request, res: Response): Promise<void> =
     // 📧 Send email (awaiting to ensure Vercel doesn't kill the function before sending)
     const emailSent = await sendEmail(
       trimmedData.email,
-      'Welcome to MuscleTime - Your Membership Credentials',
+      'Welcome to Muscle Time Fitness - Your Membership Credentials',
       htmlMessage,
       attachments
     );
@@ -445,7 +456,7 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
           const receiptEmailSent = await sendEmail(
             member.email,
             `Payment Receipt - ${receiptTitle} (${member.memberId})`,
-            `<p>Dear ${member.name}, your payment of Rs. ${freshPaymentAmount} has been received.</p>`,
+            `<p>Dear ${toTitleCase(member.name)}, your payment of Rs. ${freshPaymentAmount} has been received.</p>`,
             [{ filename: receiptFilename, content: receiptBuffer, contentType: 'application/pdf' }]
           );
 

@@ -605,6 +605,13 @@ const EnquiryDetailPage = () => {
                 </div>
               </div>
               <div className="info-row">
+                <div className="info-icon"><User size={18} /></div>
+                <div className="info-label">
+                  <span className="label-text">Enquired By</span>
+                  <span className="value-text">{enquiry.createdBy?.name || 'Unknown'}</span>
+                </div>
+              </div>
+              <div className="info-row">
                 <div className="info-icon"><Tag size={18} /></div>
                 <div className="info-label">
                   <span className="label-text">Source</span>

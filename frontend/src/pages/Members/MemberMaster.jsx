@@ -680,18 +680,20 @@ const MemberMaster = () => {
       mobileHide: true
     },
     {
-      label: 'Payment',
-      field: 'payment',
+      label: 'Payment Received',
+      field: 'paymentReceived',
       render: (item) => (
-        <div>
-          <div style={{ fontSize: '0.85rem', color: '#10b981' }}>
-            ₹{item.paymentReceived || 0}
-          </div>
-          {item.paymentRemaining > 0 && (
-            <div style={{ fontSize: '0.75rem', color: '#ef4444' }}>
-              Pending: ₹{item.paymentRemaining}
-            </div>
-          )}
+        <div style={{ fontSize: '0.85rem', color: '#10b981' }}>
+          ₹{item.paymentReceived || 0}
+        </div>
+      )
+    },
+    {
+      label: 'Payment Pending',
+      field: 'paymentRemaining',
+      render: (item) => (
+        <div style={{ fontSize: '0.85rem', color: (item.paymentRemaining || 0) > 0 ? '#ef4444' : '#64748b' }}>
+          {(item.paymentRemaining || 0) > 0 ? `₹${item.paymentRemaining}` : '-'}
         </div>
       )
     },
