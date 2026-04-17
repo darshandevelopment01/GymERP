@@ -51,11 +51,12 @@ const enquirySchema = new Schema<IEnquiry>({
   },
   email: {
     type: String,
-    required: true,
+    required: false,
     trim: true,
     lowercase: true,
     validate: {
       validator: function (v: string) {
+        if (!v) return true; // Allow empty/null
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
       },
       message: 'Invalid email format'

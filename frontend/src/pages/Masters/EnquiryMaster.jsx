@@ -76,14 +76,12 @@ const EnquiryMaster = () => {
   const [submittingReopen, setSubmittingReopen] = useState(false);
   const [liveDuplicate, setLiveDuplicate] = useState(null);
   const [checkingDuplicate, setCheckingDuplicate] = useState(false);
+  const [activeStatusFilter, setActiveStatusFilter] = useState(location.state?.filterStatus || '');
 
-  // ✅ Handle external filter status from navigation state
+  // ✅ Handle external filter status from navigation state or stat card clicks
   const externalFilters = React.useMemo(() => {
-    if (location.state?.filterStatus !== undefined) {
-      return { status: location.state.filterStatus };
-    }
-    return {};
-  }, [location.state?.filterStatus]);
+    return { status: activeStatusFilter };
+  }, [activeStatusFilter]);
 
   // ✅ Debounced Duplicate Check
   useEffect(() => {
@@ -689,7 +687,7 @@ const EnquiryMaster = () => {
       name: 'email',
       label: 'Email Address',
       type: 'email',
-      required: true,
+      required: false,
       placeholder: 'Enter email address',
       onChange: (val, formData, setFormData) => {
         setFormData({ ...formData, email: val });
@@ -848,28 +846,44 @@ const EnquiryMaster = () => {
   return (
     <div className="enquiry-master-page">
       <div className="stats-container">
-        <div className="stat-card total" onClick={() => setRefreshKey(prev => prev + 1)} style={{ cursor: 'pointer' }}>
+        <div 
+          className={`stat-card total ${activeStatusFilter === '' ? 'active' : ''}`} 
+          onClick={() => setActiveStatusFilter('')} 
+          style={{ cursor: 'pointer' }}
+        >
           <div className="stat-icon">👥</div>
           <div className="stat-content">
             <h3>{stats.total || 0}</h3>
             <p>Total Enquiries</p>
           </div>
         </div>
-        <div className="stat-card pending">
+        <div 
+          className={`stat-card pending ${activeStatusFilter === 'pending' ? 'active' : ''}`}
+          onClick={() => setActiveStatusFilter('pending')}
+          style={{ cursor: 'pointer' }}
+        >
           <div className="stat-icon">⏳</div>
           <div className="stat-content">
             <h3>{stats.pending || 0}</h3>
             <p>Pending</p>
           </div>
         </div>
-        <div className="stat-card converted">
+        <div 
+          className={`stat-card converted ${activeStatusFilter === 'converted' ? 'active' : ''}`}
+          onClick={() => setActiveStatusFilter('converted')}
+          style={{ cursor: 'pointer' }}
+        >
           <div className="stat-icon">✅</div>
           <div className="stat-content">
             <h3>{stats.converted || 0}</h3>
             <p>Converted</p>
           </div>
         </div>
-        <div className="stat-card lost">
+        <div 
+          className={`stat-card lost ${activeStatusFilter === 'lost' ? 'active' : ''}`}
+          onClick={() => setActiveStatusFilter('lost')}
+          style={{ cursor: 'pointer' }}
+        >
           <div className="stat-icon">📉</div>
           <div className="stat-content">
             <h3>{stats.lost || 0}</h3>

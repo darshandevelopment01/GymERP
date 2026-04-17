@@ -158,7 +158,7 @@ export const createEnquiry = async (req: Request, res: Response): Promise<void> 
     console.log('🧹 Cleaned data:', JSON.stringify(cleanedData, null, 2));
 
     // ✅ STEP 3: Validate required fields
-    const requiredFields = ['branch', 'name', 'mobileNumber', 'email', 'gender', 'source'];
+    const requiredFields = ['branch', 'name', 'mobileNumber', 'gender', 'source'];
     const missingFields = requiredFields.filter(field => !cleanedData[field]);
 
     if (missingFields.length > 0) {
@@ -227,8 +227,8 @@ export const createEnquiry = async (req: Request, res: Response): Promise<void> 
     }
     console.log('✅ Mobile number validated');
 
-    // ✅ STEP 7: Validate email format
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanedData.email)) {
+    // ✅ STEP 7: Validate email format (if provided)
+    if (cleanedData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanedData.email)) {
       console.error('❌ Invalid email format:', cleanedData.email);
       res.status(400).json({
         success: false,
@@ -236,7 +236,7 @@ export const createEnquiry = async (req: Request, res: Response): Promise<void> 
       });
       return;
     }
-    console.log('✅ Email validated');
+    console.log('✅ Email validated (or skipped)');
 
     // ✅ STEP 8: Validate gender
     if (!['Male', 'Female', 'Other'].includes(cleanedData.gender)) {

@@ -113,10 +113,16 @@
   height: 100%;
 }
 
-.stat-card:hover {
+.stat-card.active {
   transform: translateY(-5px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  border: 2px solid currentColor;
 }
+
+.stat-card.total.active { border-color: rgb(23, 171, 136); }
+.stat-card.pending.active { border-color: #f59e0b; }
+.stat-card.converted.active { border-color: #10b981; }
+.stat-card.lost.active { border-color: #ef4444; }
 
 .stat-icon {
   font-size: 2.5rem;
