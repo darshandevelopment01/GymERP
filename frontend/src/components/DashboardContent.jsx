@@ -37,8 +37,14 @@ export default function DashboardContent() {
   const [loading, setLoading] = useState(!hasCache);
   
   // Date Filters
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [startDate, setStartDate] = useState(() => {
+    const today = new Date();
+    return new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+  });
+  const [endDate, setEndDate] = useState(() => {
+    const today = new Date();
+    return new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0];
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
