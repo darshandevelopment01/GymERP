@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { X, Calendar, User, FileText, Search, UserCircle } from 'lucide-react';
 import attendanceApi from '../services/attendanceApi';
-import memberApi from '../services/memberApi';
+import { employeeAPI } from '../services/mastersApi';
 
 const LeaveModal = ({ onClose, onSuccess }) => {
   const [people, setPeople] = useState([]);
@@ -21,8 +21,9 @@ const LeaveModal = ({ onClose, onSuccess }) => {
     const fetchPeople = async () => {
       setLoading(true);
       try {
-        const res = await memberApi.getAll();
-        setPeople(res.members || res.data || []);
+        // Switch to Fetching Employees instead of Members
+        const res = await employeeAPI.getAll();
+        setPeople(res || []);
       } catch (err) {
         console.error('Fetch error:', err);
       } finally {
@@ -36,18 +37,18 @@ const LeaveModal = ({ onClose, onSuccess }) => {
     if (!searchQuery.trim()) return [];
     return people.filter(p => 
       p.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      p.memberId?.toLowerCase().includes(searchQuery.toLowerCase())
+      p.employeeCode?.toLowerCase().includes(searchQuery.toLowerCase()) // Search by employee code
     ).slice(0, 5); // Limit to top 5 matches
   }, [people, searchQuery]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!selectedPerson) return alert('Please select a member');
+    if (!selectedPerson) return alert('Please select an employee');
 
     try {
       await attendanceApi.applyLeave({
         personId: selectedPerson._id,
-        personType: 'member',
+        personType: 'employee', // Explicitly employee
         startDate,
         endDate,
         reason
@@ -69,7 +70,7 @@ const LeaveModal = ({ onClose, onSuccess }) => {
         boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', position: 'relative'
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem', alignItems: 'center' }}>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#111827' }}>Apply Member Leave</h2>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#111827' }}>Apply Employee Leave</h2>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}>
             <X size={24} />
           </button>
@@ -78,7 +79,7 @@ const LeaveModal = ({ onClose, onSuccess }) => {
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <div>
             <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '700', color: '#374151', marginBottom: '0.5rem' }}>
-              Select Member
+              Select Employee
             </label>
             
             {!selectedPerson ? (
@@ -87,7 +88,7 @@ const LeaveModal = ({ onClose, onSuccess }) => {
                   <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
                   <input 
                     type="text"
-                    placeholder="Search by name or member ID..."
+                    placeholder="Search by name or employee code..."
                     value={searchQuery}
                     onChange={(e) => {
                       setSearchQuery(e.target.value);
@@ -117,12 +118,12 @@ const LeaveModal = ({ onClose, onSuccess }) => {
                           }}
                         >
                           <div style={{ fontWeight: '600' }}>{p.name}</div>
-                          <div style={{ fontSize: '0.75rem', color: '#64748b' }}>ID: {p.memberId}</div>
+                          <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Code: {p.employeeCode}</div>
                         </div>
                       ))
                     ) : (
                       <div style={{ padding: '12px', fontSize: '0.875rem', color: '#94a3b8', textAlign: 'center' }}>
-                        No members found
+                        No employees found
                       </div>
                     )}
                   </div>
@@ -134,7 +135,7 @@ const LeaveModal = ({ onClose, onSuccess }) => {
                   <UserCircle size={32} color="#1ccaa1" />
                   <div>
                     <div style={{ fontWeight: '700', color: '#111827' }}>{selectedPerson.name}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{selectedPerson.memberId}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{selectedPerson.employeeCode}</div>
                   </div>
                 </div>
                 <button 
@@ -190,7 +191,7 @@ const LeaveModal = ({ onClose, onSuccess }) => {
               <textarea 
                 value={reason} 
                 onChange={(e) => setReason(e.target.value)}
-                placeholder="Explain why the member is taking leave..."
+                placeholder="Explain why the employee is taking leave..."
                 style={{ 
                   width: '100%', padding: '12px 12px 12px 40px', borderRadius: '12px', border: '2px solid #e5e7eb', 
                   minHeight: '100px', boxSizing: 'border-box', outline: 'none', fontFamily: 'inherit', resize: 'vertical'
