@@ -15,7 +15,8 @@ const LeaveModal = ({ onClose, onSuccess }) => {
   useEffect(() => {
     // Get logged-in user from localStorage
     const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-    if (storedUser && storedUser._id) {
+    // Fix: Backend uses 'id' instead of '_id' in the user object
+    if (storedUser && (storedUser.id || storedUser._id)) {
       setUser(storedUser);
     } else {
       alert("User session not found. Please login again.");
@@ -29,7 +30,7 @@ const LeaveModal = ({ onClose, onSuccess }) => {
 
     try {
       await attendanceApi.applyLeave({
-        personId: user._id,
+        personId: user.id || user._id, // Fix: support both 'id' (from API) and '_id'
         personType: 'employee', // User applying their own leave is treated as an employee leave
         startDate,
         endDate,
