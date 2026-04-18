@@ -1020,8 +1020,14 @@ const MemberDetailPage = () => {
                   <input 
                     type="tel" 
                     value={editFormData.mobileNumber || ''} 
-                    onChange={(e) => setEditFormData({...editFormData, mobileNumber: e.target.value})}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                      setEditFormData({...editFormData, mobileNumber: val});
+                    }}
                     required
+                    maxLength="10"
+                    minLength="10"
+                    pattern="[0-9]{10}"
                   />
                 </div>
                 <div className="form-group-custom">

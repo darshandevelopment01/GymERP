@@ -470,8 +470,18 @@ const GenericMaster = ({
   };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    let { name, value, type } = e.target;
     const field = formFields.find(f => f.name === name);
+
+    // Apply strict validation for phone numbers
+    if (type === 'tel' || field?.type === 'tel') {
+      // Remove all non-numeric characters
+      value = value.replace(/\D/g, '');
+      // Limit to 10 characters
+      if (value.length > 10) {
+        value = value.slice(0, 10);
+      }
+    }
 
     if (field && field.onChange) {
       field.onChange(value, formData, setFormData);
@@ -1162,6 +1172,9 @@ const GenericMaster = ({
                           min={field.min}
                           max={field.max}
                           disabled={field.disabled}
+                          maxLength={field.type === 'tel' ? 10 : field.maxLength}
+                          minLength={field.type === 'tel' ? 10 : field.minLength}
+                          pattern={field.type === 'tel' ? "[0-9]{10}" : field.pattern}
                           className={field.errorText && field.errorText(formData) ? 'input-error' : ''}
                         />
                       )}
