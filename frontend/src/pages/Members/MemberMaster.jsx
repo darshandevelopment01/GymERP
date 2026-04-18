@@ -1115,10 +1115,6 @@ const MemberMaster = () => {
                     required
                     max={selectedMember.paymentRemaining}
                     placeholder="Enter payment amount"
-                    style={{
-                      fontSize: '1.1rem',
-                      fontWeight: '600'
-                    }}
                   />
                   <small style={{ color: '#64748b', fontSize: '0.85rem', marginTop: '0.5rem', display: 'block' }}>
                     Maximum: ₹{selectedMember.paymentRemaining}
@@ -1131,11 +1127,6 @@ const MemberMaster = () => {
                     value={selectedPaymentMode}
                     onChange={(e) => setSelectedPaymentMode(e.target.value)}
                     required
-                    style={{
-                      fontSize: '1rem',
-                      fontWeight: '500',
-                      padding: '0.6rem'
-                    }}
                   >
                     {paymentModes.length > 0 ? (
                       paymentModes.map(m => (
