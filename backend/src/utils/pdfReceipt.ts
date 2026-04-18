@@ -1,5 +1,7 @@
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { LOGO_BASE64 } from '../assets/logoBase64';
+import fs from 'fs';
+import path from 'path';
 
 export interface ReceiptData {
   name: string;
@@ -52,17 +54,14 @@ const numberToWords = (num: number): string => {
     return '';
   };
 
-  // Indian numbering system logic (simplified for common receipt values)
   if (num < 1000) return helper(num);
   
   let res = '';
-  // Thousands
   if (num >= 1000 && num < 100000) {
     res = helper(Math.floor(num / 1000)) + ' Thousand';
     const rem = num % 1000;
     if (rem > 0) res += ' ' + helper(rem);
   } else if (num >= 100000) {
-    // Very basic fallback for larger numbers
     return num.toLocaleString('en-IN');
   }
 
@@ -82,7 +81,6 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
   const regularFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const italicFont = await pdfDoc.embedFont(StandardFonts.HelveticaOblique);
   
-  // Design system colors based on Image 1
   const brandRed = rgb(0.85, 0.1, 0.1); 
   const pureBlack = rgb(0, 0, 0);
   const darkGrey = rgb(0.2, 0.2, 0.2);
@@ -105,10 +103,27 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
   // 3. Logo and Header Info
   let logoY = currentY - 60;
   try {
-    const logoBuffer = Buffer.from(LOGO_BASE64, 'base64');
+    let logoBuffer: Buffer;
+    
+    // Attempt to load from multiple paths for local and dev/prod environments
+    const localPath = 'D:/BitsWizz Projects/MuscleTime-erp-system/backend/src/assets/logo.jpeg';
+    const prodPath = path.join(process.cwd(), 'backend/src/assets/logo.jpeg');
+    const prodPathAlt = path.join(process.cwd(), 'src/assets/logo.jpeg');
+
+    if (fs.existsSync(localPath)) {
+      logoBuffer = fs.readFileSync(localPath);
+    } else if (fs.existsSync(prodPath)) {
+      logoBuffer = fs.readFileSync(prodPath);
+    } else if (fs.existsSync(prodPathAlt)) {
+      logoBuffer = fs.readFileSync(prodPathAlt);
+    } else {
+      // Fallback to Base64 if filesystem read fails
+      logoBuffer = Buffer.from(LOGO_BASE64, 'base64');
+    }
+
     const logoImage = await pdfDoc.embedJpg(logoBuffer);
     
-    // Fixed width scaling: set width to 120 and scale height proportionally
+    // Fixed width scaling: set width to 130 and scale height proportionally
     const maxWidth = 130;
     const scale = maxWidth / logoImage.width;
     const finalWidth = maxWidth;
@@ -128,7 +143,7 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
   // Gym Address Info (Right of logo, centered context)
   const gymAddress = [
     `${data.branch || ''}`,
-    data.branchAddress,
+    data.branchAddress || '',
     data.city ? `${data.city}, ${data.state || ''} ${data.zipCode}` : "India"
   ];
   let addressY = currentY;
@@ -146,7 +161,6 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
   page.drawLine({ start: { x: 50, y: currentY }, end: { x: width - 50, y: currentY }, thickness: 0.5, color: dividerGrey, dashArray: [2, 2] });
   currentY -= 20;
 
-  // Left side: Customer Info
   let leftX = 50;
   let infoY = currentY;
   const drawLabelValue = (label: string, value: string, x: number, y: number) => {
@@ -161,7 +175,6 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
   drawLabelValue('Membership ID', data.memberId, leftX, infoY); infoY -= 18;
   drawLabelValue('Place of Supply', 'Maharashtra', leftX, infoY);
 
-  // Right side: Invoice Details
   let rightX = width - 220;
   infoY = currentY;
   drawLabelValue('Invoice Type', data.invoiceType, rightX, infoY); infoY -= 18;
@@ -190,7 +203,6 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
 
   // 7. Financial Summary Block
   const summaryBlockX = width - 260;
-  const summaryBoxWidth = 210;
   const drawSummaryRow = (label: string, value: string, isBold = false, y: number) => {
     const font = isBold ? boldFont : regularFont;
     page.drawText(label, { x: summaryBlockX + 5, y, size: 10, font: boldFont, color: pureBlack });
@@ -204,19 +216,16 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
   drawSummaryRow(`Paid (${data.date})`, `Rs. ${data.paidPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, true, currentY);
   currentY -= 30;
 
-  // Mode of Payment Box
   page.drawRectangle({ x: summaryBlockX + 10, y: currentY - 5, width: 150, height: 25, color: lightBg, borderColor: dividerGrey, borderWidth: 0.5 });
-  page.drawText(`Mode of Payment : ${data.paidPrice}(${data.paymentMode})`, { x: summaryBlockX + 15, y: currentY + 5, size: 9, font: boldFont, color: pureBlack });
+  page.drawText(`Mode of Payment : (${data.paymentMode})`, { x: summaryBlockX + 15, y: currentY + 5, size: 9, font: boldFont, color: pureBlack });
   currentY -= 35;
 
-  // Next Payment Date (Conditional)
   if (data.nextPaymentDate && data.balanceAmount > 0) {
     drawSummaryRow('Next Pay Date', data.nextPaymentDate, false, currentY);
     currentY -= 20;
   }
   currentY -= 5;
 
-  // Amount in words
   page.drawText('Paid Amount in Words :', { x: summaryBlockX + 5, y: currentY, size: 9, font: boldFont, color: pureBlack });
   currentY -= 18;
   const words = numberToWords(data.paidPrice);
@@ -252,7 +261,6 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
 
   currentY -= 40;
 
-  // 9. Signatures
   page.drawText('Signature of member', { x: 55, y: currentY, size: 10, font: boldFont, color: darkGrey });
   page.drawText(`For ${data.branch || 'Gym'}`, { x: width - 180, y: currentY, size: 10, font: boldFont, color: darkGrey });
   currentY -= 30;
@@ -263,13 +271,11 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
   
   currentY -= 25;
 
-  // 10. Footer Section
   const footerText = `If you have any questions about this bill, please contact Mail : muscletimehelp@gmail.com, Phone : 9511811811`;
   const ftWidth = regularFont.widthOfTextAtSize(footerText, 8);
   page.drawText(footerText, { x: (width - ftWidth) / 2, y: currentY, size: 8, font: regularFont, color: pureBlack });
   currentY -= 25;
 
-  // Centered Thank You Message
   const thanksText = 'THANK YOU FOR YOUR BUSINESS! www.muscletime.co.in';
   const thanksWidth = boldFont.widthOfTextAtSize(thanksText, 12);
   page.drawRectangle({ x: 50, y: currentY - 5, width: width - 100, height: 25, color: dividerGrey, opacity: 0.5 });
