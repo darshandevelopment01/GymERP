@@ -1056,49 +1056,104 @@ const EnquiryMaster = () => {
                         <div style={{ textAlign: 'center', color: '#94a3b8', fontSize: '2rem' }}>👤</div>
                       )}
                     </div>
-                    <label style={{
-                      display: 'block',
-                      textAlign: 'center',
-                      marginTop: '0.5rem',
-                      color: '#6366f1',
-                      fontSize: '0.75rem',
-                      fontWeight: '600',
-                      cursor: 'pointer'
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.4rem',
+                      marginTop: '0.5rem'
                     }}>
-                      {uploadingPhoto ? 'Uploading...' : 'Change Photo'}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        style={{ display: 'none' }}
-                        onChange={async (e) => {
-                          const file = e.target.files?.[0];
-                          if (!file) return;
-                          setUploadingPhoto(true);
-                          try {
-                            const compressedFile = await compressImage(file);
-                            const fd = new FormData();
-                            fd.append('photo', compressedFile);
-                            const token = localStorage.getItem('token');
-                            const res = await fetch(`${import.meta.env.VITE_API_URL}/upload/profile-photo`, {
-                              method: 'POST',
-                              headers: { 'Authorization': `Bearer ${token}` },
-                              body: fd
-                            });
-                            const result = await res.json();
-                            if (result.success) {
-                              setPaymentData(prev => ({ ...prev, profilePhoto: result.data.url }));
-                            } else {
-                              alert(result.message || 'Upload failed');
+                      <label style={{
+                        display: 'block',
+                        textAlign: 'center',
+                        color: '#10b981',
+                        fontSize: '0.75rem',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        padding: '4px',
+                        border: '1px solid #10b981',
+                        borderRadius: '4px'
+                      }}>
+                        📷 {uploadingPhoto ? 'Processing...' : 'Take Photo'}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          style={{ display: 'none' }}
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            setUploadingPhoto(true);
+                            try {
+                              const compressedFile = await compressImage(file);
+                              const fd = new FormData();
+                              fd.append('photo', compressedFile);
+                              const token = localStorage.getItem('token');
+                              const res = await fetch(`${import.meta.env.VITE_API_URL}/upload/profile-photo`, {
+                                method: 'POST',
+                                headers: { 'Authorization': `Bearer ${token}` },
+                                body: fd
+                              });
+                              const result = await res.json();
+                              if (result.success) {
+                                setPaymentData(prev => ({ ...prev, profilePhoto: result.data.url }));
+                              } else {
+                                alert(result.message || 'Capture failed');
+                              }
+                            } catch (err) {
+                              console.error(err);
+                              alert('Failed to capture');
+                            } finally {
+                              setUploadingPhoto(false);
                             }
-                          } catch (err) {
-                            console.error(err);
-                            alert('Failed to upload');
-                          } finally {
-                            setUploadingPhoto(false);
-                          }
-                        }}
-                      />
-                    </label>
+                          }}
+                        />
+                      </label>
+                      <label style={{
+                        display: 'block',
+                        textAlign: 'center',
+                        color: '#6366f1',
+                        fontSize: '0.75rem',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        padding: '4px',
+                        border: '1px solid #6366f1',
+                        borderRadius: '4px'
+                      }}>
+                        📁 {uploadingPhoto ? 'Uploading...' : 'Upload Photo'}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          style={{ display: 'none' }}
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            setUploadingPhoto(true);
+                            try {
+                              const compressedFile = await compressImage(file);
+                              const fd = new FormData();
+                              fd.append('photo', compressedFile);
+                              const token = localStorage.getItem('token');
+                              const res = await fetch(`${import.meta.env.VITE_API_URL}/upload/profile-photo`, {
+                                method: 'POST',
+                                headers: { 'Authorization': `Bearer ${token}` },
+                                body: fd
+                              });
+                              const result = await res.json();
+                              if (result.success) {
+                                setPaymentData(prev => ({ ...prev, profilePhoto: result.data.url }));
+                              } else {
+                                alert(result.message || 'Upload failed');
+                              }
+                            } catch (err) {
+                              console.error(err);
+                              alert('Failed to upload');
+                            } finally {
+                              setUploadingPhoto(false);
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
                   </div>
                   <div style={{ flex: 1 }}>
                     <h3 style={{ margin: '0 0 0.5rem 0', color: '#1e293b', fontSize: '1.1rem' }}>Enquiry Details</h3>
@@ -1162,6 +1217,7 @@ const EnquiryMaster = () => {
                     required
                     className="custom-datepicker"
                     wrapperClassName="datepicker-wrapper"
+                    minDate={new Date()}
                   />
                 </div>
 

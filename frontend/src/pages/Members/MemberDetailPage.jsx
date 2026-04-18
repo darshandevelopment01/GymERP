@@ -1139,6 +1139,7 @@ const MemberDetailPage = () => {
                       onChange={(date) => setRenewData(recalcRenewData({...renewData, membershipStartDate: date}))}
                       dateFormat="dd/MM/yyyy"
                       className="date-input"
+                      minDate={new Date()}
                     />
                   </div>
                   <div className="form-group-custom">

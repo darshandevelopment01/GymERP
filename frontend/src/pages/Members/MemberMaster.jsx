@@ -766,6 +766,7 @@ const MemberMaster = () => {
       name: 'profilePhoto',
       label: 'Profile Photo',
       type: 'image-upload',
+      enableCamera: true,
       required: false,
     },
     {
@@ -1439,6 +1440,7 @@ const MemberMaster = () => {
                     required
                     className="custom-datepicker"
                     wrapperClassName="datepicker-wrapper"
+                    minDate={new Date()}
                   />
                 </div>
 

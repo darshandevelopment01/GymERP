@@ -163,6 +163,7 @@ const UserMaster = () => {
       name: 'profilePhoto',
       label: 'Profile Photo',
       type: 'image-upload',
+      enableCamera: true,
       required: false,
     },
     {

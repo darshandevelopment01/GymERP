@@ -981,66 +981,126 @@ const GenericMaster = ({
                               <div style={{ textAlign: 'center', color: '#94a3b8', fontSize: '2.5rem' }}>👤</div>
                             )}
                           </div>
-                          <label style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            padding: '0.6rem 1.2rem',
-                            background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-                            color: 'white',
-                            borderRadius: '8px',
-                            cursor: uploadingPhoto ? 'not-allowed' : 'pointer',
-                            fontSize: '0.9rem',
-                            fontWeight: '600',
-                            transition: 'transform 0.2s, box-shadow 0.2s',
-                            boxShadow: '0 2px 8px rgba(99, 102, 241, 0.3)',
-                            opacity: uploadingPhoto ? 0.7 : 1
-                          }}
-                            onMouseOver={(e) => !uploadingPhoto && (e.currentTarget.style.transform = 'translateY(-1px)')}
-                            onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-                          >
-                            📷 {uploadingPhoto ? 'Uploading...' : (formData[field.name] ? 'Change Photo' : 'Upload Photo')}
-                            <input
-                              type="file"
-                              accept="image/jpeg,image/png,image/webp,image/gif"
-                              style={{ display: 'none' }}
-                              disabled={uploadingPhoto}
-                              onChange={async (e) => {
-                                const file = e.target.files?.[0];
-                                if (!file) return;
-                                if (file.size > 5 * 1024 * 1024) {
-                                  alert('❌ File size must be less than 5MB');
-                                  return;
-                                }
-                                setUploadingPhoto(true);
-                                try {
-                                  // Compress the image to < 1MB
-                                  const compressedFile = await compressImage(file);
-                                  
-                                  const fd = new FormData();
-                                  fd.append('photo', compressedFile);
-                                  const token = localStorage.getItem('token');
-                                  const res = await fetch(`${import.meta.env.VITE_API_URL}/upload/profile-photo`, {
-                                    method: 'POST',
-                                    headers: { 'Authorization': `Bearer ${token}` },
-                                    body: fd
-                                  });
-                                  const result = await res.json();
-                                  if (result.success) {
-                                    setFormData(prev => ({ ...prev, [field.name]: result.data.url }));
-                                  } else {
-                                    alert('❌ ' + (result.message || 'Upload failed'));
+                          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+                            {/* Standard Upload Button */}
+                            <label style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.5rem',
+                              padding: '0.6rem 1.2rem',
+                              background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                              color: 'white',
+                              borderRadius: '8px',
+                              cursor: uploadingPhoto ? 'not-allowed' : 'pointer',
+                              fontSize: '0.9rem',
+                              fontWeight: '600',
+                              transition: 'transform 0.2s, box-shadow 0.2s',
+                              boxShadow: '0 2px 8px rgba(99, 102, 241, 0.3)',
+                              opacity: uploadingPhoto ? 0.7 : 1
+                            }}
+                              onMouseOver={(e) => !uploadingPhoto && (e.currentTarget.style.transform = 'translateY(-1px)')}
+                              onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                            >
+                              📁 {uploadingPhoto ? 'Uploading...' : 'Upload Photo'}
+                              <input
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp,image/gif"
+                                style={{ display: 'none' }}
+                                disabled={uploadingPhoto}
+                                onChange={async (e) => {
+                                  const file = e.target.files?.[0];
+                                  if (!file) return;
+                                  if (file.size > 5 * 1024 * 1024) {
+                                    alert('❌ File size must be less than 5MB');
+                                    return;
                                   }
-                                } catch (err) {
-                                  console.error('Upload error:', err);
-                                  alert('❌ Failed to upload photo');
-                                } finally {
-                                  setUploadingPhoto(false);
-                                  e.target.value = '';
-                                }
+                                  setUploadingPhoto(true);
+                                  try {
+                                    const compressedFile = await compressImage(file);
+                                    const fd = new FormData();
+                                    fd.append('photo', compressedFile);
+                                    const token = localStorage.getItem('token');
+                                    const res = await fetch(`${import.meta.env.VITE_API_URL}/upload/profile-photo`, {
+                                      method: 'POST',
+                                      headers: { 'Authorization': `Bearer ${token}` },
+                                      body: fd
+                                    });
+                                    const result = await res.json();
+                                    if (result.success) {
+                                      setFormData(prev => ({ ...prev, [field.name]: result.data.url }));
+                                    } else {
+                                      alert('❌ ' + (result.message || 'Upload failed'));
+                                    }
+                                  } catch (err) {
+                                    console.error('Upload error:', err);
+                                    alert('❌ Failed to upload photo');
+                                  } finally {
+                                    setUploadingPhoto(false);
+                                    e.target.value = '';
+                                  }
+                                }}
+                              />
+                            </label>
+
+                            {/* Camera Capture Button (Optional) */}
+                            {field.enableCamera && (
+                              <label style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                padding: '0.6rem 1.2rem',
+                                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                                color: 'white',
+                                borderRadius: '8px',
+                                cursor: uploadingPhoto ? 'not-allowed' : 'pointer',
+                                fontSize: '0.9rem',
+                                fontWeight: '600',
+                                transition: 'transform 0.2s, box-shadow 0.2s',
+                                boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
+                                opacity: uploadingPhoto ? 0.7 : 1
                               }}
-                            />
-                          </label>
+                                onMouseOver={(e) => !uploadingPhoto && (e.currentTarget.style.transform = 'translateY(-1px)')}
+                                onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                              >
+                                📷 {uploadingPhoto ? 'Processing...' : 'Take Photo'}
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  capture="environment"
+                                  style={{ display: 'none' }}
+                                  disabled={uploadingPhoto}
+                                  onChange={async (e) => {
+                                    const file = e.target.files?.[0];
+                                    if (!file) return;
+                                    setUploadingPhoto(true);
+                                    try {
+                                      const compressedFile = await compressImage(file);
+                                      const fd = new FormData();
+                                      fd.append('photo', compressedFile);
+                                      const token = localStorage.getItem('token');
+                                      const res = await fetch(`${import.meta.env.VITE_API_URL}/upload/profile-photo`, {
+                                        method: 'POST',
+                                        headers: { 'Authorization': `Bearer ${token}` },
+                                        body: fd
+                                      });
+                                      const result = await res.json();
+                                      if (result.success) {
+                                        setFormData(prev => ({ ...prev, [field.name]: result.data.url }));
+                                      } else {
+                                        alert('❌ ' + (result.message || 'Upload failed'));
+                                      }
+                                    } catch (err) {
+                                      console.error('Capture error:', err);
+                                      alert('❌ Failed to capture photo');
+                                    } finally {
+                                      setUploadingPhoto(false);
+                                      e.target.value = '';
+                                    }
+                                  }}
+                                />
+                              </label>
+                            )}
+                          </div>
                           {formData[field.name] && (
                             <button
                               type="button"
