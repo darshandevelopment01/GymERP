@@ -18,7 +18,7 @@ import attendanceRoutes from './routes/attendance.routes';
 const app: Application = express();
 
 // Middleware
-app.use(cors({
+const corsOptions = {
   origin: [
     'https://muscletime.net',
     'https://www.muscletime.net',
@@ -27,10 +27,13 @@ app.use(cors({
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
-}));
+};
+
+// Middleware
+app.use(cors(corsOptions));
 
 // Explicit OPTIONS handler for preflight
-app.options('{*path}', cors());
+app.options('*', cors(corsOptions));
 app.use(express.json());
 
 // Debug middleware

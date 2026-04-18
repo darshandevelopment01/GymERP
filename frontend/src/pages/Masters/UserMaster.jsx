@@ -229,7 +229,7 @@ const UserMaster = () => {
     {
       name: 'shifts',
       label: 'Shift Timing',
-      type: 'checkbox-group',
+      type: 'multi-select',
       required: false,
       visibleWhen: (formData) => formData.userType !== 'Admin',
       options: [

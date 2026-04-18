@@ -75,6 +75,8 @@ const GenericMaster = ({
   const [showCamera, setShowCamera] = useState(false);
   const [cameraField, setCameraField] = useState(null);
   const [exporting, setExporting] = useState(false);
+  const [activeMultiSelect, setActiveMultiSelect] = useState(null); // Track open dropdown
+  const [multiSelectSearch, setMultiSelectSearch] = useState('');
 
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({});
@@ -1133,6 +1135,121 @@ const GenericMaster = ({
                               🗑️ Remove Photo
                             </button>
                           )}
+                        </div>
+                      ) : field.type === 'multi-select' ? (
+                        <div className="multi-select-container" style={{ position: 'relative' }}>
+                            <div 
+                                className="multi-select-trigger"
+                                onClick={() => setActiveMultiSelect(activeMultiSelect === field.name ? null : field.name)}
+                                style={{
+                                    padding: '0.75rem',
+                                    background: 'white',
+                                    border: '1px solid #e2e8f0',
+                                    borderRadius: '8px',
+                                    cursor: 'pointer',
+                                    minHeight: '42px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    fontSize: '0.9rem',
+                                    color: '#1e293b'
+                                }}
+                            >
+                                <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    {Array.isArray(formData[field.name]) && formData[field.name].length > 0
+                                        ? formData[field.name].map(val => {
+                                            const opt = field.options.find(o => o.value === val);
+                                            return opt ? opt.label : val;
+                                          }).join(', ')
+                                        : `-- Select ${field.label} --`}
+                                </div>
+                                <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{activeMultiSelect === field.name ? '▲' : '▼' }</span>
+                            </div>
+                            
+                            {activeMultiSelect === field.name && (
+                                <div 
+                                    className="multi-select-dropdown"
+                                    style={{
+                                        position: 'absolute',
+                                        top: '100%',
+                                        left: 0,
+                                        right: 0,
+                                        zIndex: 1000,
+                                        background: 'white',
+                                        border: '1px solid #e2e8f0',
+                                        borderRadius: '8px',
+                                        marginTop: '4px',
+                                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                                        maxHeight: '300px',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        pointerEvents: 'auto'
+                                    }}
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <div style={{ padding: '8px', borderBottom: '1px solid #f1f5f9' }}>
+                                        <input 
+                                            type="text"
+                                            placeholder="Search..."
+                                            value={multiSelectSearch}
+                                            onChange={(e) => setMultiSelectSearch(e.target.value)}
+                                            style={{
+                                                width: '100%',
+                                                padding: '8px',
+                                                borderRadius: '6px',
+                                                border: '1px solid #e2e8f0',
+                                                fontSize: '0.85rem',
+                                                outline: 'none'
+                                            }}
+                                            autoFocus
+                                        />
+                                    </div>
+                                    <div style={{ overflowY: 'auto', flex: 1, padding: '4px' }}>
+                                        {field.options
+                                            .filter(opt => opt.label.toLowerCase().includes(multiSelectSearch.toLowerCase()))
+                                            .map((opt, i) => (
+                                            <label 
+                                                key={i} 
+                                                style={{ 
+                                                    display: 'flex', 
+                                                    alignItems: 'center', 
+                                                    gap: '8px', 
+                                                    padding: '8px',
+                                                    borderRadius: '4px',
+                                                    cursor: 'pointer',
+                                                    fontSize: '0.9rem',
+                                                    color: '#334155'
+                                                }}
+                                                onMouseOver={(e) => e.currentTarget.style.background = '#f8fafc'}
+                                                onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+                                            >
+                                                <input 
+                                                    type="checkbox"
+                                                    checked={Array.isArray(formData[field.name]) && formData[field.name].includes(opt.value)}
+                                                    onChange={(e) => {
+                                                        const current = Array.isArray(formData[field.name]) ? formData[field.name] : [];
+                                                        let next;
+                                                        if (e.target.checked) {
+                                                            next = [...current, opt.value];
+                                                        } else {
+                                                            next = current.filter(v => v !== opt.value);
+                                                        }
+                                                        setFormData(prev => ({ ...prev, [field.name]: next }));
+                                                    }}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    style={{ width: '16px', height: '16px' }}
+                                                />
+                                                {opt.label}
+                                            </label>
+                                        ))}
+                                        {field.options.filter(opt => opt.label.toLowerCase().includes(multiSelectSearch.toLowerCase())).length === 0 && (
+                                            <div style={{ padding: '16px', textAlign: 'center', color: '#94a3b8', fontSize: '0.85rem' }}>
+                                                No results found
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                       ) : field.type === 'checkbox-group' ? (
                         <div className="checkbox-group" style={{ 
