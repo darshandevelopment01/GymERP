@@ -67,7 +67,8 @@ const MemberMaster = () => {
     paymentReceived: 0,
     paymentRemaining: 0,
     membershipStartDate: new Date(),
-    membershipEndDate: null
+    membershipEndDate: null,
+    nextPaymentDate: null
   });
   const [autoEditId, setAutoEditId] = useState(null);
   const [submittingPayment, setSubmittingPayment] = useState(false);
@@ -494,6 +495,7 @@ const MemberMaster = () => {
         // Increment lifetime payment and set new pending
         paymentReceived: (selectedMemberForRenewal.paymentReceived || 0) + (renewData.paymentReceived === '' ? 0 : Number(renewData.paymentReceived)),
         paymentRemaining: renewData.paymentRemaining,
+        nextPaymentDate: renewData.nextPaymentDate ? renewData.nextPaymentDate.toISOString() : null,
         taxSlab: renewData.taxSlab || null
       };
 
@@ -1542,6 +1544,22 @@ const MemberMaster = () => {
                     style={{ background: '#f1f5f9', cursor: 'not-allowed' }}
                   />
                 </div>
+
+                {renewData.paymentRemaining > 0 && (
+                  <div className="form-group">
+                    <label>Next Payment Date <span className="required">*</span></label>
+                    <DatePicker
+                      selected={renewData.nextPaymentDate}
+                      onChange={(date) => setRenewData(prev => ({ ...prev, nextPaymentDate: date }))}
+                      dateFormat="dd/MM/yyyy"
+                      placeholderText="Select next payment date"
+                      minDate={new Date()}
+                      required
+                      className="custom-datepicker"
+                      wrapperClassName="datepicker-wrapper"
+                    />
+                  </div>
+                )}
 
                 {/* Billing Summary */}
                 {renewData.plan && (() => {

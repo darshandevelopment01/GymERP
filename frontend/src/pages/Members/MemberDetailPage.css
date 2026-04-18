@@ -1113,6 +1113,30 @@
   color: white;
 }
 
+.followup-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.edit-followup-btn {
+  background: white;
+  border: 1px solid #6366f1;
+  color: #6366f1;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s;
+}
+
+.edit-followup-btn:hover {
+  background: #6366f1;
+  color: white;
+}
+
 /* Renew Modal Enhancements */
 .form-divider {
   font-size: 0.75rem;

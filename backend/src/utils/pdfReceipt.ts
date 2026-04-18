@@ -1,6 +1,5 @@
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
-import fs from 'fs';
-import path from 'path';
+import { LOGO_BASE64 } from '../assets/logoBase64';
 
 export interface ReceiptData {
   name: string;
@@ -105,33 +104,18 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
   // 3. Logo and Header Info
   let logoY = currentY - 50;
   try {
-    const logoPaths = [
-      path.join(__dirname, '../assets/logo.png'),
-      path.join(__dirname, '../../src/assets/logo.png'),
-      'src/assets/logo.png'
-    ];
-    let logoBuffer;
-    for (const p of logoPaths) {
-      if (fs.existsSync(p)) {
-        logoBuffer = fs.readFileSync(p);
-        break;
-      }
-    }
-    if (logoBuffer) {
-      const logoImage = await pdfDoc.embedPng(logoBuffer);
-      const logoDims = logoImage.scale(0.12);
-      page.drawImage(logoImage, {
-        x: 50,
-        y: logoY,
-        width: logoDims.width,
-        height: logoDims.height,
-      });
-      // Brand name below logo (left) - REMOVED AS PER REQUEST
-      // page.drawText('Muscle Time Fitness', { x: 50, y: logoY - 15, size: 11, font: boldFont, color: brandRed });
-    }
+    const logoBuffer = Buffer.from(LOGO_BASE64, 'base64');
+    const logoImage = await pdfDoc.embedPng(logoBuffer);
+    const logoDims = logoImage.scale(0.12);
+    page.drawImage(logoImage, {
+      x: 50,
+      y: logoY,
+      width: logoDims.width,
+      height: logoDims.height,
+    });
   } catch (err) {
-    console.error('Logo error:', err);
-    page.drawText(data.branch || 'GYM', { x: 50, y: logoY + 10, size: 28, font: boldFont, color: brandRed });
+    console.error('Logo embed error:', err);
+    // No text fallback — only logo should appear
   }
 
   // Gym Address Info (Right of logo, centered context)

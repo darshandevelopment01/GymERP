@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import SkeletonLoader from '../../components/SkeletonLoader';
-import { 
+import {
   User, 
   CreditCard, 
   Clock, 
@@ -16,6 +16,7 @@ import {
   Plus,
   Loader2,
   Edit,
+  Edit2,
   History,
   Wallet,
   RefreshCw,
@@ -46,6 +47,7 @@ const MemberDetailPage = () => {
   const [loading, setLoading] = useState(!member);
   const [error, setError] = useState(null);
   const [showFollowUpModal, setShowFollowUpModal] = useState(false);
+  const [editingFollowUpId, setEditingFollowUpId] = useState(null);
   const [followUpData, setFollowUpData] = useState({
     note: '',
     followUpDate: null,
@@ -295,15 +297,34 @@ const MemberDetailPage = () => {
         followUpTime: followUpData.followUpTime,
         status: 'pending'
       };
-      await followupApi.create(payload);
+      
+      if (editingFollowUpId) {
+        // Edit mode — update existing follow-up
+        await followupApi.update(editingFollowUpId, payload);
+      } else {
+        // Create mode — new follow-up
+        await followupApi.create(payload);
+      }
+      
       setShowFollowUpModal(false);
+      setEditingFollowUpId(null);
       setFollowUpData({ note: '', followUpDate: null, followUpTime: '' });
       fetchFollowups();
     } catch (err) {
-      alert('Failed to add follow-up: ' + err.message);
+      alert('Failed to save follow-up: ' + err.message);
     } finally {
       setSubmittingFollowUp(false);
     }
+  };
+
+  const handleEditFollowUp = (followUp) => {
+    setFollowUpData({
+      note: followUp.note || '',
+      followUpDate: followUp.followUpDate ? new Date(followUp.followUpDate) : null,
+      followUpTime: followUp.followUpTime || ''
+    });
+    setEditingFollowUpId(followUp._id);
+    setShowFollowUpModal(true);
   };
 
   const handleMarkFollowUpComplete = async (fuId) => {
@@ -912,7 +933,11 @@ const MemberDetailPage = () => {
 
         {activeTab === 'followups' && (
           <div className="followup-section">
-             <button className="add-followup-btn" onClick={() => setShowFollowUpModal(true)}>
+             <button className="add-followup-btn" onClick={() => {
+              setEditingFollowUpId(null);
+              setFollowUpData({ note: '', followUpDate: null, followUpTime: '' });
+              setShowFollowUpModal(true);
+            }}>
               <Plus size={20} /> Add Follow-up
             </button>
             <div className="followup-list">
@@ -940,9 +965,14 @@ const MemberDetailPage = () => {
                           </div>
                         )}
                         {f.status === 'pending' && (
-                          <button className="mark-complete-btn" onClick={() => handleMarkFollowUpComplete(f._id)}>
-                            <CheckCircle size={14} /> <span>Mark Complete</span>
-                          </button>
+                          <div className="followup-actions">
+                            <button className="edit-followup-btn" onClick={() => handleEditFollowUp(f)} title="Edit">
+                              <Edit2 size={14} />
+                            </button>
+                            <button className="mark-complete-btn" onClick={() => handleMarkFollowUpComplete(f._id)}>
+                              <CheckCircle size={14} /> <span>Complete</span>
+                            </button>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -1181,57 +1211,61 @@ const MemberDetailPage = () => {
 
       {/* Follow-up Modal */}
       {showFollowUpModal && (
-        <div className="modal-overlay" onClick={() => setShowFollowUpModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+        <div className="modal-overlay" onClick={() => { setShowFollowUpModal(false); setEditingFollowUpId(null); }}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '480px' }}>
             <div className="modal-header">
-              <h2>Add Follow-up</h2>
-              <button className="btn-close" onClick={() => setShowFollowUpModal(false)}>✕</button>
+              <h2>{editingFollowUpId ? 'Edit Follow-up' : 'Add Follow-up'}</h2>
+              <button className="btn-close" onClick={() => { setShowFollowUpModal(false); setEditingFollowUpId(null); }}>✕</button>
             </div>
             <div className="form-content">
               <div className="form-group-custom">
-                <label>Note</label>
+                <label>Note <span className="required">*</span></label>
                 <textarea 
                   value={followUpData.note}
                   onChange={(e) => setFollowUpData({ ...followUpData, note: e.target.value })}
-                  placeholder="Enter details..."
+                  placeholder="Enter follow-up details..."
+                  rows={3}
                 />
               </div>
-              <div className="form-group-custom">
-                <label>Next Follow-up Date</label>
-                <DatePicker
-                  selected={followUpData.followUpDate}
-                  onChange={(date) => setFollowUpData({ ...followUpData, followUpDate: date })}
-                  dateFormat="dd/MM/yyyy"
-                  className="date-input"
-                  minDate={new Date()}
-                />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="form-group-custom">
+                  <label>Follow-up Date</label>
+                  <DatePicker
+                    selected={followUpData.followUpDate}
+                    onChange={(date) => setFollowUpData({ ...followUpData, followUpDate: date })}
+                    dateFormat="dd/MM/yyyy"
+                    className="date-input"
+                    minDate={new Date()}
+                    placeholderText="Select date"
+                  />
+                </div>
+                <div className="form-group-custom">
+                  <label>Follow-up Time</label>
+                  <input 
+                    type="time" 
+                    value={followUpData.followUpTime || ''} 
+                    onChange={(e) => setFollowUpData({ ...followUpData, followUpTime: e.target.value })}
+                    className="date-input"
+                  />
+                </div>
               </div>
-              <div className="form-group-custom">
-                <label>Follow-up Time</label>
-                <input 
-                  type="time" 
-                  value={followUpData.followUpTime || ''} 
-                  onChange={(e) => setFollowUpData({ ...followUpData, followUpTime: e.target.value })}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                <button 
+                  className="submit-btn" 
+                  onClick={handleAddFollowUp}
+                  disabled={submittingFollowUp}
                   style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '8px',
-                    fontSize: '1rem'
+                    width: 'auto',
+                    padding: '0.6rem 1.5rem',
+                    opacity: submittingFollowUp ? 0.7 : 1,
+                    cursor: submittingFollowUp ? 'not-allowed' : 'pointer',
+                    whiteSpace: 'nowrap',
+                    fontSize: '0.9rem'
                   }}
-                />
+                >
+                  {submittingFollowUp ? '⏳ Saving...' : (editingFollowUpId ? '✅ Update' : '💾 Save')}
+                </button>
               </div>
-              <button 
-                className="submit-btn" 
-                onClick={handleAddFollowUp}
-                disabled={submittingFollowUp}
-                style={{
-                  opacity: submittingFollowUp ? 0.7 : 1,
-                  cursor: submittingFollowUp ? 'not-allowed' : 'pointer'
-                }}
-              >
-                {submittingFollowUp ? '⏳ Saving...' : '💾 Save Follow-up'}
-              </button>
             </div>
           </div>
         </div>
