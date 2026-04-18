@@ -195,7 +195,7 @@ router.post(
 
 // Generate Presigned URL for private documents
 router.get(
-    '/employee-document/presigned/:key(*)',
+    '/employee-document/presigned/{*key}',
     authMiddleware,
     async (req: Request, res: Response) => {
         try {
