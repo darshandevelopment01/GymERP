@@ -101,7 +101,7 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
   currentY -= 40;
 
   // 3. Logo and Header Info
-  let logoY = currentY - 60;
+  let logoY = currentY + 10;
   try {
     let logoBuffer: Buffer;
     
@@ -124,14 +124,14 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
     const logoImage = await pdfDoc.embedJpg(logoBuffer);
     
     // Fixed width scaling: set width to 130 and scale height proportionally
-    const maxWidth = 130;
+    const maxWidth = 120; // Slightly smaller for better fit
     const scale = maxWidth / logoImage.width;
     const finalWidth = maxWidth;
     const finalHeight = logoImage.height * scale;
 
     page.drawImage(logoImage, {
       x: 50,
-      y: logoY - (finalHeight > 50 ? (finalHeight - 50) : 0),
+      y: currentY - finalHeight + 20, // Move upward relative to address block
       width: finalWidth,
       height: finalHeight,
     });
