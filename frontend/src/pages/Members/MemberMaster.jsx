@@ -69,7 +69,8 @@ const MemberMaster = () => {
     paymentRemaining: 0,
     membershipStartDate: new Date(),
     membershipEndDate: null,
-    nextPaymentDate: null
+    nextPaymentDate: null,
+    paymentMode: ''
   });
   const [autoEditId, setAutoEditId] = useState(null);
   const [submittingPayment, setSubmittingPayment] = useState(false);
@@ -499,7 +500,8 @@ const MemberMaster = () => {
         paymentReceived: (selectedMemberForRenewal.paymentReceived || 0) + (renewData.paymentReceived === '' ? 0 : Number(renewData.paymentReceived)),
         paymentRemaining: renewData.paymentRemaining,
         nextPaymentDate: renewData.nextPaymentDate ? renewData.nextPaymentDate.toISOString() : null,
-        taxSlab: renewData.taxSlab || null
+        taxSlab: renewData.taxSlab || null,
+        paymentMode: renewData.paymentMode || null
       };
 
       const response = await memberApi.update(selectedMemberForRenewal._id, updateData);
@@ -1128,6 +1130,7 @@ const MemberMaster = () => {
                     onChange={(e) => setSelectedPaymentMode(e.target.value)}
                     required
                   >
+                    <option value="" disabled>Select Payment Mode</option>
                     {paymentModes.length > 0 ? (
                       paymentModes.map(m => (
                         <option key={m._id} value={m.paymentType}>{m.paymentType}</option>
@@ -1145,16 +1148,19 @@ const MemberMaster = () => {
 
                 <div className="form-group">
                   <label>Next Payment Date <span className="required">*</span></label>
-                  <DatePicker
-                    selected={paymentNextPayDate}
-                    onChange={(date) => setPaymentNextPayDate(date)}
-                    dateFormat="dd/MM/yyyy"
-                    placeholderText="Select next payment date"
-                    minDate={new Date()}
-                    required
-                    className="custom-datepicker"
-                    wrapperClassName="datepicker-wrapper"
-                  />
+                  <div className="date-input-wrapper">
+                    <DatePicker
+                      selected={paymentNextPayDate}
+                      onChange={(date) => setPaymentNextPayDate(date)}
+                      dateFormat="dd/MM/yyyy"
+                      placeholderText="Select next payment date"
+                      minDate={new Date()}
+                      required
+                      className="custom-datepicker"
+                      wrapperClassName="datepicker-wrapper"
+                    />
+                    <span className="date-input-icon">📅</span>
+                  </div>
                 </div>
 
                 {additionalPayment > 0 && (
@@ -1530,44 +1536,74 @@ const MemberMaster = () => {
                   </div>
                 )}
 
-                <div className="form-group">
-                  <label>Payment Received <span className="required">*</span></label>
-                  <input
-                    type="number"
-                    value={renewData.paymentReceived}
-                    onChange={handleRenewPaymentChange}
-                    required
-                    min="0"
-                    placeholder="Enter amount received"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Payment Remaining</label>
-                  <input
-                    type="number"
-                    value={renewData.paymentRemaining}
-                    readOnly
-                    disabled
-                    style={{ background: '#f1f5f9', cursor: 'not-allowed' }}
-                  />
-                </div>
-
-                {renewData.paymentRemaining > 0 && (
+                <div className="form-grid-2">
                   <div className="form-group">
-                    <label>Next Payment Date <span className="required">*</span></label>
-                    <DatePicker
-                      selected={renewData.nextPaymentDate}
-                      onChange={(date) => setRenewData(prev => ({ ...prev, nextPaymentDate: date }))}
-                      dateFormat="dd/MM/yyyy"
-                      placeholderText="Select next payment date"
-                      minDate={new Date()}
+                    <label>Payment Received <span className="required">*</span></label>
+                    <input
+                      type="number"
+                      value={renewData.paymentReceived}
+                      onChange={handleRenewPaymentChange}
                       required
-                      className="custom-datepicker"
-                      wrapperClassName="datepicker-wrapper"
+                      min="0"
+                      placeholder="Enter amount"
                     />
                   </div>
-                )}
+
+                  <div className="form-group">
+                    <label>Payment Remaining</label>
+                    <input
+                      type="number"
+                      value={renewData.paymentRemaining}
+                      readOnly
+                      disabled
+                      style={{ background: '#f1f5f9', cursor: 'not-allowed' }}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-grid-2">
+                  <div className="form-group">
+                    <label>Payment Mode <span className="required">*</span></label>
+                    <select
+                      value={renewData.paymentMode}
+                      onChange={(e) => setRenewData(prev => ({ ...prev, paymentMode: e.target.value }))}
+                      required
+                    >
+                      <option value="" disabled>Select Mode</option>
+                      {paymentModes.length > 0 ? (
+                        paymentModes.map(m => (
+                          <option key={m._id} value={m.paymentType}>{m.paymentType}</option>
+                        ))
+                      ) : (
+                        <>
+                          <option value="UPI">UPI</option>
+                          <option value="Cash">Cash</option>
+                          <option value="Card">Card</option>
+                          <option value="Bank Transfer">Bank Transfer</option>
+                        </>
+                      )}
+                    </select>
+                  </div>
+
+                  {renewData.paymentRemaining > 0 && (
+                    <div className="form-group">
+                      <label>Next Payment Date <span className="required">*</span></label>
+                      <div className="date-input-wrapper">
+                        <DatePicker
+                          selected={renewData.nextPaymentDate}
+                          onChange={(date) => setRenewData(prev => ({ ...prev, nextPaymentDate: date }))}
+                          dateFormat="dd/MM/yyyy"
+                          placeholderText="Select date"
+                          minDate={new Date()}
+                          required
+                          className="custom-datepicker"
+                          wrapperClassName="datepicker-wrapper"
+                        />
+                        <span className="date-input-icon">📅</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 {/* Billing Summary */}
                 {renewData.plan && (() => {

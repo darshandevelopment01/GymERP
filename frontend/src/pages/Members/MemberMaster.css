@@ -261,6 +261,34 @@
   box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
 }
 
+.date-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.date-input-icon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+  pointer-events: none;
+  font-size: 1.1rem;
+  z-index: 5;
+}
+
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+@media (max-width: 600px) {
+  .form-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
 .form-group select {
   cursor: pointer;
   appearance: none;

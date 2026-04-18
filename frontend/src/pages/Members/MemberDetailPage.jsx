@@ -83,7 +83,8 @@ const MemberDetailPage = () => {
     paymentRemaining: 0,
     membershipStartDate: new Date(),
     membershipEndDate: null,
-    nextPaymentDate: null
+    nextPaymentDate: null,
+    paymentMode: ''
   });
   const [additionalPayment, setAdditionalPayment] = useState(0);
   const [selectedPaymentMode, setSelectedPaymentMode] = useState('UPI');
@@ -375,6 +376,7 @@ const MemberDetailPage = () => {
         paymentReceived: (member.paymentReceived || 0) + Number(renewData.paymentReceived || 0),
         paymentRemaining: renewData.paymentRemaining,
         nextPaymentDate: renewData.nextPaymentDate?.toISOString(),
+        paymentMode: renewData.paymentMode || null,
         taxSlab: renewData.taxSlab || null
       };
 
@@ -545,7 +547,8 @@ const MemberDetailPage = () => {
                 paymentRemaining: 0,
                 membershipStartDate: new Date(),
                 membershipEndDate: null,
-                nextPaymentDate: null
+                nextPaymentDate: null,
+                paymentMode: ''
               };
               setDiscountType('percentage');
               setDiscountInputValue(0);
@@ -1077,23 +1080,41 @@ const MemberDetailPage = () => {
                   />
                 </div>
                 <div className="form-group-custom">
-                  <label>Payment Mode</label>
-                  <select value={selectedPaymentMode} onChange={(e) => setSelectedPaymentMode(e.target.value)}>
-                    {paymentTypes.map(m => (
-                      <option key={m._id} value={m.paymentType}>{m.paymentType}</option>
-                    ))}
+                  <label>Payment Mode <span className="required">*</span></label>
+                  <select 
+                    value={selectedPaymentMode} 
+                    onChange={(e) => setSelectedPaymentMode(e.target.value)}
+                    required
+                  >
+                    <option value="" disabled>Select Mode</option>
+                    {paymentTypes.length > 0 ? (
+                      paymentTypes.map(m => (
+                        <option key={m._id} value={m.paymentType}>{m.paymentType}</option>
+                      ))
+                    ) : (
+                      <>
+                        <option value="UPI">UPI</option>
+                        <option value="Cash">Cash</option>
+                        <option value="Card">Card</option>
+                        <option value="Bank Transfer">Bank Transfer</option>
+                      </>
+                    )}
                   </select>
                 </div>
                 <div className="form-group-custom">
-                  <label>Next Payment Date</label>
-                  <DatePicker
-                    selected={paymentNextPayDate}
-                    onChange={(date) => setPaymentNextPayDate(date)}
-                    className="form-control"
-                    placeholderText="Select date"
-                    dateFormat="dd/MM/yyyy"
-                    minDate={new Date()}
-                  />
+                  <label>Next Payment Date <span className="required">*</span></label>
+                  <div className="date-input-wrapper">
+                    <DatePicker
+                      selected={paymentNextPayDate}
+                      onChange={(date) => setPaymentNextPayDate(date)}
+                      className="form-control"
+                      placeholderText="Select date"
+                      dateFormat="dd/MM/yyyy"
+                      minDate={new Date()}
+                      required
+                    />
+                    <span className="date-input-icon">📅</span>
+                  </div>
                 </div>
               </div>
               <div className="modal-footer">
@@ -1169,9 +1190,9 @@ const MemberDetailPage = () => {
                   </div>
                 </div>
 
-                <div className="form-divider">Payment</div>
+                <div className="form-divider">Payment Details</div>
                 <div className="form-grid-2">
-                   <div className="form-group-custom">
+                  <div className="form-group-custom">
                     <label>Tax Slab</label>
                     <select 
                       value={renewData.taxSlab} 
@@ -1182,28 +1203,57 @@ const MemberDetailPage = () => {
                     </select>
                   </div>
                   <div className="form-group-custom">
-                    <label>Payment Received</label>
+                    <label>Payment Mode <span className="required">*</span></label>
+                    <select 
+                      value={renewData.paymentMode} 
+                      onChange={(e) => setRenewData({...renewData, paymentMode: e.target.value})}
+                      required
+                    >
+                      <option value="" disabled>Select Mode</option>
+                      {paymentTypes.length > 0 ? (
+                        paymentTypes.map(m => (
+                          <option key={m._id} value={m.paymentType}>{m.paymentType}</option>
+                        ))
+                      ) : (
+                        <>
+                          <option value="UPI">UPI</option>
+                          <option value="Cash">Cash</option>
+                          <option value="Card">Card</option>
+                          <option value="Bank Transfer">Bank Transfer</option>
+                        </>
+                      )}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-grid-2">
+                  <div className="form-group-custom">
+                    <label>Payment Received <span className="required">*</span></label>
                     <input 
                       type="number" 
                       value={renewData.paymentReceived} 
                       onChange={(e) => setRenewData(recalcRenewData({...renewData, paymentReceived: e.target.value}))}
-                    />
-                  </div>
-                </div>
-
-                {renewData.paymentRemaining > 0 && (
-                  <div className="form-group-custom">
-                    <label>Next Payment Date <span className="required">*</span></label>
-                    <DatePicker
-                      selected={renewData.nextPaymentDate}
-                      onChange={(date) => setRenewData({...renewData, nextPaymentDate: date})}
-                      dateFormat="dd/MM/yyyy"
-                      className="date-input"
-                      minDate={new Date()}
                       required
+                      min="0"
                     />
                   </div>
-                )}
+                  {renewData.paymentRemaining > 0 && (
+                    <div className="form-group-custom">
+                      <label>Next Payment Date <span className="required">*</span></label>
+                      <div className="date-input-wrapper">
+                        <DatePicker
+                          selected={renewData.nextPaymentDate}
+                          onChange={(date) => setRenewData({...renewData, nextPaymentDate: date})}
+                          dateFormat="dd/MM/yyyy"
+                          className="date-input"
+                          minDate={new Date()}
+                          required
+                        />
+                        <span className="date-input-icon">📅</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 <div className="renewal-summary-box">
                     <div className="summary-row">
