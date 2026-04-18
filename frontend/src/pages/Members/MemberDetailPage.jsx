@@ -87,6 +87,7 @@ const MemberDetailPage = () => {
   });
   const [additionalPayment, setAdditionalPayment] = useState(0);
   const [selectedPaymentMode, setSelectedPaymentMode] = useState('UPI');
+  const [paymentNextPayDate, setPaymentNextPayDate] = useState(null);
 
   // Discount settings (copied logic from MemberMaster)
   const [maxDiscountPercentage, setMaxDiscountPercentage] = useState(0);
@@ -410,7 +411,8 @@ const MemberDetailPage = () => {
       setSubmitting(true);
       const payload = {
         additionalPayment: Number(additionalPayment),
-        paymentMode: selectedPaymentMode
+        paymentMode: selectedPaymentMode,
+        nextPaymentDate: paymentNextPayDate ? paymentNextPayDate.toISOString() : null
       };
       const response = await memberApi.update(id, payload);
       
@@ -520,6 +522,7 @@ const MemberDetailPage = () => {
               setAdditionalPayment(0);
               const hasUPI = paymentTypes.find(m => m.paymentType?.toUpperCase() === 'UPI');
               setSelectedPaymentMode(hasUPI ? hasUPI.paymentType : (paymentTypes[0]?.paymentType || 'UPI'));
+              setPaymentNextPayDate(member.nextPaymentDate ? new Date(member.nextPaymentDate) : null);
               setShowPaymentModal(true);
             }}
             title="Add Payment"
@@ -1080,6 +1083,17 @@ const MemberDetailPage = () => {
                       <option key={m._id} value={m.paymentType}>{m.paymentType}</option>
                     ))}
                   </select>
+                </div>
+                <div className="form-group-custom">
+                  <label>Next Payment Date</label>
+                  <DatePicker
+                    selected={paymentNextPayDate}
+                    onChange={(date) => setPaymentNextPayDate(date)}
+                    className="form-control"
+                    placeholderText="Select date"
+                    dateFormat="dd/MM/yyyy"
+                    minDate={new Date()}
+                  />
                 </div>
               </div>
               <div className="modal-footer">

@@ -32,6 +32,7 @@ export interface ReceiptData {
   branchAddress?: string;
   state?: string;
   zipCode?: string;
+  nextPaymentDate?: string;
 }
 
 /**
@@ -200,7 +201,14 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
   // Mode of Payment Box
   page.drawRectangle({ x: summaryBlockX + 10, y: currentY - 5, width: 150, height: 25, color: lightBg, borderColor: dividerGrey, borderWidth: 0.5 });
   page.drawText(`Mode of Payment : ${data.paidPrice}(${data.paymentMode})`, { x: summaryBlockX + 15, y: currentY + 5, size: 9, font: boldFont, color: pureBlack });
-  currentY -= 40;
+  currentY -= 35;
+
+  // Next Payment Date (Conditional)
+  if (data.nextPaymentDate && data.balanceAmount > 0) {
+    drawSummaryRow('Next Pay Date', data.nextPaymentDate, false, currentY);
+    currentY -= 20;
+  }
+  currentY -= 5;
 
   // Amount in words
   page.drawText('Paid Amount in Words :', { x: summaryBlockX + 5, y: currentY, size: 9, font: boldFont, color: pureBlack });

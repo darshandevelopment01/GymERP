@@ -46,6 +46,7 @@ const MemberMaster = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
   const [additionalPayment, setAdditionalPayment] = useState(0);
+  const [paymentNextPayDate, setPaymentNextPayDate] = useState(null);
 
   const [showRenewModal, setShowRenewModal] = useState(false);
   const [selectedMemberForRenewal, setSelectedMemberForRenewal] = useState(null);
@@ -290,6 +291,7 @@ const MemberMaster = () => {
     // Reset to UPI or first mode
     const hasUPI = paymentModes.find(m => m.paymentType.toUpperCase() === 'UPI');
     setSelectedPaymentMode(hasUPI ? hasUPI.paymentType : (paymentModes[0]?.paymentType || 'UPI'));
+    setPaymentNextPayDate(member.nextPaymentDate ? new Date(member.nextPaymentDate) : null);
     setShowPaymentModal(true);
   };
 
@@ -385,7 +387,8 @@ const MemberMaster = () => {
       const paymentToSubmit = additionalPayment === '' ? 0 : Number(additionalPayment);
       const updateData = {
         additionalPayment: paymentToSubmit,
-        paymentMode: selectedPaymentMode
+        paymentMode: selectedPaymentMode,
+        nextPaymentDate: paymentNextPayDate ? paymentNextPayDate.toISOString() : null
       };
 
       const response = await memberApi.update(selectedMember._id, updateData);
@@ -1135,10 +1138,8 @@ const MemberMaster = () => {
                     }}
                   >
                     {paymentModes.length > 0 ? (
-                      paymentModes.map(mode => (
-                        <option key={mode._id} value={mode.paymentType}>
-                          {mode.paymentType}
-                        </option>
+                      paymentModes.map(m => (
+                        <option key={m._id} value={m.paymentType}>{m.paymentType}</option>
                       ))
                     ) : (
                       <>
@@ -1149,6 +1150,20 @@ const MemberMaster = () => {
                       </>
                     )}
                   </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Next Payment Date <span className="required">*</span></label>
+                  <DatePicker
+                    selected={paymentNextPayDate}
+                    onChange={(date) => setPaymentNextPayDate(date)}
+                    dateFormat="dd/MM/yyyy"
+                    placeholderText="Select next payment date"
+                    minDate={new Date()}
+                    required
+                    className="custom-datepicker"
+                    wrapperClassName="datepicker-wrapper"
+                  />
                 </div>
 
                 {additionalPayment > 0 && (

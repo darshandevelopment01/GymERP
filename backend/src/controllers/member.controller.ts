@@ -208,7 +208,8 @@ export const createMember = async (req: Request, res: Response): Promise<void> =
         discountPercentage: trimmedData.discountPercentage || 0,
         taxPercentage: trimmedData.taxPercentage || 0,
         taxAmount: trimmedData.taxAmount || 0,
-        paymentMode: trimmedData.paymentMode || 'UPI'
+        paymentMode: trimmedData.paymentMode || 'UPI',
+        nextPaymentDate: member.nextPaymentDate ? new Date(member.nextPaymentDate).toLocaleDateString('en-IN') : undefined
       });
 
       console.log(`✅ PDF Receipt generated: ${receiptBuffer.length} bytes`);
@@ -477,7 +478,8 @@ export const updateMember = async (req: Request, res: Response): Promise<void> =
             discountPercentage: member.discountPercentage || 0,
             taxPercentage: member.taxPercentage || 0,
             taxAmount: member.taxAmount || 0,
-            paymentMode: req.body.paymentMode || 'UPI'
+            paymentMode: req.body.paymentMode || 'UPI',
+            nextPaymentDate: member.nextPaymentDate ? new Date(member.nextPaymentDate).toLocaleDateString('en-IN') : undefined
           });
 
           console.log(`✅ PDF Receipt generated (Update): ${receiptBuffer.length} bytes`);
@@ -626,7 +628,8 @@ export const getMemberPaymentReceipt = async (req: Request, res: Response): Prom
       balanceAmount: balanceAfterPayment,
       totalPayment: cycleTotal,
       discount: 0,
-      paymentMode: payment.paymentMode || 'UPI'
+      paymentMode: payment.paymentMode || 'UPI',
+      nextPaymentDate: member.nextPaymentDate ? new Date(member.nextPaymentDate).toLocaleDateString('en-IN') : undefined
     });
 
     res.json({
