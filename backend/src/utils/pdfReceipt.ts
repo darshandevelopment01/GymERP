@@ -131,12 +131,12 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
     }
   } catch (err) {
     console.error('Logo error:', err);
-    page.drawText('MUSCLE TIME', { x: 50, y: logoY + 10, size: 28, font: boldFont, color: brandRed });
+    page.drawText(data.branch || 'GYM', { x: 50, y: logoY + 10, size: 28, font: boldFont, color: brandRed });
   }
 
   // Gym Address Info (Right of logo, centered context)
   const gymAddress = [
-    `${data.branch || 'Muscle Time Fitness'}`,
+    `${data.branch || ''}`,
     data.branchAddress,
     data.city ? `${data.city}, ${data.state || ''} ${data.zipCode}` : "India"
   ];
@@ -256,7 +256,7 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
 
   // 9. Signatures
   page.drawText('Signature of member', { x: 55, y: currentY, size: 10, font: boldFont, color: darkGrey });
-  page.drawText('For Muscle Time Fitness', { x: width - 180, y: currentY, size: 10, font: boldFont, color: darkGrey });
+  page.drawText(`For ${data.branch || 'Gym'}`, { x: width - 180, y: currentY, size: 10, font: boldFont, color: darkGrey });
   currentY -= 30;
   page.drawText(data.name, { x: 55, y: currentY, size: 10, font: boldFont, color: pureBlack });
   page.drawText('Authorised Signatory', { x: width - 165, y: currentY, size: 10, font: boldFont, color: pureBlack });

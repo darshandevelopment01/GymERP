@@ -90,6 +90,7 @@ const EnquiryDetailPage = () => {
     profilePhoto: ''
   });
   const [submittingConvert, setSubmittingConvert] = useState(false);
+  const [convertEmail, setConvertEmail] = useState('');
 
   const fetchMetadata = async () => {
     try {
@@ -364,6 +365,7 @@ const EnquiryDetailPage = () => {
     setDiscountType('percentage');
     setDiscountWarning('');
     setDiscountInputValue(0);
+    setConvertEmail(enquiry.email || '');
     setPaymentData(recalcRemaining(initialData));
     setShowPaymentModal(true);
   };
@@ -374,13 +376,17 @@ const EnquiryDetailPage = () => {
       alert('Please fill all required fields, including payment mode');
       return;
     }
+    if (!convertEmail || !convertEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(convertEmail.trim())) {
+      alert('Please enter a valid email address. Email is required for sending receipts and credentials.');
+      return;
+    }
 
     try {
       setSubmittingConvert(true);
       const billing = getBillingBreakdown();
       const memberData = {
         name: enquiry.name,
-        email: enquiry.email,
+        email: convertEmail.trim(),
         mobileNumber: enquiry.mobileNumber,
         gender: enquiry.gender,
         branch: enquiry.branch._id || enquiry.branch,
@@ -828,6 +834,34 @@ const EnquiryDetailPage = () => {
                   </div>
                 </div>
 
+                <div className="form-group" style={{ marginBottom: '1rem' }}>
+                  <label>Email Address <span className="required">*</span></label>
+                  <input 
+                    type="email" 
+                    value={convertEmail} 
+                    onChange={(e) => setConvertEmail(e.target.value)} 
+                    placeholder="Enter email for receipts & credentials"
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      border: !convertEmail?.trim() ? '1.5px solid #ef4444' : '1px solid #d1d5db',
+                      borderRadius: '8px',
+                      fontSize: '0.95rem',
+                      transition: 'border-color 0.2s'
+                    }}
+                  />
+                  {!convertEmail?.trim() && (
+                    <p style={{ 
+                      margin: '0.35rem 0 0', 
+                      color: '#ef4444', 
+                      fontSize: '0.78rem',
+                      fontWeight: '500'
+                    }}>
+                      ⚠️ Email is required for sending receipts and login credentials
+                    </p>
+                  )}
+                </div>
                 <div className="responsive-form-grid" style={{ marginBottom: '1rem' }}>
                   <div className="form-group">
                     <label>Plan Category <span className="required">*</span></label>

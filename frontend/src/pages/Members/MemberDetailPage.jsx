@@ -93,6 +93,7 @@ const MemberDetailPage = () => {
 
   // Loading states
   const [submitting, setSubmitting] = useState(false);
+  const [submittingFollowUp, setSubmittingFollowUp] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   useEffect(() => {
@@ -283,8 +284,10 @@ const MemberDetailPage = () => {
   };
 
   const handleAddFollowUp = async () => {
+    if (submittingFollowUp) return; // Prevent duplicate clicks
     if (!followUpData.note) return alert('Please enter a note');
     try {
+      setSubmittingFollowUp(true);
       const payload = {
         member: id,
         note: followUpData.note,
@@ -298,6 +301,8 @@ const MemberDetailPage = () => {
       fetchFollowups();
     } catch (err) {
       alert('Failed to add follow-up: ' + err.message);
+    } finally {
+      setSubmittingFollowUp(false);
     }
   };
 
@@ -1216,7 +1221,17 @@ const MemberDetailPage = () => {
                   }}
                 />
               </div>
-              <button className="submit-btn" onClick={handleAddFollowUp}>Save</button>
+              <button 
+                className="submit-btn" 
+                onClick={handleAddFollowUp}
+                disabled={submittingFollowUp}
+                style={{
+                  opacity: submittingFollowUp ? 0.7 : 1,
+                  cursor: submittingFollowUp ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {submittingFollowUp ? '⏳ Saving...' : '💾 Save Follow-up'}
+              </button>
             </div>
           </div>
         </div>
