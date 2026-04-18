@@ -605,9 +605,11 @@ const EnquiryDetailPage = () => {
             {/* Actions for Pending */}
             {isPending && (
               <div className="detail-actions">
-                <button className="btn-action btn-convert" onClick={handleConvertClick}>
-                  <ArrowRight size={20} /> Convert to Member
-                </button>
+                {can('convertToMember') && (
+                  <button className="btn-action btn-convert" onClick={handleConvertClick}>
+                    <ArrowRight size={20} /> Convert to Member
+                  </button>
+                )}
                 <button className="btn-action btn-lost" onClick={handleLost}>
                   <Trash2 size={20} /> Mark as Lost
                 </button>

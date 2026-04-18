@@ -1013,7 +1013,7 @@ const EnquiryMaster = () => {
                 👁️ View Enquiry
               </button>
 
-              {duplicateData.status === 'pending' && (
+              {duplicateData.status === 'pending' && can('convertToMember') && (
                 <button 
                   className="btn-convert" 
                   onClick={() => {
