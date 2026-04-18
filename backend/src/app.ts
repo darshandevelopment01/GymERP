@@ -33,7 +33,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // Explicit OPTIONS handler for preflight
-app.options('*', cors(corsOptions));
+app.options('{*path}', cors(corsOptions));
 app.use(express.json());
 
 // Debug middleware
