@@ -16,7 +16,12 @@ export interface IEmployee extends Document {
   position?: string; // Keep for backward compatibility
   salary?: number;
   joinDate: Date;
-  shift: mongoose.Types.ObjectId; // Ref to Shift Master
+  shifts: mongoose.Types.ObjectId[]; // Multiple Shifts
+  document?: {
+    fileName: string;
+    fileKey: string;
+    uploadedAt: Date;
+  };
 
   // Branch assignment (can work at multiple branches)
   branches: mongoose.Types.ObjectId[]; // Multiple branches
@@ -150,10 +155,14 @@ const EmployeeSchema = new Schema<IEmployee>(
       type: Date,
       default: Date.now,
     },
-    shift: {
+    shifts: [{
       type: Schema.Types.ObjectId,
       ref: 'Shift',
-      // required: true,
+    }],
+    document: {
+      fileName: String,
+      fileKey: String,
+      uploadedAt: { type: Date, default: Date.now }
     },
 
     // Branch assignment

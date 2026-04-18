@@ -71,6 +71,7 @@ const GenericMaster = ({
   const [formData, setFormData] = useState({});
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [uploadingDoc, setUploadingDoc] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const [cameraField, setCameraField] = useState(null);
   const [exporting, setExporting] = useState(false);
@@ -1132,6 +1133,155 @@ const GenericMaster = ({
                               🗑️ Remove Photo
                             </button>
                           )}
+                        </div>
+                      ) : field.type === 'checkbox-group' ? (
+                        <div className="checkbox-group" style={{ 
+                            display: 'grid', 
+                            gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', 
+                            gap: '0.75rem',
+                            background: '#f8fafc',
+                            padding: '1rem',
+                            borderRadius: '8px',
+                            border: '1px solid #e2e8f0'
+                        }}>
+                            {field.options.map((opt, i) => (
+                                <label key={i} style={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    gap: '0.5rem', 
+                                    fontSize: '0.9rem',
+                                    cursor: 'pointer',
+                                    color: '#475569'
+                                }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={Array.isArray(formData[field.name]) && formData[field.name].includes(opt.value)}
+                                        onChange={(e) => {
+                                            const current = Array.isArray(formData[field.name]) ? formData[field.name] : [];
+                                            let next;
+                                            if (e.target.checked) {
+                                                next = [...current, opt.value];
+                                            } else {
+                                                next = current.filter(v => v !== opt.value);
+                                            }
+                                            setFormData(prev => ({ ...prev, [field.name]: next }));
+                                        }}
+                                        style={{ width: '1.1rem', height: '1.1rem' }}
+                                    />
+                                    {opt.label}
+                                </label>
+                            ))}
+                        </div>
+                      ) : field.type === 'private-document-upload' ? (
+                        <div style={{ 
+                            padding: '1rem', 
+                            background: '#f1f5f9', 
+                            borderRadius: '8px', 
+                            border: '1px dashed #cbd5e1' 
+                        }}>
+                            {formData[field.name] && formData[field.name].fileKey ? (
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <span style={{ fontSize: '1.2rem' }}>📄</span>
+                                        <div>
+                                            <div style={{ fontWeight: '600', fontSize: '0.9rem', color: '#1e293b' }}>
+                                                {formData[field.name].fileName}
+                                            </div>
+                                            <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                                                Uploaded on {new Date(formData[field.name].uploadedAt).toLocaleDateString()}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                        <button 
+                                            type="button" 
+                                            onClick={async () => {
+                                                try {
+                                                    const token = localStorage.getItem('token');
+                                                    const res = await fetch(`${import.meta.env.VITE_API_URL}/upload/employee-document/presigned/${encodeURIComponent(formData[field.name].fileKey)}`, {
+                                                        headers: { 'Authorization': `Bearer ${token}` }
+                                                    });
+                                                    const result = await res.json();
+                                                    if (result.success) {
+                                                        window.open(result.url, '_blank');
+                                                    } else {
+                                                        alert('❌ Error fetching document link');
+                                                    }
+                                                } catch (err) {
+                                                    alert('❌ Failed to open document');
+                                                }
+                                            }}
+                                            style={{ padding: '0.4rem 0.8rem', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '4px', fontSize: '0.8rem', cursor: 'pointer' }}
+                                        >
+                                            👁️ View
+                                        </button>
+                                        <button 
+                                            type="button" 
+                                            onClick={() => {
+                                                if (window.confirm('⚠️ Are you sure you want to remove this document? It will be deleted from the server when you save the form.')) {
+                                                    setFormData(prev => ({ ...prev, [field.name]: null }));
+                                                }
+                                            }}
+                                            style={{ padding: '0.4rem 0.8rem', background: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', fontSize: '0.8rem', cursor: 'pointer' }}
+                                        >
+                                            🗑️
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <label style={{ 
+                                    display: 'flex', 
+                                    flexDirection: 'column', 
+                                    alignItems: 'center', 
+                                    gap: '0.5rem', 
+                                    cursor: uploadingDoc ? 'not-allowed' : 'pointer',
+                                    color: '#64748b'
+                                }}>
+                                    <span style={{ fontSize: '1.5rem' }}>📤</span>
+                                    <span style={{ fontSize: '0.9rem', fontWeight: '500' }}>
+                                        {uploadingDoc ? 'Uploading...' : 'Click to Upload Document (PDF, Doc, Image)'}
+                                    </span>
+                                    <input 
+                                        type="file" 
+                                        style={{ display: 'none' }} 
+                                        disabled={uploadingDoc}
+                                        onChange={async (e) => {
+                                            const file = e.target.files?.[0];
+                                            if (!file) return;
+
+                                            setUploadingDoc(true);
+                                            try {
+                                                const fd = new FormData();
+                                                fd.append('document', file);
+                                                const token = localStorage.getItem('token');
+                                                const res = await fetch(`${import.meta.env.VITE_API_URL}/upload/employee-document`, {
+                                                    method: 'POST',
+                                                    headers: { 'Authorization': `Bearer ${token}` },
+                                                    body: fd
+                                                });
+                                                const result = await res.json();
+                                                if (result.success) {
+                                                    setFormData(prev => ({ 
+                                                        ...prev, 
+                                                        [field.name]: {
+                                                            fileName: result.data.fileName,
+                                                            fileKey: result.data.fileKey,
+                                                            uploadedAt: new Date()
+                                                        } 
+                                                    }));
+                                                } else {
+                                                    alert('❌ ' + (result.message || 'Upload failed'));
+                                                }
+                                            } catch (err) {
+                                                alert('❌ Upload failed');
+                                            } finally {
+                                                setUploadingDoc(false);
+                                                e.target.value = '';
+                                            }
+                                        }}
+                                    />
+                                </label>
+                            )}
                         </div>
                       ) : field.type === 'location-button' ? (
                         <button

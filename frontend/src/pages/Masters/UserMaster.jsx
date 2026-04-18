@@ -227,25 +227,28 @@ const UserMaster = () => {
       }
     },
     {
-      name: 'shift',
+      name: 'shifts',
       label: 'Shift Timing',
-      type: 'select',
+      type: 'checkbox-group',
       required: false,
       visibleWhen: (formData) => formData.userType !== 'Admin',
       options: [
-        { value: '', label: 'Select Shift Timing' },
         ...shifts.map(s => ({
           value: s._id,
           label: `${s.shiftName} (${s.startTime} - ${s.endTime})`
         }))
       ],
       displayValue: (item) => {
-        if (!item.shift) return '-';
-        if (typeof item.shift === 'object') {
-          return `${item.shift.shiftName} (${item.shift.startTime} - ${item.shift.endTime})`;
-        }
-        const shift = shifts.find(s => s._id === item.shift);
-        return shift ? `${shift.shiftName} (${shift.startTime} - ${shift.endTime})` : item.shift;
+        const itemShifts = item.shifts || [];
+        if (!Array.isArray(itemShifts) || itemShifts.length === 0) return '-';
+        
+        return itemShifts.map(s => {
+          if (typeof s === 'object' && s.shiftName) {
+            return `${s.shiftName} (${s.startTime} - ${s.endTime})`;
+          }
+          const shiftDetail = shifts.find(sh => sh._id === s);
+          return shiftDetail ? `${shiftDetail.shiftName} (${shiftDetail.startTime} - ${shiftDetail.endTime})` : s;
+        }).join(', ');
       }
     },
     {
@@ -278,6 +281,13 @@ const UserMaster = () => {
         }
         return branches.find(b => b._id === item.branchId)?.name || item.branchId;
       }
+    },
+    {
+      name: 'document',
+      label: 'Employee Government ID / Documents',
+      type: 'private-document-upload',
+      required: false,
+      visibleWhen: (formData) => formData.userType !== 'Admin',
     },
     {
       name: 'permissions',
