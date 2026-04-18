@@ -5,6 +5,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import * as XLSX from 'xlsx';
 import SkeletonLoader from '../SkeletonLoader';
+import CameraModal from '../CameraModal';
 import { compressImage } from '../../utils/compressImage';
 import { formatLocalDate } from '../../utils/dateUtils';
 
@@ -70,6 +71,8 @@ const GenericMaster = ({
   const [formData, setFormData] = useState({});
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
+  const [cameraField, setCameraField] = useState(null);
   const [exporting, setExporting] = useState(false);
 
   const [showFilters, setShowFilters] = useState(false);
@@ -593,8 +596,37 @@ const GenericMaster = ({
     }
   };
 
+  const handleCapturePhoto = async (file) => {
+    if (!file || !cameraField) return;
+    setUploadingPhoto(true);
+    try {
+      const compressedFile = await compressImage(file);
+      const fd = new FormData();
+      fd.append('photo', compressedFile);
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/upload/profile-photo`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: fd
+      });
+      const result = await res.json();
+      if (result.success) {
+        setFormData(prev => ({ ...prev, [cameraField]: result.data.url }));
+      } else {
+        alert('❌ ' + (result.message || 'Capture failed'));
+      }
+    } catch (err) {
+      console.error('Capture error:', err);
+      alert('❌ Failed to process captured photo');
+    } finally {
+      setUploadingPhoto(false);
+      setShowCamera(false);
+      setCameraField(null);
+    }
+  };
+
   return (
-    <div className="generic-master">
+    <div className="generic-master-container">
       <div className="master-header">
         <h1>{icon} {title}</h1>
         <span className="date">{new Date().toLocaleDateString('en-US', {
@@ -1044,61 +1076,34 @@ const GenericMaster = ({
 
                             {/* Camera Capture Button (Optional) */}
                             {field.enableCamera && (
-                              <label style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '0.5rem',
-                                padding: '0.6rem 1.2rem',
-                                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                                color: 'white',
-                                borderRadius: '8px',
-                                cursor: uploadingPhoto ? 'not-allowed' : 'pointer',
-                                fontSize: '0.9rem',
-                                fontWeight: '600',
-                                transition: 'transform 0.2s, box-shadow 0.2s',
-                                boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
-                                opacity: uploadingPhoto ? 0.7 : 1
-                              }}
+                              <button 
+                                type="button"
+                                onClick={() => {
+                                  setCameraField(field.name);
+                                  setShowCamera(true);
+                                }}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.5rem',
+                                  padding: '0.6rem 1.2rem',
+                                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '8px',
+                                  cursor: uploadingPhoto ? 'not-allowed' : 'pointer',
+                                  fontSize: '0.9rem',
+                                  fontWeight: '600',
+                                  transition: 'all 0.2s',
+                                  boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
+                                  opacity: uploadingPhoto ? 0.7 : 1
+                                }}
                                 onMouseOver={(e) => !uploadingPhoto && (e.currentTarget.style.transform = 'translateY(-1px)')}
                                 onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                                disabled={uploadingPhoto}
                               >
                                 📷 {uploadingPhoto ? 'Processing...' : 'Take Photo'}
-                                <input
-                                  type="file"
-                                  accept="image/*"
-                                  capture="environment"
-                                  style={{ display: 'none' }}
-                                  disabled={uploadingPhoto}
-                                  onChange={async (e) => {
-                                    const file = e.target.files?.[0];
-                                    if (!file) return;
-                                    setUploadingPhoto(true);
-                                    try {
-                                      const compressedFile = await compressImage(file);
-                                      const fd = new FormData();
-                                      fd.append('photo', compressedFile);
-                                      const token = localStorage.getItem('token');
-                                      const res = await fetch(`${import.meta.env.VITE_API_URL}/upload/profile-photo`, {
-                                        method: 'POST',
-                                        headers: { 'Authorization': `Bearer ${token}` },
-                                        body: fd
-                                      });
-                                      const result = await res.json();
-                                      if (result.success) {
-                                        setFormData(prev => ({ ...prev, [field.name]: result.data.url }));
-                                      } else {
-                                        alert('❌ ' + (result.message || 'Upload failed'));
-                                      }
-                                    } catch (err) {
-                                      console.error('Capture error:', err);
-                                      alert('❌ Failed to capture photo');
-                                    } finally {
-                                      setUploadingPhoto(false);
-                                      e.target.value = '';
-                                    }
-                                  }}
-                                />
-                              </label>
+                              </button>
                             )}
                           </div>
                           {formData[field.name] && (
@@ -1340,6 +1345,12 @@ const GenericMaster = ({
           </div>
         </div>
       )}
+      {/* Camera Capture Modal */}
+      <CameraModal 
+        isOpen={showCamera} 
+        onClose={() => setShowCamera(false)} 
+        onCapture={(file) => handleCapturePhoto(file)}
+      />
     </div>
   );
 };

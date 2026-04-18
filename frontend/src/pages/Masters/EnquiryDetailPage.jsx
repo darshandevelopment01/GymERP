@@ -31,6 +31,7 @@ import { taxSlabAPI, planCategoryAPI, paymentTypeAPI } from '../../services/mast
 import { usePermissions } from '../../hooks/usePermissions';
 import { compressImage } from '../../utils/compressImage';
 import { formatLocalDate } from '../../utils/dateUtils';
+import CameraModal from '../../components/CameraModal';
 import './EnquiryDetailPage.css';
 
 const EnquiryDetailPage = () => {
@@ -38,6 +39,7 @@ const EnquiryDetailPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { can, isAdmin } = usePermissions();
+  const [showCamera, setShowCamera] = useState(false);
 
   const [activeTab, setActiveTab] = useState('details');
   // Instant render: try to get enquiry data from router state (passed from GenericMaster)
@@ -91,6 +93,34 @@ const EnquiryDetailPage = () => {
   });
   const [submittingConvert, setSubmittingConvert] = useState(false);
   const [convertEmail, setConvertEmail] = useState('');
+
+  const handleCapturePhoto = async (file) => {
+    if (!file) return;
+    setUploadingPhoto(true);
+    try {
+      const compressedFile = await compressImage(file);
+      const fd = new FormData();
+      fd.append('photo', compressedFile);
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/upload/profile-photo`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: fd
+      });
+      const result = await res.json();
+      if (result.success) {
+        setPaymentData(prev => ({ ...prev, profilePhoto: result.data.url }));
+      } else {
+        alert(result.message || 'Capture failed');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Failed to process captured photo');
+    } finally {
+      setUploadingPhoto(false);
+      setShowCamera(false);
+    }
+  };
 
   const fetchMetadata = async () => {
     try {
@@ -790,52 +820,24 @@ const EnquiryDetailPage = () => {
                       gap: '0.4rem',
                       marginTop: '0.5rem'
                     }}>
-                      <label style={{
-                        display: 'block',
-                        textAlign: 'center',
-                        color: '#10b981',
-                        fontSize: '0.75rem',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        padding: '4px',
-                        border: '1px solid #10b981',
-                        borderRadius: '4px'
-                      }}>
+                      <button 
+                        type="button"
+                        onClick={() => setShowCamera(true)}
+                        style={{
+                          display: 'block',
+                          width: '100%',
+                          textAlign: 'center',
+                          color: '#10b981',
+                          fontSize: '0.75rem',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          padding: '4px',
+                          border: '1px solid #10b981',
+                          borderRadius: '4px',
+                          background: 'white'
+                        }}>
                         📷 {uploadingPhoto ? 'Processing...' : 'Take Photo'}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          capture="environment"
-                          style={{ display: 'none' }}
-                          onChange={async (e) => {
-                            const file = e.target.files?.[0];
-                            if (!file) return;
-                            setUploadingPhoto(true);
-                            try {
-                              const compressedFile = await compressImage(file);
-                              const fd = new FormData();
-                              fd.append('photo', compressedFile);
-                              const token = localStorage.getItem('token');
-                              const res = await fetch(`${import.meta.env.VITE_API_URL}/upload/profile-photo`, {
-                                method: 'POST',
-                                headers: { 'Authorization': `Bearer ${token}` },
-                                body: fd
-                              });
-                              const result = await res.json();
-                              if (result.success) {
-                                setPaymentData(prev => ({ ...prev, profilePhoto: result.data.url }));
-                              } else {
-                                alert(result.message || 'Capture failed');
-                              }
-                            } catch (err) {
-                              console.error(err);
-                              alert('Failed to capture');
-                            } finally {
-                              setUploadingPhoto(false);
-                            }
-                          }}
-                        />
-                      </label>
+                      </button>
                       <label style={{
                         display: 'block',
                         textAlign: 'center',
@@ -960,7 +962,7 @@ const EnquiryDetailPage = () => {
                       dateFormat="dd/MM/yyyy"
                       placeholderText="Select Start Date"
                       required
-                      minDate={new Date()}
+                      minDate={isAdmin ? undefined : new Date()}
                     />
                   </div>
                   <div className="form-group">
@@ -1259,6 +1261,12 @@ const EnquiryDetailPage = () => {
           </div>
         </div>
       )}
+      {/* Camera Capture Modal */}
+      <CameraModal 
+        isOpen={showCamera} 
+        onClose={() => setShowCamera(false)} 
+        onCapture={handleCapturePhoto}
+      />
     </div>
   );
 };

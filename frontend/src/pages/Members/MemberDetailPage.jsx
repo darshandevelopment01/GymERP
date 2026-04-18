@@ -28,6 +28,7 @@ import followupApi from '../../services/followupApi';
 import branchApi from '../../services/branchApi';
 import planApi from '../../services/planApi';
 import { taxSlabAPI, planCategoryAPI, paymentTypeAPI } from '../../services/mastersApi';
+import { usePermissions } from '../../hooks/usePermissions';
 import { formatLocalDate } from '../../utils/dateUtils';
 import { compressImage } from '../../utils/compressImage';
 import DatePicker from 'react-datepicker';
@@ -38,6 +39,7 @@ const MemberDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const { isAdmin } = usePermissions();
 
   // Instant render: try to get member data from router state (passed from GenericMaster)
   const [member, setMember] = useState(location.state?.item || null);
@@ -1139,7 +1141,7 @@ const MemberDetailPage = () => {
                       onChange={(date) => setRenewData(recalcRenewData({...renewData, membershipStartDate: date}))}
                       dateFormat="dd/MM/yyyy"
                       className="date-input"
-                      minDate={new Date()}
+                      minDate={isAdmin ? undefined : new Date()}
                     />
                   </div>
                   <div className="form-group-custom">

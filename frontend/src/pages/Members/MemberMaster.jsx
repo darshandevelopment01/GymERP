@@ -1440,7 +1440,7 @@ const MemberMaster = () => {
                     required
                     className="custom-datepicker"
                     wrapperClassName="datepicker-wrapper"
-                    minDate={new Date()}
+                    minDate={isAdmin ? undefined : new Date()}
                   />
                 </div>
 
