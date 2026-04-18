@@ -103,16 +103,22 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
   currentY -= 40;
 
   // 3. Logo and Header Info
-  let logoY = currentY - 50;
+  let logoY = currentY - 60;
   try {
     const logoBuffer = Buffer.from(LOGO_BASE64, 'base64');
     const logoImage = await pdfDoc.embedJpg(logoBuffer);
-    const logoDims = logoImage.scale(0.12);
+    
+    // Fixed width scaling: set width to 120 and scale height proportionally
+    const maxWidth = 130;
+    const scale = maxWidth / logoImage.width;
+    const finalWidth = maxWidth;
+    const finalHeight = logoImage.height * scale;
+
     page.drawImage(logoImage, {
       x: 50,
-      y: logoY,
-      width: logoDims.width,
-      height: logoDims.height,
+      y: logoY - (finalHeight > 50 ? (finalHeight - 50) : 0),
+      width: finalWidth,
+      height: finalHeight,
     });
   } catch (err) {
     console.error('Logo embed error:', err);

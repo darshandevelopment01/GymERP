@@ -307,6 +307,11 @@
   color: #ef4444;
 }
 
+/* Ensure DatePicker popper floats above modal overlays */
+.react-datepicker-popper {
+  z-index: 9999 !important;
+}
+
 
 /* ========== MOBILE RESPONSIVE ========== */
 @media (max-width: 800px) {
