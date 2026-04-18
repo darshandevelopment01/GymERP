@@ -105,7 +105,7 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
   let logoY = currentY - 50;
   try {
     const logoBuffer = Buffer.from(LOGO_BASE64, 'base64');
-    const logoImage = await pdfDoc.embedPng(logoBuffer);
+    const logoImage = await pdfDoc.embedJpg(logoBuffer);
     const logoDims = logoImage.scale(0.12);
     page.drawImage(logoImage, {
       x: 50,
