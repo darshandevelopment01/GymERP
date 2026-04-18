@@ -1158,6 +1158,7 @@ const MemberMaster = () => {
                       required
                       className="custom-datepicker"
                       wrapperClassName="datepicker-wrapper"
+                      portalId="root"
                     />
                     <span className="date-input-icon">📅</span>
                   </div>
@@ -1598,6 +1599,7 @@ const MemberMaster = () => {
                           required
                           className="custom-datepicker"
                           wrapperClassName="datepicker-wrapper"
+                          portalId="root"
                         />
                         <span className="date-input-icon">📅</span>
                       </div>

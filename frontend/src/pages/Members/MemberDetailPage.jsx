@@ -1112,6 +1112,7 @@ const MemberDetailPage = () => {
                       dateFormat="dd/MM/yyyy"
                       minDate={new Date()}
                       required
+                      portalId="root"
                     />
                     <span className="date-input-icon">📅</span>
                   </div>
@@ -1248,6 +1249,7 @@ const MemberDetailPage = () => {
                           className="date-input"
                           minDate={new Date()}
                           required
+                          portalId="root"
                         />
                         <span className="date-input-icon">📅</span>
                       </div>
@@ -1304,6 +1306,7 @@ const MemberDetailPage = () => {
                     className="date-input"
                     minDate={new Date()}
                     placeholderText="Select date"
+                    portalId="root"
                   />
                 </div>
                 <div className="form-group-custom">
