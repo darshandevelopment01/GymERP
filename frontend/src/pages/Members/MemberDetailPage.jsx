@@ -639,7 +639,56 @@ const MemberDetailPage = () => {
                   <p>{member.convertedBy?.name || 'N/A'}</p>
                 </div>
               </div>
+              
+              {member.referredBy && (
+                <div className="info-item" style={{ border: '1px dashed #3b82f6', borderRadius: '8px', padding: '10px', background: '#eff6ff' }}>
+                  <div className="info-icon" style={{ color: '#3b82f6' }}><Share2 size={22} /></div>
+                  <div className="info-text">
+                    <label style={{ color: '#1d4ed8' }}>Referred By</label>
+                    <p style={{ fontWeight: '600' }}>
+                      {member.referredBy.name} ({member.referredBy.memberId})
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
+
+            {member.referredMembers && member.referredMembers.length > 0 && (
+              <div style={{ marginTop: '2rem' }}>
+                <h3 className="section-title">REFERRAL PROGRAM (MEMBERS REFERRED)</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
+                  {member.referredMembers.map(refMember => (
+                    <div 
+                      key={refMember._id} 
+                      className="info-item" 
+                      onClick={() => navigate(`/members/${refMember._id}`)}
+                      style={{ 
+                        border: '1px solid #e2e8f0', 
+                        borderRadius: '12px', 
+                        padding: '12px', 
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        background: 'white'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.borderColor = '#3b82f6'}
+                      onMouseLeave={(e) => e.currentTarget.style.borderColor = '#e2e8f0'}
+                    >
+                      <div className="info-icon" style={{ background: '#f0fdf4', color: '#16a34a' }}><User size={22} /></div>
+                      <div className="info-text">
+                        <label>{refMember.memberId}</label>
+                        <p style={{ fontWeight: '600' }}>{refMember.name}</p>
+                        <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                          Status: <span style={{ color: refMember.status === 'active' ? '#16a34a' : '#ef4444', fontWeight: '500' }}>{refMember.status?.toUpperCase()}</span>
+                        </span>
+                      </div>
+                      <div style={{ marginLeft: 'auto' }}>
+                        <ArrowRight size={18} color="#94a3b8" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 

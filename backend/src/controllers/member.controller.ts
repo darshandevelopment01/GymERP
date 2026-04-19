@@ -117,7 +117,8 @@ export const createMember = async (req: Request, res: Response): Promise<void> =
       ...trimmedData,
       membershipEndDate: endDate,
       paymentRemaining: paymentRemaining,
-      convertedBy: req.user?.id || null
+      convertedBy: req.user?.id || null,
+      referredBy: trimmedData.referredBy || null
     };
 
     console.log('📝 Final member data:', JSON.stringify(memberData, null, 2));
@@ -335,6 +336,7 @@ export const getMemberById = async (req: Request, res: Response): Promise<void> 
       .populate('branch', 'name city address state zipCode')
       .populate('plan', 'planName duration price')
       .populate('convertedBy', 'name')
+      .populate('referredBy', 'name memberId')
       .populate({ path: 'enquiryId', populate: { path: 'createdBy', select: 'name' } })
       .populate('history.plan', 'planName duration price');
 
@@ -343,7 +345,17 @@ export const getMemberById = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    res.json({ success: true, data: member });
+    // Fetch members who were referred by this member
+    const referredMembers = await Member.find({ referredBy: member._id })
+      .select('name memberId status createdAt');
+
+    res.json({ 
+      success: true, 
+      data: {
+        ...member.toObject(),
+        referredMembers
+      }
+    });
   } catch (error) {
     console.error('Error fetching member:', error);
     res.status(500).json({ success: false, message: 'Failed to fetch member' });

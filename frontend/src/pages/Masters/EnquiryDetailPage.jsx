@@ -89,10 +89,13 @@ const EnquiryDetailPage = () => {
     membershipStartDate: new Date(),
     membershipEndDate: null,
     nextPaymentDate: null,
-    profilePhoto: ''
+    profilePhoto: '',
+    referredBy: ''
   });
   const [submittingConvert, setSubmittingConvert] = useState(false);
   const [convertEmail, setConvertEmail] = useState('');
+  const [allMembers, setAllMembers] = useState([]);
+  const [fetchingMembers, setFetchingMembers] = useState(false);
 
   const handleCapturePhoto = async (file) => {
     if (!file) return;
@@ -378,7 +381,22 @@ const EnquiryDetailPage = () => {
     }
   };
 
-  const handleConvertClick = () => {
+  const handleConvertClick = async () => {
+    // Fetch members if source is Referral
+    if (enquiry.source === 'Referral') {
+      try {
+        setFetchingMembers(true);
+        const res = await memberApi.getAll();
+        if (res.success && res.data) {
+          setAllMembers(res.data.filter(m => m.status === 'active'));
+        }
+      } catch (err) {
+        console.error('Failed to fetch members for referral:', err);
+      } finally {
+        setFetchingMembers(false);
+      }
+    }
+
     const initialData = {
       planCategory: enquiry.plan?.category?._id || enquiry.plan?.category || '',
       plan: enquiry.plan?._id || '',
@@ -390,7 +408,8 @@ const EnquiryDetailPage = () => {
       membershipStartDate: new Date(),
       membershipEndDate: null,
       nextPaymentDate: null,
-      profilePhoto: enquiry.profilePhoto || ''
+      profilePhoto: enquiry.profilePhoto || '',
+      referredBy: ''
     };
     setDiscountType('percentage');
     setDiscountWarning('');
@@ -436,7 +455,8 @@ const EnquiryDetailPage = () => {
         membershipEndDate: paymentData.membershipEndDate ? paymentData.membershipEndDate.toISOString() : null,
         nextPaymentDate: paymentData.nextPaymentDate ? paymentData.nextPaymentDate.toISOString() : null,
         enquiryId: id,
-        profilePhoto: paymentData.profilePhoto || enquiry.profilePhoto || null
+        profilePhoto: paymentData.profilePhoto || enquiry.profilePhoto || null,
+        referredBy: paymentData.referredBy || null
       };
 
       const response = await memberApi.create(memberData);
@@ -1095,6 +1115,35 @@ const EnquiryDetailPage = () => {
                     </div>
                   )}
                 </div>
+
+                {enquiry.source === 'Referral' && (
+                  <div className="form-group" style={{ marginBottom: '1rem' }}>
+                    <label>Referred By (Optional)</label>
+                    {fetchingMembers ? (
+                      <div style={{ fontSize: '0.85rem', color: '#64748b' }}>⏳ Fetching active members...</div>
+                    ) : (
+                      <select
+                        value={paymentData.referredBy}
+                        onChange={(e) => setPaymentData(prev => ({ ...prev, referredBy: e.target.value }))}
+                        style={{
+                          width: '100%',
+                          padding: '0.75rem',
+                          border: '2px solid #e2e8f0',
+                          borderRadius: '8px',
+                          background: '#fff',
+                          fontSize: '1rem'
+                        }}
+                      >
+                        <option value="">-- Select Member --</option>
+                        {allMembers.map(member => (
+                          <option key={member._id} value={member._id}>
+                            {member.name} ({member.memberId})
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                )}
 
                 {/* Billing Summary Section */}
                 {paymentData.plan && (() => {

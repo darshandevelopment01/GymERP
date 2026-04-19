@@ -26,6 +26,7 @@ export interface IMember extends Document {
   nextPaymentDate?: Date;
   enquiryId?: mongoose.Types.ObjectId;
   convertedBy?: mongoose.Types.ObjectId;
+  referredBy?: mongoose.Types.ObjectId;
   history: {
     plan: mongoose.Types.ObjectId;
     membershipStartDate: Date;
@@ -174,6 +175,11 @@ const MemberSchema = new Schema<IMember>(
     convertedBy: {
       type: Schema.Types.ObjectId,
       ref: 'Employee',
+      default: null
+    },
+    referredBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'Member',
       default: null
     },
     history: [
