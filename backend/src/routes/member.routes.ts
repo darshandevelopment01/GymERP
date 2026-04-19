@@ -6,7 +6,8 @@ import {
   updateMember, 
   deleteMember,
   getMemberHistory,
-  getMemberPaymentReceipt
+  getMemberPaymentReceipt,
+  freezeMember
 } from '../controllers/member.controller';
 import { authMiddleware } from '../middleware/auth.middleware';
 
@@ -18,6 +19,7 @@ router.get('/:id/history', authMiddleware, getMemberHistory);
 router.get('/:id/payments/:paymentIndex/receipt', authMiddleware, getMemberPaymentReceipt);
 router.get('/:id', authMiddleware, getMemberById);
 router.post('/', authMiddleware, createMember);
+router.post('/:id/freeze', authMiddleware, freezeMember);
 router.put('/:id', authMiddleware, updateMember);
 router.delete('/:id', authMiddleware, deleteMember);
 

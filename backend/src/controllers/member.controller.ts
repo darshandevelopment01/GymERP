@@ -714,3 +714,64 @@ export const getMemberHistory = async (req: Request, res: Response): Promise<voi
     res.status(500).json({ success: false, message: 'Failed to fetch member history' });
   }
 };
+
+export const freezeMember = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { days, note } = req.body;
+    
+    if (typeof days !== 'number' || days === 0) {
+      res.status(400).json({ success: false, message: 'Invalid freeze days provided' });
+      return;
+    }
+
+    const member = await Member.findById(req.params.id);
+    if (!member) {
+      res.status(404).json({ success: false, message: 'Member not found' });
+      return;
+    }
+
+    if (!member.membershipEndDate) {
+      res.status(400).json({ success: false, message: 'Member does not have an active end date' });
+      return;
+    }
+
+    const previousEndDate = new Date(member.membershipEndDate);
+    const newEndDate = new Date(previousEndDate);
+    newEndDate.setDate(newEndDate.getDate() + days);
+
+    // Ensure freeze arrays and counts exist
+    if (!member.freezeHistory) member.freezeHistory = [];
+    if (typeof member.frozenDaysTotal !== 'number') member.frozenDaysTotal = 0;
+
+    member.membershipEndDate = newEndDate;
+    member.frozenDaysTotal += days;
+
+    // Check status if newEndDate goes beyond today and it was previously expired
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const checkEndDate = new Date(newEndDate);
+    checkEndDate.setHours(23, 59, 59, 999);
+    
+    if (checkEndDate >= today && member.status === 'expired') {
+      member.status = 'active';
+    } else if (checkEndDate < today && member.status === 'active') {
+      member.status = 'expired';
+    }
+
+    member.freezeHistory.push({
+      actionDate: new Date(),
+      days,
+      previousEndDate,
+      newEndDate,
+      recordedBy: (req.user?.id as any) || null,
+      note: note || ''
+    });
+
+    await member.save();
+
+    res.json({ success: true, message: 'Membership freeze applied', data: member });
+  } catch (error) {
+    console.error('Error freezing member:', error);
+    res.status(500).json({ success: false, message: 'Failed to freeze membership' });
+  }
+};

@@ -82,6 +82,21 @@ const memberApi = {
       throw error;
     }
   },
+
+  async freeze(id, data) {
+    try {
+      const response = await fetchWithAuth(`${API_URL}/members/${id}/freeze`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error('Failed to freeze/unfreeze member');
+      return await response.json();
+    } catch (error) {
+      console.error('Freeze member error:', error);
+      throw error;
+    }
+  },
+
   async getPaymentReceipt(memberId, paymentIndex) {
     try {
       const response = await fetchWithAuth(`${API_URL}/members/${memberId}/payments/${paymentIndex}/receipt`);

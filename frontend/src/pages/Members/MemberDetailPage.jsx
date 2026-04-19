@@ -22,6 +22,7 @@ import {
   RefreshCw,
   AlertCircle,
   CheckCircle,
+  Snowflake,
 } from 'lucide-react';
 import memberApi from '../../services/memberApi';
 import followupApi from '../../services/followupApi';
@@ -71,6 +72,7 @@ const MemberDetailPage = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showRenewModal, setShowRenewModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showFreezeModal, setShowFreezeModal] = useState(false);
 
   // Form States
   const [editFormData, setEditFormData] = useState({});
@@ -89,6 +91,11 @@ const MemberDetailPage = () => {
   const [additionalPayment, setAdditionalPayment] = useState(0);
   const [selectedPaymentMode, setSelectedPaymentMode] = useState('UPI');
   const [paymentNextPayDate, setPaymentNextPayDate] = useState(null);
+  
+  const [freezeData, setFreezeData] = useState({
+    days: 0,
+    note: ''
+  });
 
   // Discount settings (copied logic from MemberMaster)
   const [maxDiscountPercentage, setMaxDiscountPercentage] = useState(0);
@@ -442,6 +449,26 @@ const MemberDetailPage = () => {
     }
   };
 
+  const handleFreezeSubmit = async (e) => {
+    e.preventDefault();
+    const freezeDays = Number(freezeData.days);
+    if (!freezeDays) return alert('Please enter a valid number of days (positive or negative)');
+    
+    try {
+      setSubmitting(true);
+      await memberApi.freeze(id, { days: freezeDays, note: freezeData.note });
+      alert('✅ Membership freeze updated successfully!');
+      setShowFreezeModal(false);
+      setFreezeData({ days: 0, note: '' });
+      fetchMemberData();
+      fetchHistoryData();
+    } catch (err) {
+      alert('Failed to freeze membership: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   if (loading && !member) return (
     <SkeletonLoader variant="member-detail" />
   );
@@ -559,6 +586,21 @@ const MemberDetailPage = () => {
           >
             <RefreshCw size={20} />
             <span>Renew</span>
+          </button>
+        )}
+
+        {(member.status === 'active' || member.status === 'expired') && (
+          <button 
+            className="action-btn freeze" 
+            onClick={() => {
+              setFreezeData({ days: 0, note: '' });
+              setShowFreezeModal(true);
+            }}
+            title="Freeze/Adjust Membership"
+            style={{ color: '#0ea5e9', borderColor: '#e0f2fe', background: '#f0f9ff' }}
+          >
+            <Snowflake size={20} />
+            <span>Freeze</span>
           </button>
         )}
       </div>
@@ -710,6 +752,14 @@ const MemberDetailPage = () => {
                   <p className="end-date-text">{formatDate(member.membershipEndDate)}</p>
                 </div>
               </div>
+              {member.frozenDaysTotal > 0 && (
+                <div style={{ marginTop: '1rem', padding: '0.75rem', background: '#f0f9ff', borderRadius: '8px', border: '1px solid #bae6fd', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Snowflake size={20} color="#0284c7" />
+                  <span style={{ color: '#0369a1', fontWeight: '500', fontSize: '0.9rem' }}>
+                    This membership has been extended by a total of <strong>{member.frozenDaysTotal}</strong> frozen days.
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="receipts-section">
@@ -1407,6 +1457,95 @@ const MemberDetailPage = () => {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Freeze Modal */}
+      {showFreezeModal && (
+        <div className="modal-overlay" onClick={() => setShowFreezeModal(false)}>
+          <div className="modal-content freeze-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+            <div className="modal-header" style={{ background: '#0ea5e9' }}>
+              <h2 style={{ color: 'white', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Snowflake size={24} />
+                Freeze Membership
+              </h2>
+              <button className="btn-close" onClick={() => setShowFreezeModal(false)} style={{ color: 'white' }}>✕</button>
+            </div>
+
+            <form onSubmit={handleFreezeSubmit}>
+              <div className="form-content" style={{ background: 'white' }}>
+                <div style={{ background: '#f0f9ff', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', border: '1px solid #bae6fd', color: '#0369a1', fontSize: '0.9rem', lineHeight: '1.5' }}>
+                  <p style={{ margin: 0 }}>
+                    Enter the number of days to freeze the membership. This will push the end date forward.
+                  </p>
+                  <p style={{ margin: '0.5rem 0 0' }}>
+                    <em>Tip: To reduce/unfreeze, enter a negative number (e.g. -5).</em>
+                  </p>
+                  {member.frozenDaysTotal > 0 && (
+                    <p style={{ margin: '0.75rem 0 0', fontWeight: '600', color: '#0284c7' }}>
+                      Current Frozen Days: {member.frozenDaysTotal}
+                    </p>
+                  )}
+                </div>
+
+                <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                  <label>Days to Freeze/Adjust <span className="required">*</span></label>
+                  <input
+                    type="number"
+                    value={freezeData.days}
+                    onChange={(e) => setFreezeData({ ...freezeData, days: e.target.value })}
+                    placeholder="E.g., 10 or -5"
+                    required
+                    style={{ width: '100%', padding: '0.75rem', border: '2px solid #e2e8f0', borderRadius: '8px', fontSize: '1rem' }}
+                  />
+                  {freezeData.days !== '' && freezeData.days !== 0 && member.membershipEndDate && (
+                    <p style={{ margin: '0.5rem 0 0', fontSize: '0.85rem', color: '#10b981', fontWeight: '500' }}>
+                      Preview: New end date will be {
+                        new Date(new Date(member.membershipEndDate).getTime() + (Number(freezeData.days) || 0) * 24 * 60 * 60 * 1000).toLocaleDateString('en-GB')
+                      }
+                    </p>
+                  )}
+                </div>
+
+                <div className="form-group">
+                  <label>Note / Reason (Optional)</label>
+                  <textarea
+                    value={freezeData.note}
+                    onChange={(e) => setFreezeData({ ...freezeData, note: e.target.value })}
+                    placeholder="Why are these days being frozen/adjusted?"
+                    rows="3"
+                    style={{ width: '100%', padding: '0.75rem', border: '2px solid #e2e8f0', borderRadius: '8px', fontSize: '1rem', resize: 'vertical' }}
+                  />
+                </div>
+              </div>
+
+              <div className="modal-footer" style={{ background: '#f8fafc', borderTop: '1px solid #e2e8f0' }}>
+                <button
+                  type="button"
+                  className="btn-cancel"
+                  onClick={() => setShowFreezeModal(false)}
+                  style={{ background: 'white', color: '#64748b', border: '1px solid #cbd5e1', padding: '0.75rem 1.5rem', borderRadius: '8px', cursor: 'pointer', fontWeight: '600' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  style={{
+                    background: submitting ? '#94a3b8' : '#0ea5e9',
+                    color: 'white',
+                    border: 'none',
+                    padding: '0.75rem 1.5rem',
+                    borderRadius: '8px',
+                    cursor: submitting ? 'not-allowed' : 'pointer',
+                    fontWeight: '600'
+                  }}
+                >
+                  {submitting ? '⏳ Updating...' : '❄️ Confirm'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -42,6 +42,15 @@ export interface IMember extends Document {
     status: string;
     recordedAt: Date;
   }[];
+  frozenDaysTotal?: number;
+  freezeHistory?: {
+    actionDate: Date;
+    days: number;
+    previousEndDate: Date;
+    newEndDate: Date;
+    recordedBy?: mongoose.Types.ObjectId;
+    note?: string;
+  }[];
   payments: {
     amount: number;
     paymentDate: Date;
@@ -197,6 +206,20 @@ const MemberSchema = new Schema<IMember>(
         paymentRemaining: Number,
         status: { type: String, default: 'active' },
         recordedAt: { type: Date, default: Date.now }
+      }
+    ],
+    frozenDaysTotal: {
+      type: Number,
+      default: 0
+    },
+    freezeHistory: [
+      {
+        actionDate: { type: Date, default: Date.now },
+        days: { type: Number, required: true },
+        previousEndDate: { type: Date, required: true },
+        newEndDate: { type: Date, required: true },
+        recordedBy: { type: Schema.Types.ObjectId, ref: 'Employee' },
+        note: { type: String, default: '' }
       }
     ],
     payments: [

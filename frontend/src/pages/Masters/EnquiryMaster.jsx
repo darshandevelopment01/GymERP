@@ -75,6 +75,8 @@ const EnquiryMaster = () => {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [allMembers, setAllMembers] = useState([]);
   const [fetchingMembers, setFetchingMembers] = useState(false);
+  const [referralInput, setReferralInput] = useState('');
+  const [verifiedReferralMember, setVerifiedReferralMember] = useState(null);
 
   // ✅ DUPLICATE ENQUIRY STATES
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
@@ -286,6 +288,9 @@ const EnquiryMaster = () => {
         setFetchingMembers(false);
       }
     }
+
+    setReferralInput('');
+    setVerifiedReferralMember(null);
 
     const initialData = {
       planCategory: enquiry.plan?.category?._id || enquiry.plan?.category || '',
@@ -1372,30 +1377,43 @@ const EnquiryMaster = () => {
 
                 {selectedEnquiry?.source === 'Referral' && (
                   <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                    <label>Referred By (Optional)</label>
-                    {fetchingMembers ? (
-                      <div style={{ fontSize: '0.85rem', color: '#64748b' }}>⏳ Fetching active members...</div>
-                    ) : (
-                      <select
-                        value={paymentData.referredBy}
-                        onChange={(e) => setPaymentData(prev => ({ ...prev, referredBy: e.target.value }))}
+                    <label>Referred By (Enter Member ID) {fetchingMembers && <span style={{ fontSize: '0.75rem', color: '#64748b' }}>(Fetching...)</span>}</label>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type="text"
+                        value={referralInput}
+                        onChange={(e) => {
+                          const val = e.target.value.toUpperCase();
+                          setReferralInput(val);
+                          const matched = allMembers.find(m => m.memberId.toUpperCase() === val);
+                          if (matched) {
+                            setVerifiedReferralMember(matched);
+                            setPaymentData(prev => ({ ...prev, referredBy: matched._id }));
+                          } else {
+                            setVerifiedReferralMember(null);
+                            setPaymentData(prev => ({ ...prev, referredBy: '' }));
+                          }
+                        }}
+                        placeholder="e.g. MEM-20260419-0001"
                         style={{
                           width: '100%',
                           padding: '0.75rem',
-                          border: '2px solid #e2e8f0',
+                          border: `2px solid ${referralInput ? (verifiedReferralMember ? '#22c55e' : '#ef4444') : '#e2e8f0'}`,
                           borderRadius: '8px',
-                          background: '#fff',
-                          fontSize: '1rem'
+                          fontSize: '1rem',
+                          textTransform: 'uppercase'
                         }}
-                      >
-                        <option value="">-- Select Member --</option>
-                        {allMembers.map(member => (
-                          <option key={member._id} value={member._id}>
-                            {member.name} ({member.memberId})
-                          </option>
-                        ))}
-                      </select>
-                    )}
+                      />
+                      {referralInput && (
+                        <div style={{ marginTop: '0.5rem', fontSize: '0.85rem', fontWeight: '500' }}>
+                          {verifiedReferralMember ? (
+                            <span style={{ color: '#16a34a' }}>✅ Verified: {verifiedReferralMember.name}</span>
+                          ) : (
+                            <span style={{ color: '#dc2626' }}>❌ Invalid Member ID</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
 
