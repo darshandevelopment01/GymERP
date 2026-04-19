@@ -24,6 +24,7 @@ import {
   CheckCircle,
   Snowflake,
   ArrowRight,
+  Copy,
 } from 'lucide-react';
 import memberApi from '../../services/memberApi';
 import followupApi from '../../services/followupApi';
@@ -254,6 +255,13 @@ const MemberDetailPage = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCopyId = (id) => {
+    navigator.clipboard.writeText(id);
+    // Visual feedback is handled via CSS or state if needed, 
+    // but for now simple copy is fine. 
+    // We can also add a small temporary tooltip or change color.
   };
 
   const fetchFollowups = async () => {
@@ -525,6 +533,16 @@ const MemberDetailPage = () => {
               <span className={`status-tag status-${member.status}`}>
                 {member.status}
               </span>
+            </div>
+            <div className="id-copy-row">
+              <span className="member-id-text">ID: {member.memberId}</span>
+              <button 
+                className="copy-id-btn-detail"
+                onClick={() => handleCopyId(member.memberId)}
+                title="Copy Member ID"
+              >
+                <Copy size={14} />
+              </button>
             </div>
             <p className="member-since">Member since {formatMonthYear(member.createdAt || member.membershipStartDate)}</p>
           </div>

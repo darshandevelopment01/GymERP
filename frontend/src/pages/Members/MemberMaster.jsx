@@ -10,6 +10,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { taxSlabAPI, planCategoryAPI, paymentTypeAPI, employeeAPI } from '../../services/mastersApi';
 import { usePermissions } from '../../hooks/usePermissions';
 import { formatLocalDate } from '../../utils/dateUtils';
+import { Copy } from 'lucide-react';
 import './MemberMaster.css';
 
 const MemberMaster = () => {
@@ -677,6 +678,18 @@ const MemberMaster = () => {
     setRenewData(prev => recalcRenewData({ ...prev, paymentReceived: received }));
   };
 
+  const handleCopyId = (id, e) => {
+    if (e) e.stopPropagation();
+    navigator.clipboard.writeText(id);
+    // Simple visual feedback
+    const btn = e?.currentTarget;
+    if (btn) {
+      const originalColor = btn.style.color;
+      btn.style.color = '#10b981';
+      setTimeout(() => { btn.style.color = originalColor; }, 1050);
+    }
+  };
+
   const formatDate = (date) => {
     if (!date) return '-';
     const d = new Date(date);
@@ -688,6 +701,33 @@ const MemberMaster = () => {
   };
 
   const columns = [
+    {
+      label: 'Member ID',
+      field: 'memberId',
+      render: (item) => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '0.85rem', color: '#64748b', fontFamily: 'monospace' }}>
+            {item.memberId}
+          </span>
+          <button 
+            onClick={(e) => handleCopyId(item.memberId, e)}
+            style={{
+              background: 'none',
+              border: 'none',
+              padding: '4px',
+              cursor: 'pointer',
+              color: '#94a3b8',
+              display: 'flex',
+              alignItems: 'center',
+              transition: 'color 0.2s'
+            }}
+            title="Copy ID"
+          >
+            <Copy size={14} />
+          </button>
+        </div>
+      )
+    },
     {
       label: 'Name',
       field: 'name'

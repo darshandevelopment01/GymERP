@@ -216,6 +216,44 @@
   color: #64748b;
 }
 
+.id-copy-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.15rem;
+}
+
+.member-id-text {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 600;
+  background: #f1f5f9;
+  padding: 0.1rem 0.5rem;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+.copy-id-btn-detail {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s;
+  border-radius: 4px;
+}
+
+.copy-id-btn-detail:hover {
+  background: #f1f5f9;
+  color: #10b981;
+}
+
+.copy-id-btn-detail:active {
+  transform: scale(0.9);
+}
+
 /* Tabs */
 .tabs-container {
   display: flex;
