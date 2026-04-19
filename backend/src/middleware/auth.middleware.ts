@@ -38,8 +38,19 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
 
     req.user = decoded;
     next();
-  } catch (error) {
-    res.status(401).json({ message: 'Invalid token' });
+  } catch (error: any) {
+    // If it's specifically a JWT error, return 401 (triggers frontend logout)
+    if (error.name === 'TokenExpiredError' || error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ message: 'Session expired. Please log in again.' });
+    }
+    
+    // For other errors (like database timeouts or connection loss), return 500.
+    // This prevents the frontend from purging the session due to a temporary DB stutter.
+    console.error('🛡️ Auth Middleware Error:', error.message);
+    res.status(500).json({ 
+      message: 'Internal authentication error. Please try again.',
+      error: error.message 
+    });
   }
 };
 

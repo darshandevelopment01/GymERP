@@ -1473,7 +1473,7 @@ const GenericMaster = ({
                         <span className="field-error">{field.errorText(formData)}</span>
                       )}
                       {field.helperText && field.helperText(formData) && (
-                        <span className="field-helper">{field.helperText(formData)}</span>
+                        <div className="field-helper">{field.helperText(formData)}</div>
                       )}
                     </div>
                   );

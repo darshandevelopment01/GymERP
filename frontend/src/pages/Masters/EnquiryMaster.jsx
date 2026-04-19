@@ -726,7 +726,7 @@ const EnquiryMaster = () => {
       helperText: (formData) => {
         if (liveDuplicate && liveDuplicate.mobileNumber === formData.mobileNumber) {
           return (
-            <div className="field-helper">
+            <>
               <div className="field-helper-text">
                 <span>⚠️ This mobile number is already registered in our system.</span>
               </div>
@@ -735,11 +735,9 @@ const EnquiryMaster = () => {
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  // Force hard navigation to ensure modal state is cleared
                   window.location.href = `/enquiry/${liveDuplicate._id}`;
                 }} 
                 className="field-helper-btn"
-                style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: '5px', color: '#2563eb', fontWeight: 'bold' }}
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '16px', height: '16px' }}>
                   <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
@@ -747,7 +745,7 @@ const EnquiryMaster = () => {
                 </svg>
                 View Existing Enquiry
               </button>
-            </div>
+            </>
           );
         }
         return null;
@@ -773,22 +771,20 @@ const EnquiryMaster = () => {
         return null;
       },
       helperText: (formData) => {
-        if (liveDuplicate && liveDuplicate.email?.toLowerCase() === formData.email?.toLowerCase()) {
+        if (liveDuplicate && liveDuplicate.email === formData.email) {
           return (
-            <div className="field-helper">
+            <>
               <div className="field-helper-text">
-                <span>⚠️ This email address is already registered in our system.</span>
+                <span>⚠️ This email is already registered in our system.</span>
               </div>
               <button 
                 type="button"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  // Force hard navigation to ensure modal state is cleared
                   window.location.href = `/enquiry/${liveDuplicate._id}`;
                 }} 
                 className="field-helper-btn"
-                style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: '5px', color: '#2563eb', fontWeight: 'bold' }}
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '16px', height: '16px' }}>
                   <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
@@ -796,7 +792,7 @@ const EnquiryMaster = () => {
                 </svg>
                 View Existing Enquiry
               </button>
-            </div>
+            </>
           );
         }
         return null;
