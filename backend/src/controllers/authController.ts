@@ -97,7 +97,7 @@ export const login = async (req: Request, res: Response) => {
 
     // Check active status
     if (user.status !== 'active') {
-      return res.status(401).json({ error: 'Account is inactive. Contact administrator.' });
+      return res.status(401).json({ error: "You can't login contact to admin." });
     }
 
     // Check password

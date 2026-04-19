@@ -8,6 +8,7 @@ const UserMaster = () => {
   const [shifts, setShifts] = useState([]);
   const [branches, setBranches] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState('active');
 
   // Activity Logs state
   const [isAdmin, setIsAdmin] = useState(false);
@@ -164,6 +165,23 @@ const UserMaster = () => {
         </span>
       )
     },
+    {
+      label: 'Status',
+      field: 'status',
+      render: (item) => (
+        <span style={{
+          background: (item.status === 'active' || !item.status) ? '#e8f5e9' : '#ffebee',
+          color: (item.status === 'active' || !item.status) ? '#2e7d32' : '#c62828',
+          padding: '0.25rem 0.75rem',
+          borderRadius: '12px',
+          fontSize: '0.85rem',
+          fontWeight: 500,
+          textTransform: 'capitalize'
+        }}>
+          {item.status || 'Active'}
+        </span>
+      )
+    },
   ];
 
 
@@ -206,6 +224,16 @@ const UserMaster = () => {
         { value: 'Male', label: 'Male' },
         { value: 'Female', label: 'Female' },
         { value: 'Other', label: 'Other' },
+      ],
+    },
+    {
+      name: 'status',
+      label: 'Status',
+      type: 'select',
+      required: true,
+      options: [
+        { value: 'active', label: 'Active' },
+        { value: 'inactive', label: 'Inactive' },
       ],
     },
     {
@@ -450,53 +478,103 @@ const UserMaster = () => {
       {isAdmin && (
         <div style={{
           display: 'flex',
-          gap: '0',
+          justifyContent: 'space-between',
+          alignItems: 'center',
           margin: '0 1.5rem',
           borderBottom: '2px solid #e2e8f0',
           marginBottom: '-1px',
           position: 'relative',
           zIndex: 1
         }}>
-          <button
-            onClick={() => setActiveTab('users')}
-            style={{
-              padding: '0.85rem 1.5rem',
-              border: 'none',
-              background: 'none',
-              cursor: 'pointer',
-              fontSize: '0.95rem',
-              fontWeight: activeTab === 'users' ? 600 : 400,
-              color: activeTab === 'users' ? '#6366f1' : '#64748b',
-              borderBottom: activeTab === 'users' ? '2px solid #6366f1' : '2px solid transparent',
-              marginBottom: '-2px',
-              transition: 'all 0.2s',
+          <div style={{ display: 'flex', gap: '0' }}>
+            <button
+              onClick={() => setActiveTab('users')}
+              style={{
+                padding: '0.85rem 1.5rem',
+                border: 'none',
+                background: 'none',
+                cursor: 'pointer',
+                fontSize: '0.95rem',
+                fontWeight: activeTab === 'users' ? 600 : 400,
+                color: activeTab === 'users' ? '#6366f1' : '#64748b',
+                borderBottom: activeTab === 'users' ? '2px solid #6366f1' : '2px solid transparent',
+                marginBottom: '-2px',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}
+            >
+              👤 Users
+            </button>
+            <button
+              onClick={() => setActiveTab('logs')}
+              style={{
+                padding: '0.85rem 1.5rem',
+                border: 'none',
+                background: 'none',
+                cursor: 'pointer',
+                fontSize: '0.95rem',
+                fontWeight: activeTab === 'logs' ? 600 : 400,
+                color: activeTab === 'logs' ? '#6366f1' : '#64748b',
+                borderBottom: activeTab === 'logs' ? '2px solid #6366f1' : '2px solid transparent',
+                marginBottom: '-2px',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}
+            >
+              📋 Activity Logs
+            </button>
+          </div>
+
+          {/* Status Filter Toggles (Active/Inactive) */}
+          {activeTab === 'users' && (
+            <div style={{
               display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem'
-            }}
-          >
-            👤 Users
-          </button>
-          <button
-            onClick={() => setActiveTab('logs')}
-            style={{
-              padding: '0.85rem 1.5rem',
-              border: 'none',
-              background: 'none',
-              cursor: 'pointer',
-              fontSize: '0.95rem',
-              fontWeight: activeTab === 'logs' ? 600 : 400,
-              color: activeTab === 'logs' ? '#6366f1' : '#64748b',
-              borderBottom: activeTab === 'logs' ? '2px solid #6366f1' : '2px solid transparent',
-              marginBottom: '-2px',
-              transition: 'all 0.2s',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem'
-            }}
-          >
-            📋 Activity Logs
-          </button>
+              background: '#f1f5f9',
+              padding: '0.25rem',
+              borderRadius: '10px',
+              gap: '0.25rem',
+              marginBottom: '0.5rem'
+            }}>
+              <button
+                onClick={() => setStatusFilter('active')}
+                style={{
+                  padding: '0.4rem 1rem',
+                  border: 'none',
+                  borderRadius: '7px',
+                  fontSize: '0.85rem',
+                  fontWeight: statusFilter === 'active' ? 600 : 500,
+                  cursor: 'pointer',
+                  background: statusFilter === 'active' ? '#fff' : 'transparent',
+                  color: statusFilter === 'active' ? '#10b981' : '#64748b',
+                  boxShadow: statusFilter === 'active' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                  transition: 'all 0.2s'
+                }}
+              >
+                Active
+              </button>
+              <button
+                onClick={() => setStatusFilter('inactive')}
+                style={{
+                  padding: '0.4rem 1rem',
+                  border: 'none',
+                  borderRadius: '7px',
+                  fontSize: '0.85rem',
+                  fontWeight: statusFilter === 'inactive' ? 600 : 500,
+                  cursor: 'pointer',
+                  background: statusFilter === 'inactive' ? '#fff' : 'transparent',
+                  color: statusFilter === 'inactive' ? '#ef4444' : '#64748b',
+                  boxShadow: statusFilter === 'inactive' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                  transition: 'all 0.2s'
+                }}
+              >
+                Inactive
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -509,6 +587,8 @@ const UserMaster = () => {
           formFields={formFields}
           searchPlaceholder="Search users..."
           icon="👤"
+          showDeleteButton={false}
+          externalFilters={{ status: statusFilter }}
         />
       )}
 
