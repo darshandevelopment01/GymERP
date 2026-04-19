@@ -1051,6 +1051,26 @@ const MemberDetailPage = () => {
                     <option value="Other">Other</option>
                   </select>
                 </div>
+                <div className="form-group-custom">
+                  <label>Membership Start Date</label>
+                  <DatePicker
+                    selected={editFormData.membershipStartDate ? new Date(editFormData.membershipStartDate) : null}
+                    onChange={(date) => setEditFormData({ ...editFormData, membershipStartDate: date })}
+                    dateFormat="dd/MM/yyyy"
+                    className="date-input"
+                    placeholderText="Select start date"
+                  />
+                </div>
+                <div className="form-group-custom">
+                  <label>Membership End Date</label>
+                  <DatePicker
+                    selected={editFormData.membershipEndDate ? new Date(editFormData.membershipEndDate) : null}
+                    onChange={(date) => setEditFormData({ ...editFormData, membershipEndDate: date })}
+                    dateFormat="dd/MM/yyyy"
+                    className="date-input"
+                    placeholderText="Select end date"
+                  />
+                </div>
               </div>
               <div className="modal-footer">
                 <button type="submit" className="submit-btn" disabled={submitting}>

@@ -590,7 +590,7 @@ export const createEmployee = async (req: Request, res: Response) => {
     req.body.password = await bcrypt.hash(rawPassword, 10);
 
     // Sanitize Empty Strings to prevent Mongoose CastError on ObjectIds
-    ['designation', 'shift', 'branchId'].forEach(key => {
+    ['designation', 'shifts', 'branchId'].forEach(key => {
       if (req.body[key] === '') {
         delete req.body[key];
       }
@@ -646,7 +646,7 @@ export const createEmployee = async (req: Request, res: Response) => {
       .populate('designation')
       .populate('branches')
       .populate('branchId')
-      .populate('shift');
+      .populate('shifts');
 
     const messageContent = emailSent
       ? `User created successfully!\n\nCredentials have been securely EMAILED to ${req.body.email}. Keep them safe.\n\nEmail ID: ${req.body.email}\nTemporary Password: ${rawPassword}`
@@ -678,7 +678,7 @@ export const getAllEmployees = async (req: Request, res: Response) => {
     }
 
     const items = await Employee.find(filter)
-      .populate('designation branches branchId shift')
+      .populate('designation branches branchId shifts')
       .select('-password')
       .sort({ createdAt: -1 });
 
@@ -691,7 +691,7 @@ export const getAllEmployees = async (req: Request, res: Response) => {
 
 
 export const getEmployeeById = (req: Request, res: Response) =>
-  getMasterById(Employee, String(req.params.id), res, 'designation branches branchId shift', '-password');
+  getMasterById(Employee, String(req.params.id), res, 'designation branches branchId shifts', '-password');
 
 
 export const updateEmployee = async (req: Request, res: Response) => {
@@ -712,7 +712,7 @@ export const updateEmployee = async (req: Request, res: Response) => {
       console.log('🔐 Permissions payload detected:', JSON.stringify(req.body.permissions, null, 2));
     }
 
-    await updateMaster(Employee, String(req.params.id), req.body, res, req, 'Employee', 'user_updated', 'designation branches branchId shift', '-password');
+    await updateMaster(Employee, String(req.params.id), req.body, res, req, 'Employee', 'user_updated', 'designation branches branchId shifts', '-password');
   } catch (error: any) {
     console.error('Update employee error:', error);
     res.status(500).json({ message: 'Error updating employee', error: error.message });
@@ -765,7 +765,7 @@ export const searchEmployees = async (req: Request, res: Response) => {
     const employees = await Employee.find(filter)
       .populate('designation')
       .populate('branches')
-      .populate('shift')
+      .populate('shifts')
       .select('-password')
       .sort({ createdAt: -1 });
 
