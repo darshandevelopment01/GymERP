@@ -666,7 +666,7 @@ export const createEmployee = async (req: Request, res: Response) => {
 export const getAllEmployees = async (req: Request, res: Response) => {
   try {
     const branchFilter = await getUserBranchFilter(req);
-    const filter: any = { status: 'active' };
+    const filter: any = {};
     
     // Apply branch scoping for non-admin users
     // Check both 'branches' (array) and 'branchId' (legacy single field)
@@ -728,7 +728,7 @@ export const searchEmployees = async (req: Request, res: Response) => {
   try {
     const { query, branchId, designation, userType } = req.query;
 
-    let filter: any = { status: 'active' };
+    let filter: any = {};
 
     if (query) {
       filter.$or = [
