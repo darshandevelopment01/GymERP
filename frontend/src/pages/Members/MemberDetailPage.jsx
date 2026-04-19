@@ -23,6 +23,7 @@ import {
   AlertCircle,
   CheckCircle,
   Snowflake,
+  ArrowRight,
 } from 'lucide-react';
 import memberApi from '../../services/memberApi';
 import followupApi from '../../services/followupApi';
@@ -720,7 +721,7 @@ const MemberDetailPage = () => {
                         <label>{refMember.memberId}</label>
                         <p style={{ fontWeight: '600' }}>{refMember.name}</p>
                         <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                          Status: <span style={{ color: refMember.status === 'active' ? '#16a34a' : '#ef4444', fontWeight: '500' }}>{refMember.status?.toUpperCase()}</span>
+                          Status: <span style={{ color: (refMember.status || 'inactive') === 'active' ? '#16a34a' : '#ef4444', fontWeight: '500' }}>{(refMember.status || 'N/A').toUpperCase()}</span>
                         </span>
                       </div>
                       <div style={{ marginLeft: 'auto' }}>
