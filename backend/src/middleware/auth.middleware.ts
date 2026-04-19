@@ -16,7 +16,7 @@ declare global {
   }
 }
 
-export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
+export const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
 
@@ -28,6 +28,13 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
       token,
       process.env.JWT_SECRET || 'your-secret-key'
     ) as JwtPayload;
+
+    // ✅ FORCE LOGOUT INACTIVE USERS:
+    // Verify user still exists and is active in database
+    const user = await Employee.findById(decoded.id).select('status');
+    if (!user || user.status === 'inactive') {
+      return res.status(401).json({ message: 'Account is inactive. Please contact administrator.' });
+    }
 
     req.user = decoded;
     next();
