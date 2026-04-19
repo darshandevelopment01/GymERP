@@ -123,15 +123,28 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
 
     const logoImage = await pdfDoc.embedJpg(logoBuffer);
     
-    // Fixed width scaling: set width to 130 and scale height proportionally
-    const maxWidth = 120; // Slightly smaller for better fit
+    // Watermark Logo - Large, Centered, Semi-transparent (Background)
+    const watermarkWidth = 300;
+    const watermarkScale = watermarkWidth / logoImage.width;
+    const watermarkHeight = logoImage.height * watermarkScale;
+    
+    page.drawImage(logoImage, {
+      x: (width - watermarkWidth) / 2,
+      y: (height - watermarkHeight) / 2,
+      width: watermarkWidth,
+      height: watermarkHeight,
+      opacity: 0.06, // Very faint
+    });
+
+    // Header Logo - Small, Top-Left
+    const maxWidth = 120; 
     const scale = maxWidth / logoImage.width;
     const finalWidth = maxWidth;
     const finalHeight = logoImage.height * scale;
 
     page.drawImage(logoImage, {
       x: 50,
-      y: currentY - finalHeight + 20, // Move upward relative to address block
+      y: currentY - finalHeight + 20, 
       width: finalWidth,
       height: finalHeight,
     });
@@ -141,18 +154,46 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
   }
 
   // Gym Address Info (Right of logo, centered context)
-  const gymAddress = [
-    `${data.branch || ''}`,
+  // Logic to wrap address lines to avoid overlap with logo
+  const wrapText = (text: string, maxChars: number): string[] => {
+    const words = text.split(' ');
+    const lines = [];
+    let currentLine = '';
+    
+    words.forEach(word => {
+      if ((currentLine + word).length > maxChars) {
+        lines.push(currentLine.trim());
+        currentLine = word + ' ';
+      } else {
+        currentLine += word + ' ';
+      }
+    });
+    if (currentLine) lines.push(currentLine.trim());
+    return lines;
+  };
+
+  const rawAddressLines = [
+    data.branch || '',
     data.branchAddress || '',
     data.city ? `${data.city}, ${data.state || ''} ${data.zipCode}` : "India"
   ];
+
   let addressY = currentY;
-  gymAddress.forEach((line, i) => {
-    const lineSize = i === 0 ? 11 : 9;
-    const lineFont = i === 0 ? boldFont : italicFont;
-    const lineWidth = lineFont.widthOfTextAtSize(line, lineSize);
-    page.drawText(line, { x: width - 50 - lineWidth, y: addressY, size: lineSize, font: lineFont, color: pureBlack });
-    addressY -= 14;
+  rawAddressLines.forEach((line, i) => {
+    const maxChars = i === 1 ? 40 : 50; // Tighter wrap for the long address line
+    const wrappedLines = wrapText(line, maxChars);
+    
+    wrappedLines.forEach(subLine => {
+      const lineSize = i === 0 ? 11 : 9;
+      const lineFont = i === 0 ? boldFont : italicFont;
+      const lineWidth = lineFont.widthOfTextAtSize(subLine, lineSize);
+      
+      // Guard: Ensure text stays to the right of the logo (x=50 + width=130 = 180, so 200 is safe)
+      const xPos = Math.max(200, width - 50 - lineWidth);
+      
+      page.drawText(subLine, { x: xPos, y: addressY, size: lineSize, font: lineFont, color: pureBlack });
+      addressY -= 14;
+    });
   });
 
   currentY -= 100;
@@ -214,6 +255,9 @@ export const generateReceiptPdfBuffer = async (data: ReceiptData): Promise<Buffe
   currentY -= 25;
   
   drawSummaryRow(`Paid (${data.date})`, `Rs. ${data.paidPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, true, currentY);
+  currentY -= 25;
+
+  drawSummaryRow('Pending Amount', `Rs. ${data.balanceAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, true, currentY);
   currentY -= 30;
 
   page.drawRectangle({ x: summaryBlockX + 10, y: currentY - 5, width: 150, height: 25, color: lightBg, borderColor: dividerGrey, borderWidth: 0.5 });
