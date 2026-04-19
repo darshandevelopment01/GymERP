@@ -1,7 +1,11 @@
 import { Router } from 'express';
 import * as mastersController from '../controllers/masters.controller';
+import { authMiddleware } from '../middleware/auth.middleware';
 
 const router = Router();
+
+// Apply auth middleware to all routes in this router
+router.use(authMiddleware);
 
 // Payment Type Routes
 router.post('/payment-types', mastersController.createPaymentType);

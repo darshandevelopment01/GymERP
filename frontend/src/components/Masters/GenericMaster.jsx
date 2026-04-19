@@ -349,6 +349,12 @@ const GenericMaster = ({
       if (field.type === 'select' && typeof item[field.name] === 'object' && item[field.name]?._id) {
         formattedItem[field.name] = item[field.name]._id;
       }
+      // ✅ Normalize multi-select fields (e.g., shifts) if they are populated objects
+      if (field.type === 'multi-select' && Array.isArray(item[field.name])) {
+        formattedItem[field.name] = item[field.name].map(val => 
+          (typeof val === 'object' && val?._id) ? val._id : val
+        );
+      }
     });
 
     setFormData(formattedItem);
@@ -599,13 +605,13 @@ const GenericMaster = ({
   };
 
   // ✅ Handle row click - always opens view modal (read-only)
+  // ✅ Handle row click - always opens view modal (read-only)
   const handleRowClick = (item) => {
     if (onRowClick) {
       onRowClick(item);
     } else {
-      // Default behavior: navigate to detail page with item data in state
-      const detailPath = `/${title.toLowerCase().replace(/\s+/g, '')}/${item._id}`;
-      navigate(detailPath, { state: { item } });
+      // Default behavior: open read-only view modal
+      handleView(item);
     }
   };
 

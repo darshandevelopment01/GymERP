@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import mongoose from 'mongoose';
 import PaymentType from '../models/PaymentType';
 import Plan from '../models/Plan';
 import PlanCategory from '../models/PlanCategory';
@@ -12,6 +13,7 @@ import DietPlan from '../models/DietPlan';
 import WorkoutPlan from '../models/WorkoutPlan';
 import bcrypt from 'bcryptjs';
 import { sendEmail } from '../utils/mailer';
+import ActivityLog from '../models/ActivityLog';
 
 // Helper to capitalize first letter of each name part
 const toTitleCase = (str: string): string => {
@@ -22,6 +24,31 @@ const toTitleCase = (str: string): string => {
     .filter(word => word.length > 0)
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
+};
+
+// Log generic master activity
+const logActivity = async (req: Request, action: string, targetType: string, targetId: any, targetName: string, details: string) => {
+  try {
+    const userId = (req as any).user?.id;
+    const userName = (req as any).user?.name || 'System';
+
+    if (!userId) {
+       console.warn(`Activity log skipped: No user ID in request for action ${action}`);
+       return;
+    }
+
+    await ActivityLog.create({
+      action,
+      performedBy: userId,
+      performedByName: userName,
+      targetType,
+      targetId,
+      targetName,
+      details
+    });
+  } catch (error) {
+    console.error('Failed to create activity log:', error);
+  }
 };
 
 // Generic CRUD helper functions
@@ -51,11 +78,22 @@ const generateId = async (Model: any, idField: string): Promise<string> => {
 };
 
 
-const createMaster = async (Model: any, idField: string, data: any, res: Response) => {
+const createMaster = async (Model: any, idField: string, data: any, res: Response, req: Request, targetType: string, actionName: string) => {
   try {
     data[idField] = await generateId(Model, idField);
     const item = new Model(data);
     await item.save();
+    
+    // Log activity
+    await logActivity(
+      req, 
+      actionName, 
+      targetType, 
+      item._id, 
+      item.name || item[idField] || 'New Item', 
+      `Created new ${targetType}: ${item.name || item[idField]}`
+    );
+
     res.status(201).json({ message: 'Created successfully', data: item });
   } catch (error: any) {
     console.error(`Create error:`, error);
@@ -101,7 +139,7 @@ const getMasterById = async (Model: any, id: string, res: Response, populateFiel
 };
 
 
-const updateMaster = async (Model: any, id: string, data: any, res: Response, populateFields?: string, selectFields?: string) => {
+const updateMaster = async (Model: any, id: string, data: any, res: Response, req: Request, targetType: string, actionName: string, populateFields?: string, selectFields?: string) => {
   try {
     let query = Model.findByIdAndUpdate(id, data, { new: true, runValidators: true });
     if (populateFields) {
@@ -114,6 +152,17 @@ const updateMaster = async (Model: any, id: string, data: any, res: Response, po
     if (!item) {
       return res.status(404).json({ message: 'Item not found' });
     }
+
+    // Log activity
+    await logActivity(
+      req, 
+      actionName, 
+      targetType, 
+      item._id, 
+      item.name || item.paymentType || item.designationName || item.shiftName || item.planName || id, 
+      `Updated ${targetType}: ${item.name || item.paymentType || item.designationName || item.shiftName || item.planName || id}`
+    );
+
     res.json({ message: 'Updated successfully', data: item });
   } catch (error: any) {
     res.status(500).json({ message: 'Error updating item', error: error.message });
@@ -121,12 +170,23 @@ const updateMaster = async (Model: any, id: string, data: any, res: Response, po
 };
 
 
-const deleteMaster = async (Model: any, id: string, res: Response) => {
+const deleteMaster = async (Model: any, id: string, res: Response, req: Request, targetType: string, actionName: string) => {
   try {
     const item = await Model.findByIdAndUpdate(id, { status: 'inactive' }, { new: true });
     if (!item) {
       return res.status(404).json({ message: 'Item not found' });
     }
+
+    // Log activity
+    await logActivity(
+      req, 
+      actionName, 
+      targetType, 
+      item._id, 
+      item.name || item.paymentType || item.designationName || item.shiftName || item.planName || id, 
+      `Deleted ${targetType}: ${item.name || item.paymentType || item.designationName || item.shiftName || item.planName || id}`
+    );
+
     res.json({ message: 'Deleted successfully' });
   } catch (error: any) {
     res.status(500).json({ message: 'Error deleting item', error: error.message });
@@ -187,9 +247,10 @@ export const updatePaymentType = async (req: Request, res: Response) => {
     const { paymentType } = req.body;
 
     // ✅ Check if another payment type with same name exists (excluding current)
-    const existingPaymentType = await PaymentType.findOne({
-      paymentType: { $regex: `^${paymentType.trim()}$`, $options: 'i' },
-      status: 'active'
+    const existingPaymentType = await (PaymentType as any).findOne({
+      paymentType: { $regex: new RegExp(`^${paymentType.trim()}$`, 'i') },
+      status: 'active',
+      _id: { $ne: new mongoose.Types.ObjectId(id as string) }
     });
 
 
@@ -213,6 +274,16 @@ export const updatePaymentType = async (req: Request, res: Response) => {
       });
     }
 
+    // Log activity
+    await logActivity(
+      req,
+      'payment_type_updated',
+      'PaymentType',
+      item._id,
+      item.paymentType,
+      `Updated payment type: ${item.paymentType}`
+    );
+
     res.json({
       success: true,
       message: 'Payment type updated successfully',
@@ -230,12 +301,12 @@ export const updatePaymentType = async (req: Request, res: Response) => {
 
 
 export const deletePaymentType = (req: Request, res: Response) =>
-  deleteMaster(PaymentType, String(req.params.id), res);
+  deleteMaster(PaymentType, String(req.params.id), res, req, 'PaymentType', 'payment_type_deleted');
 
 
 // Plan Category Controllers
 export const createPlanCategory = (req: Request, res: Response) =>
-  createMaster(PlanCategory, 'planCategoryId', req.body, res);
+  createMaster(PlanCategory, 'planCategoryId', req.body, res, req, 'PlanCategory', 'plan_category_created');
 
 
 export const getAllPlanCategories = (req: Request, res: Response) =>
@@ -247,16 +318,16 @@ export const getPlanCategoryById = (req: Request, res: Response) =>
 
 
 export const updatePlanCategory = (req: Request, res: Response) =>
-  updateMaster(PlanCategory, String(req.params.id), req.body, res);
+  updateMaster(PlanCategory, String(req.params.id), req.body, res, req, 'PlanCategory', 'plan_category_updated');
 
 
 export const deletePlanCategory = (req: Request, res: Response) =>
-  deleteMaster(PlanCategory, String(req.params.id), res);
+  deleteMaster(PlanCategory, String(req.params.id), res, req, 'PlanCategory', 'plan_category_deleted');
 
 
 // Offer Controllers
 export const createOffer = (req: Request, res: Response) =>
-  createMaster(Offer, 'offerId', req.body, res);
+  createMaster(Offer, 'offerId', req.body, res, req, 'Offer', 'offer_created');
 
 
 export const getAllOffers = async (req: Request, res: Response) => {
@@ -287,16 +358,16 @@ export const getOfferById = (req: Request, res: Response) =>
 
 
 export const updateOffer = (req: Request, res: Response) =>
-  updateMaster(Offer, String(req.params.id), req.body, res, 'planCategories');
+  updateMaster(Offer, String(req.params.id), req.body, res, req, 'Offer', 'offer_updated', 'planCategories');
 
 
 export const deleteOffer = (req: Request, res: Response) =>
-  deleteMaster(Offer, String(req.params.id), res);
+  deleteMaster(Offer, String(req.params.id), res, req, 'Offer', 'offer_deleted');
 
 
 // Plan Controllers
 export const createPlan = (req: Request, res: Response) =>
-  createMaster(Plan, 'planId', req.body, res);
+  createMaster(Plan, 'planId', req.body, res, req, 'Plan', 'plan_created');
 
 
 export const getAllPlans = (req: Request, res: Response) =>
@@ -308,16 +379,16 @@ export const getPlanById = (req: Request, res: Response) =>
 
 
 export const updatePlan = (req: Request, res: Response) =>
-  updateMaster(Plan, String(req.params.id), req.body, res, 'category');
+  updateMaster(Plan, String(req.params.id), req.body, res, req, 'Plan', 'plan_updated', 'category');
 
 
 export const deletePlan = (req: Request, res: Response) =>
-  deleteMaster(Plan, String(req.params.id), res);
+  deleteMaster(Plan, String(req.params.id), res, req, 'Plan', 'plan_deleted');
 
 
 // Tax Slab Controllers
 export const createTaxSlab = (req: Request, res: Response) =>
-  createMaster(TaxSlab, 'taxSlabId', req.body, res);
+  createMaster(TaxSlab, 'taxSlabId', req.body, res, req, 'TaxSlab', 'tax_slab_created');
 
 
 export const getAllTaxSlabs = (req: Request, res: Response) =>
@@ -329,16 +400,16 @@ export const getTaxSlabById = (req: Request, res: Response) =>
 
 
 export const updateTaxSlab = (req: Request, res: Response) =>
-  updateMaster(TaxSlab, String(req.params.id), req.body, res);
+  updateMaster(TaxSlab, String(req.params.id), req.body, res, req, 'TaxSlab', 'tax_slab_updated');
 
 
 export const deleteTaxSlab = (req: Request, res: Response) =>
-  deleteMaster(TaxSlab, String(req.params.id), res);
+  deleteMaster(TaxSlab, String(req.params.id), res, req, 'TaxSlab', 'tax_slab_deleted');
 
 
 // Shift Controllers
 export const createShift = (req: Request, res: Response) =>
-  createMaster(Shift, 'shiftId', req.body, res);
+  createMaster(Shift, 'shiftId', req.body, res, req, 'Shift', 'shift_created');
 
 
 export const getAllShifts = (req: Request, res: Response) =>
@@ -350,16 +421,16 @@ export const getShiftById = (req: Request, res: Response) =>
 
 
 export const updateShift = (req: Request, res: Response) =>
-  updateMaster(Shift, String(req.params.id), req.body, res);
+  updateMaster(Shift, String(req.params.id), req.body, res, req, 'Shift', 'shift_updated');
 
 
 export const deleteShift = (req: Request, res: Response) =>
-  deleteMaster(Shift, String(req.params.id), res);
+  deleteMaster(Shift, String(req.params.id), res, req, 'Shift', 'shift_deleted');
 
 
 // Designation Controllers
 export const createDesignation = (req: Request, res: Response) =>
-  createMaster(Designation, 'designationId', req.body, res);
+  createMaster(Designation, 'designationId', req.body, res, req, 'Designation', 'designation_created');
 
 
 export const getAllDesignations = (req: Request, res: Response) =>
@@ -371,11 +442,11 @@ export const getDesignationById = (req: Request, res: Response) =>
 
 
 export const updateDesignation = (req: Request, res: Response) =>
-  updateMaster(Designation, String(req.params.id), req.body, res);
+  updateMaster(Designation, String(req.params.id), req.body, res, req, 'Designation', 'designation_updated');
 
 
 export const deleteDesignation = (req: Request, res: Response) =>
-  deleteMaster(Designation, String(req.params.id), res);
+  deleteMaster(Designation, String(req.params.id), res, req, 'Designation', 'designation_deleted');
 
 
 // Branch Controllers - UPDATED WITH LOCATION HANDLING
@@ -396,6 +467,16 @@ export const createBranch = async (req: Request, res: Response) => {
 
     const branch = new Branch(otherData);
     await branch.save();
+
+    // Log activity
+    await logActivity(
+      req,
+      'branch_created',
+      'Branch',
+      branch._id,
+      branch.name,
+      `Created new branch: ${branch.name}`
+    );
 
     res.status(201).json({ message: 'Branch created successfully', data: branch });
   } catch (error: any) {
@@ -435,6 +516,16 @@ export const updateBranch = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Branch not found' });
     }
 
+    // Log activity
+    await logActivity(
+      req,
+      'branch_updated',
+      'Branch',
+      branch._id,
+      branch.name,
+      `Updated branch: ${branch.name}`
+    );
+
     res.json({ message: 'Branch updated successfully', data: branch });
   } catch (error: any) {
     console.error('Update branch error:', error);
@@ -444,7 +535,7 @@ export const updateBranch = async (req: Request, res: Response) => {
 
 
 export const deleteBranch = (req: Request, res: Response) =>
-  deleteMaster(Branch, String(req.params.id), res);
+  deleteMaster(Branch, String(req.params.id), res, req, 'Branch', 'branch_deleted');
 
 
 // Employee Controllers - UPDATED TO USE ADMIN'S EMPLOYEE CODE
@@ -512,6 +603,16 @@ export const createEmployee = async (req: Request, res: Response) => {
 
     const employee = new Employee(req.body);
     await employee.save();
+
+    // Log activity
+    await logActivity(
+      req,
+      'user_created',
+      'Employee',
+      employee._id,
+      employee.name,
+      `Created new user: ${employee.name} (Code: ${employee.employeeCode})`
+    );
 
     console.log(`\n================================`);
     console.log(`📧 DISPATCHING EMAIL TO USER`);
@@ -583,12 +684,11 @@ export const updateEmployee = async (req: Request, res: Response) => {
       req.body.branchId = req.body.branches[0];
     }
 
-    console.log('📝 Incoming update for employee:', req.params.id);
     if (req.body.permissions) {
       console.log('🔐 Permissions payload detected:', JSON.stringify(req.body.permissions, null, 2));
     }
 
-    await updateMaster(Employee, String(req.params.id), req.body, res, 'designation branches branchId shift', '-password');
+    await updateMaster(Employee, String(req.params.id), req.body, res, req, 'Employee', 'user_updated', 'designation branches branchId shift', '-password');
   } catch (error: any) {
     console.error('Update employee error:', error);
     res.status(500).json({ message: 'Error updating employee', error: error.message });
@@ -597,7 +697,7 @@ export const updateEmployee = async (req: Request, res: Response) => {
 
 
 export const deleteEmployee = (req: Request, res: Response) =>
-  deleteMaster(Employee, String(req.params.id), res);
+  deleteMaster(Employee, String(req.params.id), res, req, 'Employee', 'user_deleted');
 
 
 export const searchEmployees = async (req: Request, res: Response) => {
@@ -635,7 +735,7 @@ export const searchEmployees = async (req: Request, res: Response) => {
 
 // Diet Plan Controllers
 export const createDietPlan = (req: Request, res: Response) =>
-  createMaster(DietPlan, 'dietPlanId', req.body, res);
+  createMaster(DietPlan, 'dietPlanId', req.body, res, req, 'DietPlan', 'diet_plan_created');
 
 
 export const getAllDietPlans = (req: Request, res: Response) =>
@@ -647,16 +747,16 @@ export const getDietPlanById = (req: Request, res: Response) =>
 
 
 export const updateDietPlan = (req: Request, res: Response) =>
-  updateMaster(DietPlan, String(req.params.id), req.body, res);
+  updateMaster(DietPlan, String(req.params.id), req.body, res, req, 'DietPlan', 'diet_plan_updated');
 
 
 export const deleteDietPlan = (req: Request, res: Response) =>
-  deleteMaster(DietPlan, String(req.params.id), res);
+  deleteMaster(DietPlan, String(req.params.id), res, req, 'DietPlan', 'diet_plan_deleted');
 
 
 // Workout Plan Controllers
 export const createWorkoutPlan = (req: Request, res: Response) =>
-  createMaster(WorkoutPlan, 'workoutPlanId', req.body, res);
+  createMaster(WorkoutPlan, 'workoutPlanId', req.body, res, req, 'WorkoutPlan', 'workout_plan_created');
 
 
 export const getAllWorkoutPlans = (req: Request, res: Response) =>
@@ -668,8 +768,8 @@ export const getWorkoutPlanById = (req: Request, res: Response) =>
 
 
 export const updateWorkoutPlan = (req: Request, res: Response) =>
-  updateMaster(WorkoutPlan, String(req.params.id), req.body, res);
+  updateMaster(WorkoutPlan, String(req.params.id), req.body, res, req, 'WorkoutPlan', 'workout_plan_updated');
 
 
 export const deleteWorkoutPlan = (req: Request, res: Response) =>
-  deleteMaster(WorkoutPlan, String(req.params.id), res);
+  deleteMaster(WorkoutPlan, String(req.params.id), res, req, 'WorkoutPlan', 'workout_plan_deleted');

@@ -69,38 +69,35 @@ const UserMaster = () => {
 
   const getActionIcon = (action) => {
     switch (action) {
-      case 'enquiry_created': return '📋';
-      case 'enquiry_updated': return '✏️';
+      case 'enquiry_created': return '✨';
+      case 'enquiry_updated': return '📝';
       case 'followup_created': return '📞';
       case 'followup_updated': return '🔄';
-      case 'member_converted': return '🏋️';
+      case 'member_converted': return '💎';
       case 'member_updated': return '👤';
-      default: return '📝';
+      case 'user_created': return '👤';
+      case 'user_updated': return '✏️';
+      case 'user_deleted': return '🗑️';
+      case 'branch_created': return '🏢';
+      case 'branch_updated': return '🏗️';
+      case 'branch_deleted': return '🗑️';
+      case 'designation_created': return '👔';
+      case 'designation_updated': return '🎨';
+      case 'designation_deleted': return '🗑️';
+      default: return '🔘';
     }
   };
 
   const getActionLabel = (action) => {
-    switch (action) {
-      case 'enquiry_created': return 'Enquiry Created';
-      case 'enquiry_updated': return 'Enquiry Updated';
-      case 'followup_created': return 'Follow-Up Created';
-      case 'followup_updated': return 'Follow-Up Updated';
-      case 'member_converted': return 'Member Converted';
-      case 'member_updated': return 'Member Updated';
-      default: return action;
-    }
+    return action.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
   };
 
   const getActionColor = (action) => {
-    switch (action) {
-      case 'enquiry_created': return { bg: '#e3f2fd', color: '#1565c0' };
-      case 'enquiry_updated': return { bg: '#e8eaf6', color: '#283593' };
-      case 'followup_created': return { bg: '#fff3e0', color: '#e65100' };
-      case 'followup_updated': return { bg: '#fff8e1', color: '#f57f17' };
-      case 'member_converted': return { bg: '#e8f5e9', color: '#2e7d32' };
-      case 'member_updated': return { bg: '#f3e5f5', color: '#7b1fa2' };
-      default: return { bg: '#f5f5f5', color: '#616161' };
-    }
+    if (action.includes('created')) return '#10b981';
+    if (action.includes('updated')) return '#3b82f6';
+    if (action.includes('deleted')) return '#ef4444';
+    if (action.includes('converted')) return '#8b5cf6';
+    return '#64748b';
   };
 
   const formatDate = (dateStr) => {
