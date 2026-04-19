@@ -91,7 +91,17 @@ const ShiftMaster = () => {
       required: true,
       placeholder: 'Enter full day hours (e.g., 8)',
       onChange: (value, formData, setFormData) => {
-        const numVal = Number(value);
+        let numVal = Number(value);
+        
+        let maxHours = 24; // Default upper bound
+        if (formData.startTime && formData.endTime) {
+          maxHours = calculateHoursDifference(formData.startTime, formData.endTime);
+        }
+
+        if (numVal > maxHours) {
+          numVal = maxHours; // Cap input to the total calculated shift duration
+        }
+
         let halfDay = formData.halfDayHours || 0;
         if (halfDay > numVal) {
           halfDay = numVal; // Lower half-day to match the new lowered full-day
