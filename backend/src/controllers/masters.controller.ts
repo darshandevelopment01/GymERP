@@ -14,6 +14,7 @@ import WorkoutPlan from '../models/WorkoutPlan';
 import bcrypt from 'bcryptjs';
 import { sendEmail } from '../utils/mailer';
 import ActivityLog from '../models/ActivityLog';
+import { getUserBranchFilter } from '../middleware/auth.middleware';
 
 // Helper to capitalize first letter of each name part
 const toTitleCase = (str: string): string => {
@@ -662,8 +663,31 @@ export const createEmployee = async (req: Request, res: Response) => {
 };
 
 
-export const getAllEmployees = (req: Request, res: Response) =>
-  getAllMaster(Employee, res, 'designation branches branchId shift', '-password');
+export const getAllEmployees = async (req: Request, res: Response) => {
+  try {
+    const branchFilter = await getUserBranchFilter(req);
+    const filter: any = { status: 'active' };
+    
+    // Apply branch scoping for non-admin users
+    // Check both 'branches' (array) and 'branchId' (legacy single field)
+    if (branchFilter.branch && branchFilter.branch.$in) {
+      filter.$or = [
+        { branches: branchFilter.branch },
+        { branchId: branchFilter.branch }
+      ];
+    }
+
+    const items = await Employee.find(filter)
+      .populate('designation branches branchId shift')
+      .select('-password')
+      .sort({ createdAt: -1 });
+
+    res.json({ data: items, count: items.length });
+  } catch (error: any) {
+    console.error('getAllEmployees error:', error);
+    res.status(500).json({ message: 'Error fetching employees', error: error.message });
+  }
+};
 
 
 export const getEmployeeById = (req: Request, res: Response) =>
@@ -715,7 +739,26 @@ export const searchEmployees = async (req: Request, res: Response) => {
       ];
     }
 
-    if (branchId) filter.branches = branchId;
+    // ✅ Branch scoping
+    const branchFilter = await getUserBranchFilter(req);
+    if (branchFilter.branch && branchFilter.branch.$in) {
+      // If we already have a branchFilter from middleware (non-admin), 
+      // it should override the query param branchId for security, 
+      // or we could intersect them. Here we prioritize the restricted filter.
+      filter.$and = filter.$and || [];
+      filter.$and.push({
+        $or: [
+          { branches: branchFilter.branch },
+          { branchId: branchFilter.branch }
+        ]
+      });
+    } else if (branchId) {
+      // If admin provides a specific branchId to filter by
+      filter.$or = filter.$or || [];
+      filter.$or.push({ branches: branchId });
+      filter.$or.push({ branchId: branchId });
+    }
+
     if (designation) filter.designation = designation;
     if (userType) filter.userType = userType;
 
@@ -728,6 +771,7 @@ export const searchEmployees = async (req: Request, res: Response) => {
 
     res.json({ data: employees, count: employees.length });
   } catch (error: any) {
+    console.error('searchEmployees error:', error);
     res.status(500).json({ message: 'Error searching employees', error: error.message });
   }
 };

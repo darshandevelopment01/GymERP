@@ -61,6 +61,7 @@ router.post('/login', async (req: Request, res: Response) => {
         email: user.email,
         userType: user.userType || 'User',
         permissions: user.permissions || null,
+        branches: user.branches || [],
       }
     });
   } catch (error: any) {
@@ -115,6 +116,7 @@ router.get('/me', authMiddleware, async (req: Request, res: Response) => {
         noDiscountLimit,
         discountOptions,
         permissions: employee.permissions || null,
+        branches: employee.branches || [],
       }
     });
   } catch (error: any) {

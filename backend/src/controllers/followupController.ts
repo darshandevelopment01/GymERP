@@ -1,9 +1,31 @@
 import { Request, Response } from 'express';
 import FollowUp from '../models/FollowUp.js';
+import Enquiry from '../models/Enquiry';
+import Member from '../models/Member';
+import { getUserBranchFilter } from '../middleware/auth.middleware';
 
 export const getAllFollowUps = async (req: Request, res: Response): Promise<void> => {
   try {
-    const followups = await FollowUp.find()
+    // ✅ Branch scoping: for employees, only show follow-ups linked to their branch
+    const branchFilter = await getUserBranchFilter(req);
+    let followupFilter: any = {};
+
+    if (Object.keys(branchFilter).length > 0) {
+      // Find member and enquiry IDs belonging to the user's branches
+      const [memberIds, enquiryIds] = await Promise.all([
+        Member.find(branchFilter).select('_id').lean().then(docs => docs.map(d => d._id)),
+        Enquiry.find(branchFilter).select('_id').lean().then(docs => docs.map(d => d._id))
+      ]);
+
+      followupFilter = {
+        $or: [
+          { member: { $in: memberIds } },
+          { enquiry: { $in: enquiryIds } }
+        ]
+      };
+    }
+
+    const followups = await FollowUp.find(followupFilter)
       .populate('member', 'name memberId email mobileNumber')
       .populate('enquiry', 'name enquiryId email mobileNumber')
       .populate('createdBy', 'name email')
@@ -186,10 +208,27 @@ export const getFollowUpsByEnquiry = async (req: Request, res: Response): Promis
 // Get follow-up statistics
 export const getFollowUpStats = async (req: Request, res: Response): Promise<void> => {
   try {
-    const total = await FollowUp.countDocuments();
-    const pending = await FollowUp.countDocuments({ status: 'pending' });
-    const completed = await FollowUp.countDocuments({ status: 'completed' });
-    const expired = await FollowUp.countDocuments({ status: 'expired' });
+    // ✅ Branch scoping
+    const branchFilter = await getUserBranchFilter(req);
+    let followupFilter: any = {};
+
+    if (Object.keys(branchFilter).length > 0) {
+      const [memberIds, enquiryIds] = await Promise.all([
+        Member.find(branchFilter).select('_id').lean().then(docs => docs.map(d => d._id)),
+        Enquiry.find(branchFilter).select('_id').lean().then(docs => docs.map(d => d._id))
+      ]);
+      followupFilter = {
+        $or: [
+          { member: { $in: memberIds } },
+          { enquiry: { $in: enquiryIds } }
+        ]
+      };
+    }
+
+    const total = await FollowUp.countDocuments(followupFilter);
+    const pending = await FollowUp.countDocuments({ ...followupFilter, status: 'pending' });
+    const completed = await FollowUp.countDocuments({ ...followupFilter, status: 'completed' });
+    const expired = await FollowUp.countDocuments({ ...followupFilter, status: 'expired' });
 
     // Get today's follow-ups
     const today = new Date();
@@ -198,6 +237,7 @@ export const getFollowUpStats = async (req: Request, res: Response): Promise<voi
     tomorrow.setDate(tomorrow.getDate() + 1);
 
     const todayFollowUps = await FollowUp.countDocuments({
+      ...followupFilter,
       followUpDate: {
         $gte: today,
         $lt: tomorrow

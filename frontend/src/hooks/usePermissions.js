@@ -105,5 +105,5 @@ export function usePermissions() {
         return isAdmin || !!panelAccess[key];
     };
 
-    return { isAdmin, can, panelAccess, user };
+    return { isAdmin, can, panelAccess, user, userBranches: user.branches || [] };
 }

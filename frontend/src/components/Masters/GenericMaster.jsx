@@ -118,16 +118,17 @@ const GenericMaster = ({
   const fetchData = async (signal) => {
     try {
       // 1. Instantly load from cache if available (Stale-While-Revalidate)
-      const cachedData = sessionStorage.getItem(cacheKey);
+      const cachedData = localStorage.getItem(cacheKey) || sessionStorage.getItem(cacheKey);
       if (cachedData) {
         try {
           let parsed = JSON.parse(cachedData);
           if (parsed && typeof parsed === 'object' && parsed.data && Array.isArray(parsed.data)) {
             parsed = parsed.data;
           }
-          if (!Array.isArray(parsed)) parsed = [];
-          setData(parsed);
-          setFilteredData(parsed);
+          if (Array.isArray(parsed)) {
+            setData(parsed);
+            setFilteredData(parsed);
+          }
         } catch (e) {
           console.error("Cache parse error", e);
         }
@@ -140,17 +141,29 @@ const GenericMaster = ({
 
       // 2. Fetch fresh data in the background
       const response = await apiService.getAll({ signal, ...apiOptions });
+      
+      // Handle the case where API returns a success: false or similar
+      if (response.success === false) {
+        throw new Error(response.message || 'API reported failure');
+      }
+
       let fetchedData = response.data || response || [];
       if (fetchedData.data && Array.isArray(fetchedData.data)) {
         fetchedData = fetchedData.data;
       }
+      
+      if (!Array.isArray(fetchedData)) {
+          // If response is just { count: 0 } or similar, try to find the array
+          fetchedData = Object.values(response).find(val => Array.isArray(val)) || [];
+      }
 
       console.log(`[GenericMaster:${title}] Fresh data fetched:`, fetchedData);
+      
       // 3. Update UI and Cache with fresh data
-      setData(fetchedData || []);
-      setFilteredData(fetchedData || []);
+      setData(fetchedData);
+      setFilteredData(fetchedData);
       localStorage.setItem(cacheKey, JSON.stringify(fetchedData));
-      sessionStorage.setItem(cacheKey, JSON.stringify(fetchedData)); // Fix storage mismatch
+      sessionStorage.setItem(cacheKey, JSON.stringify(fetchedData));
 
     } catch (error) {
       if (error.name === 'CanceledError' || error.name === 'AbortError') {
@@ -158,9 +171,14 @@ const GenericMaster = ({
         return;
       }
       console.error('Error fetching data:', error);
-      // Only show error UI if we have absolutely nothing to display
+      
+      // 4. Handle Errors
+      const errorMsg = error.response?.data?.message || error.message || 'Failed to load data';
+      setFetchError(errorMsg);
+      
+      // If we got a 500 error and have no data, it's a critical failure for the user
       if (data.length === 0) {
-        setFetchError('Failed to load data. Please check your connection.');
+        setFetchError(`⚠️ ${errorMsg} (Please contact support if this persists)`);
       }
     } finally {
       setLoading(false);

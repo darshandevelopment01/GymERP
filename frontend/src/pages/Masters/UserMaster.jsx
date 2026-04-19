@@ -115,18 +115,30 @@ const UserMaster = () => {
 
   const fetchMasterData = async () => {
     try {
-      const [designationsRes, shiftsRes, branchesRes] = await Promise.all([
-        designationAPI.getAll(),
-        shiftAPI.getAll(),
-        branchAPI.getAll()
-      ]);
+      // Fetch datasets individually so one failure doesn't block others
+      try {
+        const designationsRes = await designationAPI.getAll();
+        setDesignations(designationsRes.data || designationsRes || []);
+      } catch (err) {
+        console.error('Error fetching designations:', err);
+      }
 
+      try {
+        const shiftsRes = await shiftAPI.getAll();
+        setShifts(shiftsRes.data || shiftsRes || []);
+      } catch (err) {
+        console.error('Error fetching shifts:', err);
+      }
 
-      setDesignations(designationsRes.data || []);
-      setShifts(shiftsRes.data || []);
-      setBranches(branchesRes.data || []);
+      try {
+        const branchesRes = await branchAPI.getAll();
+        setBranches(branchesRes.data || branchesRes || []);
+      } catch (err) {
+        console.error('Error fetching branches:', err);
+      }
+
     } catch (error) {
-      console.error('Error fetching master data:', error);
+      console.error('Critical error in fetchMasterData:', error);
     } finally {
       setLoading(false);
     }

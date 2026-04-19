@@ -14,7 +14,7 @@ import './MemberMaster.css';
 
 const MemberMaster = () => {
   const navigate = useNavigate();
-  const { can, isAdmin } = usePermissions();
+  const { can, isAdmin, userBranches } = usePermissions();
   const cacheKeyBranches = 'cache_global_branches';
   const cacheKeyPlans = 'cache_global_plans';
   const cacheKeyStats = 'cache_member_stats';
@@ -779,13 +779,18 @@ const MemberMaster = () => {
       label: 'Branch',
       type: 'select',
       required: true,
-      options: [
-        { value: '', label: 'Select Branch' },
-        ...branches.map(b => ({
-          value: b._id,
-          label: b.name
-        }))
-      ]
+      options: isAdmin
+        ? [
+            { value: '', label: 'Select Branch' },
+            ...branches.map(b => ({
+              value: b._id,
+              label: b.name
+            }))
+          ]
+        : branches
+            .filter(b => userBranches.includes(b._id))
+            .map(b => ({ value: b._id, label: b.name })),
+      ...((!isAdmin && userBranches.length === 1) ? { defaultValue: userBranches[0], disabled: true } : {})
     },
     {
       name: 'name',
@@ -896,7 +901,7 @@ const MemberMaster = () => {
         { value: 'expired', label: 'Expired' }
       ]
     },
-    {
+    ...(isAdmin ? [{
       name: 'branch',
       label: 'Branch',
       type: 'select',
@@ -907,7 +912,7 @@ const MemberMaster = () => {
           label: b.name
         }))
       ]
-    },
+    }] : []),
     {
       name: 'plan',
       label: 'Plan',

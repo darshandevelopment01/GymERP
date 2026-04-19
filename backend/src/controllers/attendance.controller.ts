@@ -6,6 +6,7 @@ import Member from '../models/Member';
 import Employee from '../models/Employee';
 import mongoose from 'mongoose';
 import jwt from 'jsonwebtoken';
+import { getUserBranchFilter } from '../middleware/auth.middleware';
 
 // Helper to normalize date to midnight UTC
 const normalizeDate = (date: Date): Date => {
@@ -24,10 +25,23 @@ export const getAttendance = async (req: Request, res: Response) => {
     const startOfMonth = new Date(Date.UTC(Number(year), Number(month) - 1, 1));
     const endOfMonth = new Date(Date.UTC(Number(year), Number(month), 0, 23, 59, 59, 999));
 
-    const attendance = await Attendance.find({
+    // ✅ Branch scoping
+    const branchFilter = await getUserBranchFilter(req);
+    const query: any = {
       personType: type as 'member' | 'employee',
       date: { $gte: startOfMonth, $lte: endOfMonth },
-    }).populate('personId', 'name profilePhoto memberId employeeCode')
+    };
+
+    if (Object.keys(branchFilter).length > 0) {
+      const [memberIds, employeeIds] = await Promise.all([
+        Member.find(branchFilter).select('_id').lean().then(docs => docs.map(d => d._id)),
+        Employee.find(branchFilter).select('_id').lean().then(docs => docs.map(d => d._id))
+      ]);
+      query.personId = { $in: [...memberIds, ...employeeIds] };
+    }
+
+    const attendance = await Attendance.find(query)
+      .populate('personId', 'name profilePhoto memberId employeeCode')
       .populate('markedBy', 'name');
 
     res.json(attendance);
@@ -99,6 +113,16 @@ export const getLeaves = async (req: Request, res: Response) => {
     const { type } = req.query;
     const filter: any = {};
     if (type) filter.personType = type;
+
+    // ✅ Branch scoping
+    const branchFilter = await getUserBranchFilter(req);
+    if (Object.keys(branchFilter).length > 0) {
+      const [memberIds, employeeIds] = await Promise.all([
+        Member.find(branchFilter).select('_id').lean().then(docs => docs.map(d => d._id)),
+        Employee.find(branchFilter).select('_id').lean().then(docs => docs.map(d => d._id))
+      ]);
+      filter.personId = { $in: [...memberIds, ...employeeIds] };
+    }
 
     const leaves = await Leave.find(filter)
       .populate('personId', 'name memberId employeeCode')
@@ -254,12 +278,24 @@ export const getAttendanceStats = async (req: Request, res: Response) => {
     const startOfMonth = new Date(Date.UTC(Number(year), Number(month) - 1, 1));
     const endOfMonth = new Date(Date.UTC(Number(year), Number(month), 0, 23, 59, 59, 999));
 
-    const stats = await Attendance.aggregate([
+    // ✅ Branch scoping
+    const branchFilter = await getUserBranchFilter(req);
+    const matchQuery: any = {
+      personType: type as any,
+      date: { $gte: startOfMonth, $lte: endOfMonth },
+    };
+
+    if (Object.keys(branchFilter).length > 0) {
+      const [memberIds, employeeIds] = await Promise.all([
+        Member.find(branchFilter).select('_id').lean().then(docs => docs.map(d => d._id)),
+        Employee.find(branchFilter).select('_id').lean().then(docs => docs.map(d => d._id))
+      ]);
+      matchQuery.personId = { $in: [...memberIds, ...employeeIds] };
+    }
+
+    const statsRecords = await Attendance.aggregate([
       {
-        $match: {
-          personType: type as any,
-          date: { $gte: startOfMonth, $lte: endOfMonth },
-        },
+        $match: matchQuery,
       },
       {
         $group: {
@@ -271,9 +307,9 @@ export const getAttendanceStats = async (req: Request, res: Response) => {
 
     // Format stats for frontend
     const result = {
-      present: stats.find((s) => s._id === 'present')?.count || 0,
-      absent: stats.find((s) => s._id === 'absent')?.count || 0,
-      leave: stats.find((s) => s._id === 'leave')?.count || 0,
+      present: statsRecords.find((s) => s._id === 'present')?.count || 0,
+      absent: statsRecords.find((s) => s._id === 'absent')?.count || 0,
+      leave: statsRecords.find((s) => s._id === 'leave')?.count || 0,
     };
 
     res.json(result);

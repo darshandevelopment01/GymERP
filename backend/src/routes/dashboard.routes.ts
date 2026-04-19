@@ -3,7 +3,7 @@ import Member from '../models/Member';
 import Employee from '../models/Employee';
 import Branch from '../models/Branch';
 import Enquiry from '../models/Enquiry';
-import { authMiddleware } from '../middleware/auth.middleware';
+import { authMiddleware, getUserBranchFilter } from '../middleware/auth.middleware';
 
 const router = Router();
 
@@ -20,6 +20,16 @@ router.get('/stats', authMiddleware, async (req: Request, res: Response) => {
       query.createdAt = { $gte: start, $lte: end };
     }
 
+    // ✅ Branch scoping for employees
+    const branchFilter = await getUserBranchFilter(req);
+    Object.assign(query, branchFilter);
+
+    // Build member branch filter for revenue aggregation
+    const memberBranchMatch: any = {};
+    if (branchFilter.branch) {
+      memberBranchMatch.branch = branchFilter.branch;
+    }
+
     const [enquiryStats, revenueResult] = await Promise.all([
       Promise.all([
         Enquiry.countDocuments(query),
@@ -27,6 +37,7 @@ router.get('/stats', authMiddleware, async (req: Request, res: Response) => {
         Enquiry.countDocuments({ ...query, status: 'lost' })
       ]),
       Member.aggregate([
+        ...(Object.keys(memberBranchMatch).length > 0 ? [{ $match: memberBranchMatch }] : []),
         { $unwind: '$payments' },
         {
           $match: {
@@ -74,7 +85,9 @@ router.get('/attendance-weekly', authMiddleware, async (req: Request, res: Respo
     monday.setDate(today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1));
     monday.setHours(0, 0, 0, 0);
 
-    const totalMembers = await Member.countDocuments({ status: 'active' });
+    // ✅ Branch scoping for employees
+    const branchFilter = await getUserBranchFilter(req);
+    const totalMembers = await Member.countDocuments({ status: 'active', ...branchFilter });
     console.log('📊 Generating attendance data for', totalMembers, 'members');
 
     const weeklyData = [];
@@ -117,11 +130,14 @@ router.get('/membership-growth', authMiddleware, async (req: Request, res: Respo
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const today = new Date();
 
+    // ✅ Branch scoping for employees
+    const branchFilter = await getUserBranchFilter(req);
+
     console.log('📊 Starting membership growth calculation...');
     console.log('📊 Current date:', today.toISOString());
 
     // Check total members first
-    const totalMembers = await Member.countDocuments();
+    const totalMembers = await Member.countDocuments(branchFilter);
     console.log('📊 Total members in database:', totalMembers);
 
     for (let i = 5; i >= 0; i--) {
@@ -134,6 +150,7 @@ router.get('/membership-growth', authMiddleware, async (req: Request, res: Respo
 
       // Count cumulative members up to end of this month using membershipStartDate
       const count = await Member.countDocuments({
+        ...branchFilter,
         membershipStartDate: { $lte: monthEnd }
       });
 
@@ -156,3 +173,4 @@ router.get('/membership-growth', authMiddleware, async (req: Request, res: Respo
 });
 
 export default router;
+

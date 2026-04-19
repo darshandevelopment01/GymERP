@@ -5,6 +5,7 @@ import Branch from '../models/Branch';
 import ActivityLog from '../models/ActivityLog';
 import Employee from '../models/Employee';
 import mongoose from 'mongoose';
+import { getUserBranchFilter } from '../middleware/auth.middleware';
 
 
 // ✅ GET ALL ENQUIRIES
@@ -15,6 +16,10 @@ export const getAllEnquiries = async (req: Request, res: Response): Promise<void
     if (req.query.selfOnly === 'true' && req.user?.id) {
       filter.createdBy = req.user.id;
     }
+
+    // ✅ Branch scoping: employees only see their branch's enquiries
+    const branchFilter = await getUserBranchFilter(req);
+    Object.assign(filter, branchFilter);
 
     // ✅ MIGRATION: Handle legacy statuses (confirmed/rejected -> pending)
     await Enquiry.updateMany({
@@ -618,12 +623,16 @@ export const deleteEnquiry = async (req: Request, res: Response): Promise<void> 
 // ✅ GET ENQUIRY STATISTICS
 export const getEnquiryStats = async (req: Request, res: Response): Promise<void> => {
   try {
-    const totalEnquiries = await Enquiry.countDocuments();
-    const pending = await Enquiry.countDocuments({ status: 'pending' });
-    const converted = await Enquiry.countDocuments({ status: 'converted' });
-    const lost = await Enquiry.countDocuments({ status: 'lost' });
+    // ✅ Branch scoping: employees only see their branch's stats
+    const branchFilter = await getUserBranchFilter(req);
+
+    const totalEnquiries = await Enquiry.countDocuments(branchFilter);
+    const pending = await Enquiry.countDocuments({ ...branchFilter, status: 'pending' });
+    const converted = await Enquiry.countDocuments({ ...branchFilter, status: 'converted' });
+    const lost = await Enquiry.countDocuments({ ...branchFilter, status: 'lost' });
 
     const thisMonth = await Enquiry.countDocuments({
+      ...branchFilter,
       createdAt: {
         $gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
       }

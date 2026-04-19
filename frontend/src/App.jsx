@@ -64,6 +64,7 @@ function usePermissionSync() {
             ...existingUser,
             userType: result.data.userType,
             permissions: result.data.permissions,
+            branches: result.data.branches || [],
           };
           localStorage.setItem('user', JSON.stringify(updatedUser));
           // Notify same-tab components that permissions were refreshed

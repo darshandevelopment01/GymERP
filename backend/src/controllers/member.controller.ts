@@ -8,6 +8,7 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import { sendEmail, generateDocxBuffer, generateReceiptPdfBuffer } from '../utils/mailer';
 import path from 'path';
+import { getUserBranchFilter } from '../middleware/auth.middleware';
 
 // Helper to capitalize first letter of each name part
 const toTitleCase = (str: string): string => {
@@ -295,6 +296,10 @@ export const getAllMembers = async (req: Request, res: Response): Promise<void> 
     if (req.query.selfOnly === 'true' && req.user?.id) {
       filter.convertedBy = req.user.id;
     }
+
+    // ✅ Branch scoping: employees only see their branch's members
+    const branchFilter = await getUserBranchFilter(req);
+    Object.assign(filter, branchFilter);
 
     const members = await Member.find(filter)
       .populate('branch', 'name city address state zipCode')

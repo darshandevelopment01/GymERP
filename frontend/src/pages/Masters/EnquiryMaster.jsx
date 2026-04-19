@@ -18,7 +18,7 @@ import './EnquiryMaster.css';
 const EnquiryMaster = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { can, isAdmin } = usePermissions();
+  const { can, isAdmin, userBranches } = usePermissions();
   const [showCamera, setShowCamera] = useState(false);
   const cacheKeyBranches = 'cache_global_branches';
   const cacheKeyPlans = 'cache_global_plans';
@@ -647,13 +647,18 @@ const EnquiryMaster = () => {
       label: 'Branch',
       type: 'select',
       required: true,
-      options: [
-        { value: '', label: 'Select Branch' },
-        ...branches.map(b => ({
-          value: b._id,
-          label: b.name
-        }))
-      ],
+      options: isAdmin
+        ? [
+            { value: '', label: 'Select Branch' },
+            ...branches.map(b => ({
+              value: b._id,
+              label: b.name
+            }))
+          ]
+        : branches
+            .filter(b => userBranches.includes(b._id))
+            .map(b => ({ value: b._id, label: b.name })),
+      ...((!isAdmin && userBranches.length === 1) ? { defaultValue: userBranches[0], disabled: true } : {}),
       onChange: (val, formData, setFormData) => {
         setFormData({ ...formData, branch: val });
         handleLiveDuplicateCheck(val, formData.mobileNumber, formData.email);
@@ -818,7 +823,7 @@ const EnquiryMaster = () => {
         { label: 'Lost', value: 'lost' },
       ]
     },
-    {
+    ...(isAdmin ? [{
       name: 'branch',
       label: 'Branch',
       type: 'select',
@@ -829,7 +834,7 @@ const EnquiryMaster = () => {
           label: b.name
         }))
       ]
-    },
+    }] : []),
     {
       name: 'source',
       label: 'Source',
