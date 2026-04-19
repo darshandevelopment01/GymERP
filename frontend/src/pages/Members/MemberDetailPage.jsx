@@ -940,54 +940,49 @@ const MemberDetailPage = () => {
         )}
 
         {activeTab === 'followups' && (
-          <div className="followup-section">
+          <div className="followups-container">
              <button className="add-followup-btn" onClick={() => {
               setEditingFollowUpId(null);
               setFollowUpData({ note: '', followUpDate: null, followUpTime: '' });
               setShowFollowUpModal(true);
             }}>
-              <Plus size={20} /> Add Follow-up
+              <Plus size={20} /> Add New Follow-up
             </button>
             <div className="followup-list">
-              {followups.length > 0 ? (
-                followups.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)).map((f, index) => (
-                  <div className={`followup-item ${f.status}`} key={index}>
-                    <div className={`followup-card ${f.status}`}>
-                      <div className="followup-header">
-                        <div className="msg-icon-rounded">
-                          <MessageSquare size={18} />
-                        </div>
-                        <div className="followup-main-text">
-                           <p className="followup-note">{f.note}</p>
-                           <span className={`status-badge-compact ${f.status}`}>{f.status}</span>
-                        </div>
+              {followups.length === 0 ? (
+                <div className="empty-state">No follow-ups recorded</div>
+              ) : (
+                <>
+                  <h3 className="followup-section-title">Follow-up History</h3>
+                  {followups.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)).map(f => (
+                    <div key={f._id} className={`followup-card ${f.status}`}>
+                      <div className="followup-note">{f.note}</div>
+                      <div className="followup-meta">
+                        <span className="followup-date">
+                          📅 {new Date(f.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        </span>
+                        {f.followUpDate && f.status === 'pending' && (
+                          <span className="next-date-badge">
+                            Next: {new Date(f.followUpDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+                          </span>
+                        )}
+                        <span className={`fu-status-label ${f.status}`}>{f.status}</span>
                       </div>
                       <div className="followup-footer">
-                        <div className="followup-timestamp">
-                          <Clock size={14} />
-                          <span>{new Date(f.createdAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
-                        </div>
-                        {f.followUpDate && (
-                          <div className="followup-next-badge">
-                            Next: {new Date(f.followUpDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
-                          </div>
-                        )}
                         {f.status === 'pending' && (
-                          <div className="followup-actions">
-                            <button className="edit-followup-btn" onClick={() => handleEditFollowUp(f)} title="Edit">
-                              <Edit2 size={14} />
+                          <>
+                            <button className="btn-complete" onClick={() => handleMarkFollowUpComplete(f._id)}>
+                              <CheckCircle size={16} /> Mark Complete
                             </button>
-                            <button className="mark-complete-btn" onClick={() => handleMarkFollowUpComplete(f._id)}>
-                              <CheckCircle size={14} /> <span>Complete</span>
+                            <button className="btn-edit-small" onClick={() => handleEditFollowUp(f)}>
+                              <Edit2 size={16} />
                             </button>
-                          </div>
+                          </>
                         )}
                       </div>
                     </div>
-                  </div>
-                ))
-              ) : (
-                <div className="no-data-card">No follow-ups recorded</div>
+                  ))}
+                </>
               )}
             </div>
           </div>

@@ -725,86 +725,149 @@
 
 .success { color: #166534; }
 
-/* Follow-ups */
-.add-followup-btn {
+/* Follow-ups Styling (Synced with Enquiry Module) */
+.followups-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
   width: 100%;
-  padding: 1rem;
-  background: #10b981;
-  color: white;
-  border: none;
+}
+
+.add-followup-btn {
+  background: white;
+  border: 2px dashed #10b981;
+  color: #10b981;
+  padding: 0.8rem;
   border-radius: 12px;
-  font-weight: 600;
+  font-weight: 700;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  margin-bottom: 1.5rem;
-  cursor: pointer;
-  box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
+  transition: all 0.2s;
+  margin-bottom: 0.5rem;
+}
+
+.add-followup-btn:hover {
+  background-color: #f0fdf9;
+  transform: translateY(-2px);
+}
+
+.followup-section-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
 }
 
 .followup-card {
   background: white;
-  padding: 1.5rem;
-  border-radius: 20px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04);
-  border: 1px solid #e2e8f0;
-  margin-bottom: 1.25rem;
-  transition: transform 0.2s, box-shadow 0.2s;
+  border-radius: 16px;
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  position: relative;
+  border-left: 4px solid #e5e7eb;
+  margin-bottom: 1rem;
 }
 
-.followup-header {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1.25rem;
-  align-items: flex-start;
+.followup-card.pending {
+  border-left-color: #f59e0b;
 }
 
-.msg-icon-rounded {
-  width: 44px;
-  height: 44px;
-  background: #f1f5f9;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #10b981;
-  flex-shrink: 0;
+.followup-card.completed {
+  border-left-color: #10b981;
 }
 
 .followup-note {
-  margin: 0;
+  font-size: 1rem;
   color: #1e293b;
   line-height: 1.5;
-  font-size: 0.95rem;
   font-weight: 500;
-  padding-top: 0.25rem;
+  margin: 0;
 }
 
-.followup-footer {
+.followup-meta {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 1rem;
-}
-
-.followup-timestamp {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
   font-size: 0.85rem;
   color: #64748b;
-  font-weight: 500;
 }
 
-.followup-next-badge {
-  background: #fffbeb;
-  color: #b45309;
-  padding: 0.5rem 1rem;
-  border-radius: 12px;
-  font-size: 0.85rem;
+.next-date-badge {
+  background-color: #fffbeb;
+  color: #92400e;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
   font-weight: 700;
-  border: 1px solid #fef3c7;
+}
+
+.fu-status-label {
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    padding: 0.2rem 0.6rem;
+    border-radius: 6px;
+}
+.fu-status-label.pending {
+    background: #fffbeb;
+    color: #d97706;
+}
+.fu-status-label.completed {
+    background: #f0fdf4;
+    color: #16a34a;
+}
+
+.followup-footer {
+  margin-top: 0.25rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-complete {
+  flex: 1;
+  background-color: transparent;
+  color: #10b981;
+  border: 1px solid #10b981;
+  padding: 0.5rem;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  transition: all 0.2s;
+}
+
+.btn-complete:hover {
+  background-color: #10b981;
+  color: white;
+}
+
+.btn-edit-small {
+  padding: 0.5rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  cursor: pointer;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-edit-small:hover {
+  background-color: #f8fafc;
+  color: #10b981;
+  border-color: #10b981;
 }
 
 /* Modal styles for Follow-up */
@@ -1138,72 +1201,9 @@
   border-color: #9ca3af;
 }
 
-/* Follow-up Enhancement */
-.followup-item.completed {
-  opacity: 0.8;
-}
 
-.followup-main-text {
-  flex: 1;
-}
 
-.status-badge-compact {
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  padding: 0.15rem 0.45rem;
-  border-radius: 4px;
-  margin-top: 0.25rem;
-  display: inline-block;
-}
 
-.status-badge-compact.pending { background: #fffbeb; color: #b45309; border: 0.5px solid #fef3c7; }
-.status-badge-compact.completed { background: #f0fdf4; color: #166534; border: 0.5px solid #dcfce7; }
-
-.mark-complete-btn {
-  background: white;
-  border: 1px solid #10b981;
-  color: #10b981;
-  padding: 0.25rem 0.6rem;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  width: fit-content;
-}
-
-.mark-complete-btn:hover {
-  background: #10b981;
-  color: white;
-}
-
-.followup-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.edit-followup-btn {
-  background: white;
-  border: 1px solid #6366f1;
-  color: #6366f1;
-  padding: 0.25rem 0.5rem;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  transition: all 0.2s;
-}
-
-.edit-followup-btn:hover {
-  background: #6366f1;
-  color: white;
-}
 
 /* Renew Modal Enhancements */
 .form-divider {
